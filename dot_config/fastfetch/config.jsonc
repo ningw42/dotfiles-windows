@@ -1,0 +1,85 @@
+// see examples at https://github.com/fastfetch-cli/fastfetch/tree/dev/presets
+{
+    "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+    "logo": {
+        "padding": {
+            "top": 2
+        }
+    },
+    "modules": [
+        "title",
+
+        "break",
+        {
+            "type": "custom",
+            "format": "\u001b[32;1mSystem\u001b[0m:" // bright green
+        },
+        {
+            "type": "host",
+            "key": "├─Host"
+        },
+        {
+            "type": "os",
+            "key": "├─OS"
+        },
+        {
+            "type": "kernel",
+            "key": "├─Kernel"
+        },
+        {
+            "type": "locale",
+            "key": "├─Locale"
+        },
+        {
+            "type": "uptime",
+            "key": "└─Uptime"
+        },
+
+        "break",
+        {
+            "type": "custom",
+            "format": "\u001b[32;1mHardware\u001b[0m:" // bright green
+        },
+        {
+            "type": "cpu",
+            "key": "├─CPU"
+        },
+        {
+            "type": "gpu",
+            "key": "├─GPU"
+        },
+        {
+            "type": "memory",
+            "key": "├─Memory"
+        },
+        {
+            "type": "disk",
+            "key": "└─Disk",
+            "folders": "/"
+        },
+
+        "break",
+        {
+            "type": "custom",
+            "format": "\u001b[32;1mSoftware\u001b[0m:" // bright green
+        },
+        {
+            "type": "terminal",
+            "key": "├─Terminal"
+        },
+        {
+            "type": "shell",
+            "key": "├─Shell"
+        },
+        {
+            "type": "packages",
+            "key": "└─Packages"
+        },
+
+        "break",
+        {
+            "type": "colors",
+            "symbol": "block"
+        }
+    ]
+}

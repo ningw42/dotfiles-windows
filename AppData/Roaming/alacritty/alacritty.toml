@@ -1,0 +1,16 @@
+[general]
+import = [ "themes/gruvbox_dark.toml" ]
+
+[window]
+dimensions = { columns = 160, lines = 40 }
+padding = { x = 2, y = 0 }
+
+[font]
+normal = { family = "PragmataPro", style = "Regular" }
+bold = { family = "PragmataPro", style = "Bold" }
+italic = { family = "PragmataPro", style = "Italic" }
+bold_italic = { family = "PragmataPro", style = "Bold Italic" }
+size = 10
+
+[terminal]
+shell = { program = "pwsh" }

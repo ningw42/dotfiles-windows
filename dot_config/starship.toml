@@ -1,0 +1,139 @@
+"$schema" = "https://starship.rs/config-schema.json"
+
+format = """
+$directory\
+$git_branch\
+$git_status\
+$nix_shell\
+$fill\
+$cmd_duration\
+$time\
+$username\
+$hostname\
+$line_break\
+$character\
+"""
+
+palette = "gruvbox_dark"
+
+[palettes.gruvbox_dark]
+fg = "#ebdbb2" # alias of fg1
+fg0 = "#fbf1c7"
+fg1 = "#ebdbb2"
+fg2 = "#d5c4a1"
+fg3 = "#bdae93"
+fg4 = "#a89984"
+bg = "#282828" # alias of bg0
+bg0_soft = "#32302f"
+bg0_hard = "#1d2021"
+bg0 = "#282828"
+bg1 = "#3c3836"
+bg2 = "#504945"
+bg3 = "#665c54"
+bg4 = "#7c6f64"
+red = "#cc241d"
+green = "#98971a"
+yellow = "#d79921"
+blue = "#458588"
+purple = "#b16286"
+aqua = "#689d6a"
+orange = "#d65d0e"
+bright_red = "#fb4934"
+bright_green = "#b8bb26"
+bright_yellow = "#fabd2f"
+bright_blue = "#83a598"
+bright_purple = "#d3879b"
+bright_aqua = "#8ec07c"
+bright_orange = "#fe8019"
+
+# modules to the left, remember to add an extra space to the right of them.
+[directory]
+format = "[$read_only]($read_only_style)[$path]($style) "
+read_only = " " # an extra space is appended because it would always has a space if we do it in directory.format
+style = "fg:bright_blue"
+read_only_style = "fg:bright_yellow"
+truncation_length = 3
+truncation_symbol = ".../"
+use_os_path_sep = true # OS specific path separator. e.g. "\" for Windows
+fish_style_pwd_dir_length = 1 # "~/Dev/Nix/nixpkgs/pkgs" will be "~/D/N/nixpkgs/pkgs" instead of "nixpkgs/pkgs"
+
+[git_branch]
+symbol = ""
+style = "fg:bright_green"
+format = "[$symbol  $branch ]($style)"
+
+[git_status]
+ahead = "[⇡${count}](fg:bright_green)"
+behind = "[⇣${count}](fg:bright_red)"
+diverged = "[⇡${ahead_count}](fg:bright_green)[⇣${behind_count}](fg:bright_red)"
+untracked = "[?${count}](fg:yellow)"
+stashed = "[\\$${count}](fg:yellow)" # "$" has to be excaped by "\$", so it becomes "\\$"
+modified = "[!${count}](fg:yellow)"
+staged = "[+${count}](fg:green)"
+renamed = "[»${count}](fg:yellow)"
+deleted = "[✘${count}](fg:red)"
+format = "$ahead_behind$all_status "
+
+[nix_shell]
+format = "[$symbol  $state\\($name\\)]($style)" # use "\(" to escape "(", so it has to be "\\("
+symbol = ""
+style = "fg:bright_blue"
+
+
+# module that conencts the left part and the right part
+[fill]
+symbol = "·"
+style = "fg:bg1"
+
+
+# modules to the right, remember to add an extra space to the left of them.
+# status of the previous command, not enabled in global format because it hasn't been configured properly
+[status]
+disabled = false
+format = " [$symbol$status]($style)"
+symbol = "❌"
+success_symbol = ""
+not_executable_symbol = ""
+not_found_symbol = "🔍"
+sigint_symbol = ""
+signal_symbol = ""
+
+[cmd_duration]
+min_time = 5000 # 5s
+format = "[   $duration]($style)"
+style = "fg:yellow"
+
+[time]
+disabled = false
+time_format = "%R"
+style = "fg:blue"
+format = "[   $time]($style)"
+
+[username]
+show_always = true
+style_user = "fg:fg3"
+style_root = "fg:bright_red"
+format = "[   $user]($style)"
+
+[hostname]
+ssh_only = false
+style = "fg:fg3"
+format = "[@$hostname]($style)"
+
+
+# second line
+[line_break]
+disabled = false
+
+# not enabled in global format
+[shell]
+disabled = false
+
+[character]
+disabled = false
+success_symbol = "[❯](bold fg:bright_green)"
+error_symbol = "[❯](bold fg:bright_red)"
+vimcmd_symbol = "[❮](bold fg:bright_green)"
+vimcmd_replace_one_symbol = "[❮](bold fg:bright_purple)"
+vimcmd_replace_symbol = "[❮](bold fg:bright_purple)"
+vimcmd_visual_symbol = "[❮](bold fg:bright_yellow)"
