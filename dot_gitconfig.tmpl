@@ -1,6 +1,7 @@
 [user]
   name = {{ .git_username | quote }}
   email = {{ .git_useremail | quote }}
+  signingkey = {{ .git_signingkey | quote }}
 
 [core]
   sshCommand = C:/Windows/System32/OpenSSH/ssh.exe # use the ssh.exe shipped with Windows to make use of 1Password's ssh agent
@@ -29,3 +30,12 @@
   st = "status"
   sw = "switch"
   df = "diff"
+
+[gpg]
+  format = ssh
+
+[gpg "ssh"]
+  program = "C:/Users/ningw/AppData/Local/1Password/app/8/op-ssh-sign.exe"
+
+[commit]
+  gpgsign = true
