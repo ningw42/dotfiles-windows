@@ -1,0 +1,31 @@
+[user]
+  name = {{ .git_username | quote }}
+  email = {{ .git_useremail | quote }}
+
+[core]
+  sshCommand = C:/Windows/System32/OpenSSH/ssh.exe # use the ssh.exe shipped with Windows to make use of 1Password's ssh agent
+  pager = delta
+
+[diff]
+  colorMoved = default
+
+[interactive]
+  diffFilter = delta --color-only
+
+[delta]
+  line-numbers = true
+  side-by-side = true
+  navigate = true  # use n and N to move between diff sections
+  dark = true      # or light = true, or omit for auto-detection
+
+[merge]
+  conflictstyle = zdiff3
+
+[alias]
+  br = "branch"
+  co = "checkout"
+  cp = "cherry-pick"
+  rb = "rebase"
+  st = "status"
+  sw = "switch"
+  df = "diff"
