@@ -11,26 +11,16 @@ $Env:EXA_ICON_SPACING = 2
 #endregion Environment Variables
 
 
-#region Aliases
-
-Set-Alias -Name y -Value Invoke-Yazi
-Set-Alias -Name cdcz -Value Enter-ChezmoiRepository
-Set-Alias -Name l -Value Get-ChildItemEza
-Set-Alias -Name ll -Value Get-ChildItemEzaLong
-Set-Alias -Name lt -Value Get-ChildItemEzaTree
-Set-Alias -Name llt -Value Get-ChildItemEzaTreeLong
-
-#endregion Aliases
-
-
 #region Functions
 
-function Enter-ChezmoiRepository
+# entering the local chezmoi repository
+function cdcz
 {
   cd $(chezmoi source-path)
 }
 
-function Invoke-Yazi
+# alias for launching yazi
+function y
 {
     $tmp = [System.IO.Path]::GetTempFileName()
     yazi $args --cwd-file="$tmp"
@@ -41,24 +31,24 @@ function Invoke-Yazi
     Remove-Item -Path $tmp
 }
 
-Function Get-ChildItemEza
+Function l
 {
-  eza --group-directories-first --icons --long --group --header --time-style=iso --binary --all
+  eza --group-directories-first --icons --long --group --header --time-style=iso --binary --all $args
 }
 
-Function Get-ChildItemEzaLong
+Function ll
 {
-  eza --group-directories-first --icons --long --group --header --accessed --modified --created --time-style=iso --binary --all
+  eza --group-directories-first --icons --long --group --header --accessed --modified --created --time-style=iso --binary --all $args
 }
 
-Function Get-ChildItemEzaTree
+Function lt
 {
-  eza --group-directories-first --icons --long --group --header --time-style=iso --binary --tree
+  eza --group-directories-first --icons --long --group --header --time-style=iso --binary --tree $args
 }
 
-Function Get-ChildItemEzaTreeLong
+Function llt
 {
-  eza --group-directories-first --icons --long --group --header --accessed --modified --created --time-style=iso --binary --tree
+  eza --group-directories-first --icons --long --group --header --accessed --modified --created --time-style=iso --binary --tree $args
 }
 
 #endregion Functions
