@@ -12,27 +12,123 @@ return {
     opts = {
       -- unlike other plugins, components are enabled iff they are configured explicitly, or enabled is set to true for default settings.
       dashboard = {
+        formats = {
+          -- custom item formatter to support icon specific highlight
+          icon = function(item)
+            if item.file and item.icon == "file" or item.icon == "directory" then
+              local miniicons = require("mini.icons")
+              local miniicon, hl, _ = miniicons.get(item.icon, item.file)
+              return { miniicon, width = 2, hl = hl or "icon"}
+            end
+            return { item.icon, width = 2, hl = item.icon.hl or "Constant" }
+          end,
+        },
         sections = {
-          { pane = 1, section = "header", },
+          { pane = 1, section = "header", padding = 1 },
+          -- customized builtin 'startup' to add neovim version information
+          function()
+            local version_info = vim.version()
+            local version = version_info.major .. "." .. version_info.minor .. "." .. version_info.patch
+            local lazy_stats = require("lazy.stats").stats()
+            local ms = (math.floor(lazy_stats.startuptime * 100 + 0.5) / 100)
+            local icon = "  "
+            return {
+              pane = 1,
+              align = "center",
+              padding = 1,
+              text = {
+                { icon .. "Neovim(" .. version .. ") loaded ", hl = "footer" },
+                { lazy_stats.loaded .. "/" .. lazy_stats.count, hl = "special" },
+                { " plugins in ", hl = "footer" },
+                { ms .. "ms", hl = "special" },
+              },
+            }
+          end,
           { pane = 1, section = "keys", gap = 1, padding = 1 },
-          { pane = 1, section = "startup" },
+          -- weekday ascii art
+          function()
+            local weekday_ascii_arts = {
+              ['Monday'] = [[
+███╗   ███╗ ██████╗ ███╗   ██╗
+████╗ ████║██╔═══██╗████╗  ██║
+██╔████╔██║██║   ██║██╔██╗ ██║
+██║╚██╔╝██║██║   ██║██║╚██╗██║
+██║ ╚═╝ ██║╚██████╔╝██║ ╚████║
+╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝]],
+              ['Tuesday'] = [[
+████████╗██╗   ██╗███████╗
+╚══██╔══╝██║   ██║██╔════╝
+   ██║   ██║   ██║█████╗  
+   ██║   ██║   ██║██╔══╝  
+   ██║   ╚██████╔╝███████╗
+   ╚═╝    ╚═════╝ ╚══════╝]],
+              ['Wednesday'] = [[
+██╗    ██╗███████╗██████╗ 
+██║    ██║██╔════╝██╔══██╗
+██║ █╗ ██║█████╗  ██║  ██║
+██║███╗██║██╔══╝  ██║  ██║
+╚███╔███╔╝███████╗██████╔╝
+ ╚══╝╚══╝ ╚══════╝╚═════╝ ]],
+              ['Thursday'] = [[
+████████╗██╗  ██╗██╗   ██╗
+╚══██╔══╝██║  ██║██║   ██║
+   ██║   ███████║██║   ██║
+   ██║   ██╔══██║██║   ██║
+   ██║   ██║  ██║╚██████╔╝
+   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ]],
+              ['Friday'] = [[
+███████╗██████╗ ██╗
+██╔════╝██╔══██╗██║
+█████╗  ██████╔╝██║
+██╔══╝  ██╔══██╗██║
+██║     ██║  ██║██║
+╚═╝     ╚═╝  ╚═╝╚═╝]],
+              ['Saturday'] = [[
+███████╗ █████╗ ████████╗
+██╔════╝██╔══██╗╚══██╔══╝
+███████╗███████║   ██║   
+╚════██║██╔══██║   ██║   
+███████║██║  ██║   ██║   
+╚══════╝╚═╝  ╚═╝   ╚═╝   ]],
+              ['Sunday'] = [[
+███████╗██╗   ██╗███╗   ██╗
+██╔════╝██║   ██║████╗  ██║
+███████╗██║   ██║██╔██╗ ██║
+╚════██║██║   ██║██║╚██╗██║
+███████║╚██████╔╝██║ ╚████║
+╚══════╝ ╚═════╝ ╚═╝  ╚═══╝]]
+            }
+            local weekdays = { 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday' }
+            local weekday = weekdays[os.date('*t').wday]
+            local weekday_ascii_art = weekday_ascii_arts[weekday]
+            return {
+              pane = 2,
+              enabled = function() return vim.o.columns > 80 end, -- only enabled if the number of columns is greater than 80
+              text = { weekday_ascii_art, hl = "MiniIconsCyan" },
+              align = "center",
+              padding = 1,
+            }
+          end,
+          -- timestamp
+          function()
+            local timestamp = os.date('%Y-%m-%d %H:%M:%S')
+            return {
+              pane = 2,
+              enabled = function() return vim.o.columns > 80 end, -- only enabled if the number of columns is greater than 80
+              text = { "  " .. timestamp, hl = "MiniIconsCyan" },
+              align = "center",
+              padding = 1,
+            }
+          end,
+          { pane = 2, icon = { " ", hl = "MiniIconsAzure" }, title = "Recent Files", section = "recent_files", indent = 2, padding = 1, enabled = function() return vim.o.columns > 80 end, }, -- only enabled if the number of columns is greater than 80
+          { pane = 2, icon = { " ", hl = "MiniIconsAzure" }, title = "Projects", section = "projects", indent = 2, padding = 1, enabled = function() return vim.o.columns > 80 end, }, -- only enabled if the number of columns is greater than 80
+          { pane = 2, icon = {}},
           {
             pane = 2,
-            section = "terminal",
-            cmd = "colorscript -e square",
-            height = 5,
-            padding = 1,
-          },
-          { pane = 2, icon = " ", title = "Recent Files", section = "recent_files", indent = 2, padding = 1 },
-          { pane = 2, icon = " ", title = "Projects", section = "projects", indent = 2, padding = 1 },
-          {
-            pane = 2,
-            icon = " ",
+            icon = { " ", hl = "MiniIconsAzure" },
             title = "Git Status",
             section = "terminal",
-            enabled = function()
-              return Snacks.git.get_root() ~= nil
-            end,
+            enabled = function() return Snacks.git.get_root() ~= nil and vim.o.columns > 80 end,
             cmd = "git status --short --branch --renames",
             height = 5,
             padding = 1,
