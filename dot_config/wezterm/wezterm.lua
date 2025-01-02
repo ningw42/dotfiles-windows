@@ -14,7 +14,7 @@ local font_fallback_list = wezterm.font_with_fallback {
 -- This is where you actually apply your config choices
 
 -- Launching Programs
-config.default_prog = { 'powershell.exe' }
+config.default_prog = { 'pwsh.exe' }
 
 -- Color Scheme
 config.color_scheme = 'GruvboxDark'
