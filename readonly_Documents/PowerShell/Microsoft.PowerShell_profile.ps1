@@ -13,10 +13,16 @@ $Env:EXA_ICON_SPACING = 2
 
 #region Functions
 
-# entering the local chezmoi repository
-function cdcz
+# alias for chezmoi
+function cz
 {
-  cd $(chezmoi source-path)
+  chezmoi $args
+}
+
+# alias for entering local chezmoi repository
+function czcd
+{
+  Set-Location $(chezmoi source-path)
 }
 
 # alias for launching yazi
@@ -54,6 +60,8 @@ Function llt
 #endregion Functions
 
 
-# This has to be the last expression in this file
+# This is recommended to be the last expression in $PROFILE
 Invoke-Expression (&starship init powershell)
 
+# But zoxide doesn't work if it is before starship, see https://github.com/ajeetdsouza/zoxide/issues/74
+Invoke-Expression (& { (zoxide init powershell | Out-String) })
