@@ -120,7 +120,7 @@ format = "[@$hostname]($style)"
 
 [time]
 disabled = false
-time_format = "%R"
+time_format = "%T"
 style = "fg:blue"
 format = "[   $time]($style)"
 
