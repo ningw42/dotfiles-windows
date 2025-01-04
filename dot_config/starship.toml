@@ -63,19 +63,23 @@ style = "fg:bright_green"
 format = "[$symbol  $branch ]($style)"
 
 [git_status]
+format = "($ahead_behind )($all_status )" # parentheses make them conditional strings, so that we won't end up with an extra space
+# branch status ($ahead_behind)
 ahead = "[⇡${count}](fg:bright_green)"
 behind = "[⇣${count}](fg:bright_red)"
 diverged = "[⇡${ahead_count}](fg:bright_green)[⇣${behind_count}](fg:bright_red)"
+up_to_date = ""
+# file status ($all_status)
+conflicted = "[=${count}](fg:yellow)"
 untracked = "[?${count}](fg:yellow)"
-stashed = "[\\$${count}](fg:yellow)" # "$" has to be excaped by "\$", so it becomes "\\$"
+stashed = "[\\$${count}](fg:yellow)" # "$" has to be excaped by "\$", so it becomes "\\$" in literal. the output would be "$3" if there are 3 stashes.
 modified = "[!${count}](fg:yellow)"
 staged = "[+${count}](fg:green)"
 renamed = "[»${count}](fg:yellow)"
 deleted = "[✘${count}](fg:red)"
-format = "$ahead_behind$all_status "
 
 [nix_shell]
-format = "[$symbol  $state\\($name\\)]($style)" # use "\(" to escape "(", so it has to be "\\("
+format = "[$symbol  $state\\($name\\) ]($style)" # "(" has to be escaped by "\(", so it becomes "\\(" in literal.
 symbol = ""
 style = "fg:bright_blue"
 
