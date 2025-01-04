@@ -7,9 +7,9 @@ $git_status\
 $nix_shell\
 $fill\
 $cmd_duration\
-$time\
 $username\
 $hostname\
+$time\
 $line_break\
 $character\
 """
@@ -107,12 +107,6 @@ min_time = 5000 # 5s
 format = "[   $duration]($style)"
 style = "fg:yellow"
 
-[time]
-disabled = false
-time_format = "%R"
-style = "fg:blue"
-format = "[   $time]($style)"
-
 [username]
 show_always = true
 style_user = "fg:fg3"
@@ -123,6 +117,12 @@ format = "[   $user]($style)"
 ssh_only = false
 style = "fg:fg3"
 format = "[@$hostname]($style)"
+
+[time]
+disabled = false
+time_format = "%R"
+style = "fg:blue"
+format = "[   $time]($style)"
 
 
 # second line
