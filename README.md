@@ -44,6 +44,7 @@ chezmoi apply --verbose
 | [fastfetch](https://github.com/fastfetch-cli/fastfetch) configs | N            | `dot_config\fastfetch`                                                      | `~\.config\fastfetch`                                     |
 | [wezterm](https://github.com/wez/wezterm) configs               | N            | `dot_config\wezterm`                                                        | `~\.config\wezterm`                                       |
 | [starship](https://github.com/starship/starship) configs        | N            | `dot_config\starship.toml`                                                  | `~\.config\starship.toml`                                 |
+| [glazewm](https://github.com/glzr-io/glazewm) configs           | N            | `dot_glze\glazewm\config.yaml`                                              | `~\.glzr\glazewm\config.yaml`                             |
 | PowerShell Profile                                              | N            | `dot_config\readonly_Documents\PowerShell\Microsoft.PowerShell_profile.ps1` | `~\Documents\PowerShell\Microsoft.PowerShell_profile.ps1` |
 
 ### Component specific notes
