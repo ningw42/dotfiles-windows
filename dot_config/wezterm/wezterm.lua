@@ -13,6 +13,9 @@ local font_fallback_list = wezterm.font_with_fallback {
 
 -- This is where you actually apply your config choices
 
+config.initial_cols = 160
+config.initial_rows = 40
+
 -- Launching Programs
 config.default_prog = { 'pwsh.exe' }
 
@@ -31,8 +34,15 @@ config.font = font_fallback_list
 config.font_size = 10.0
 config.line_height = 1.0
 
-config.default_ssh_auth_sock = '\\\\.\\pipe\\openssh-ssh-agent'
--- config.ssh_backend = 'Ssh2'
+-- config.default_ssh_auth_sock = '\\\\.\\pipe\\openssh-ssh-agent'
+config.ssh_backend = 'Ssh2'
+-- config.ssh_domains = {
+--   {
+--     name = 'yuki',
+--     username = 'ning';
+--     remote_address = '192.168.2.6';
+--   },
+-- }
 
 -- and finally, return the configuration to wezterm
 return config
