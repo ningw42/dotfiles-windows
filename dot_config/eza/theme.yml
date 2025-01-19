@@ -1,0 +1,149 @@
+# https://github.com/eza-community/eza-themes/blob/main/themes/gruvbox-dark.yml
+# gruvbox dark palette
+# bg: #282828
+# red: #cc241d
+# green: #98971a
+# yellow: #d79921
+# blue: #458588
+# purple: #b16286
+# aqua: #689d6a
+# orange: #d65d0e
+# gray_246: #a89984
+#
+# gray_245: #928374
+# bright red: #fb4934
+# bright green: #b8bb26
+# bright yellow: #fabd2f
+# bright blue: #83a598
+# bright purple: #d3869b
+# bright aqua: #8ec07c
+# bright orange: #fe8019
+# fg: #ebdbb2
+#
+# bg0_h: #1d2021
+# bg0_s: #32302f
+# bg0: #282828
+# bg1: #3c3836
+# bg2: #504945
+# bg3: #665c54
+# bg4: #7c6f64
+# gray: #928374
+#
+# fg4: #a89984
+# fg3: #bdae93
+# fg2: #d5c4a1
+# fg1: #ebdbb2
+# fg0: #fbf1c7
+
+colourful: true
+
+filekinds:
+  normal: {foreground: "#ebdbb2"}
+  directory: {foreground: "#83a598"}
+  symlink: {foreground: "#8ec07c"}
+  pipe: {foreground: "#928374"}
+  block_device: {foreground: "#fb4934"}
+  char_device: {foreground: "#fb4934"}
+  socket: {foreground: "#665c54"}
+  special: {foreground: "#d3869b"}
+  executable: {foreground: "#b8bb26"}
+  mount_point: {foreground: "#fe8019"}
+
+perms:
+  user_read: {foreground: "#ebdbb2"}
+  user_write: {foreground: "#fabd2f"}
+  user_execute_file: {foreground: "#b8bb26"}
+  user_execute_other: {foreground: "#b8bb26"}
+  group_read: {foreground: "#ebdbb2"}
+  group_write: {foreground: "#fabd2f"}
+  group_execute: {foreground: "#b8bb26"}
+  other_read: {foreground: "#bdae93"}
+  other_write: {foreground: "#fabd2f"}
+  other_execute: {foreground: "#b8bb26"}
+  special_user_file: {foreground: "#d3869b"}
+  special_other: {foreground: "#928374"}
+  attribute: {foreground: "#bdae93"}
+
+size:
+  major: {foreground: "#bdae93"}
+  minor: {foreground: "#8ec07c"}
+  number_byte: {foreground: "#bdae93"}
+  number_kilo: {foreground: "#83a598"}
+  number_mega: {foreground: "#d3869b"}
+  number_giga: {foreground: "#d3869b"}
+  number_huge: {foreground: "#fe8019"}
+  unit_byte: {foreground: "#bdae93"}
+  unit_kilo: {foreground: "#83a598"}
+  unit_mega: {foreground: "#d3869b"}
+  unit_giga: {foreground: "#d3869b"}
+  unit_huge: {foreground: "#fe8019"}
+
+users:
+  user_root: {foreground: "#fb4934", is_bold: true}
+  user_you: {foreground: "#98971a", is_bold: true}
+  user_other: {foreground: "#98971a", is_dimmed: true}
+  group_root: {foreground: "#fb4934", is_bold: true}
+  group_yours: {foreground: "#98971a", is_bold: true}
+  group_other: {foreground: "#98971a", is_dimmed: true}
+
+links:
+  normal: {foreground: "#8ec07c"}
+  multi_link_file: {foreground: "#fe8019"}
+
+git:
+  new: {foreground: "#b8bb26"}
+  modified: {foreground: "#fabd2f"}
+  deleted: {foreground: "#fb4934"}
+  renamed: {foreground: "#8ec07c"}
+  typechange: {foreground: "#d3869b"}
+  ignored: {foreground: "#928374"}
+  conflicted: {foreground: "#cc241d"}
+
+git_repo:
+  branch_main: {foreground: "#ebdbb2"}
+  branch_other: {foreground: "#d3869b"}
+  git_clean: {foreground: "#b8bb26"}
+  git_dirty: {foreground: "#fb4934"}
+
+security_context:
+  colon: {foreground: "#928374"}
+  user: {foreground: "#ebdbb2"}
+  role: {foreground: "#d3869b"}
+  typ: {foreground: "#665c54"}
+  range: {foreground: "#d3869b"}
+
+file_type:
+  image: {foreground: "#fabd2f"}
+  video: {foreground: "#fb4934"}
+  music: {foreground: "#b8bb26"}
+  lossless: {foreground: "#8ec07c"}
+  crypto: {foreground: "#928374"}
+  document: {foreground: "#ebdbb2"}
+  compressed: {foreground: "#d3869b"}
+  temp: {foreground: "#cc241d"}
+  compiled: {foreground: "#83a598"}
+  build: {foreground: "#928374"}
+  source: {foreground: "#83a598"}
+
+punctuation: {foreground: "#928374"}
+date: {foreground: "#fabd2f"}
+inode: {foreground: "#bdae93"}
+blocks: {foreground: "#a89984"}
+header: {foreground: "#ebdbb2"}
+octal: {foreground: "#8ec07c"}
+flags: {foreground: "#d3869b"}
+
+symlink_path: {foreground: "#8ec07c"}
+control_char: {foreground: "#83a598"}
+broken_symlink: {foreground: "#fb4934"}
+broken_path_overlay: {foreground: "#928374"}
+
+filenames:
+  # Custom filename-based overrides
+  # Cargo.toml: {icon: {glyph: 🦀}}
+  flake.lock: {icon: {glyph: ""}}
+
+extensions:
+  # Custom extension-based overrides
+  # rs: {filename: {foreground: Red}, icon: {glyph: 🦀}}
+  md: {icon: {glyph: ""}}

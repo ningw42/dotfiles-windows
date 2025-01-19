@@ -39,22 +39,17 @@ function y
 
 Function l
 {
-  eza --group-directories-first --icons --long --group --header --time-style=iso --binary --all $args
+  eza --icons --no-quotes --group-directories-first --no-symlinks $args
 }
 
 Function ll
 {
-  eza --group-directories-first --icons --long --group --header --accessed --modified --created --time-style=iso --binary --all $args
+  eza --header --icons --long --octal-permissions --binary --group --time-style='+%F %T' --color-scale=age --no-quotes --group-directories-first --all $args
 }
 
 Function lt
 {
-  eza --group-directories-first --icons --long --group --header --time-style=iso --binary --tree $args
-}
-
-Function llt
-{
-  eza --group-directories-first --icons --long --group --header --accessed --modified --created --time-style=iso --binary --tree $args
+  eza --header --icons --long --octal-permissions --binary --group --time-style='+%F %T' --color-scale=age --no-quotes --group-directories-first --all --tree $args
 }
 
 #endregion Functions
