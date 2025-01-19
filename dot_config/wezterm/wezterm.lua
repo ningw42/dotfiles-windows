@@ -23,10 +23,19 @@ config.default_prog = { 'pwsh.exe' }
 config.color_scheme = 'GruvboxDark'
 
 -- Tab Bar
+config.tab_bar_at_bottom = true
+
+-- Window
 config.window_decorations = 'RESIZE'
 config.window_frame = {
 	font = font_fallback_list,
 	font_size = 10.0,
+}
+config.window_padding = {
+  left = '0.5cell',
+  right = '0.5cell',
+  top = '0.5cell',
+  bottom = 0,
 }
 
 -- Fonts
@@ -34,15 +43,11 @@ config.font = font_fallback_list
 config.font_size = 10.0
 config.line_height = 1.0
 
--- config.default_ssh_auth_sock = '\\\\.\\pipe\\openssh-ssh-agent'
+-- WezTerm reads ssh configuration
 config.ssh_backend = 'Ssh2'
--- config.ssh_domains = {
---   {
---     name = 'yuki',
---     username = 'ning';
---     remote_address = '192.168.2.6';
---   },
--- }
+
+-- to match main monitor's refresh rate
+config.max_fps = 240
 
 -- and finally, return the configuration to wezterm
 return config
