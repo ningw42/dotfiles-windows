@@ -55,10 +55,11 @@
             {
                 "builtinGlyphs": false,
                 "cellHeight": "1.1",
-                // "face": "Iosevkata Nerd Font, 'Sarasa Fixed SC'",
+                "colorGlyphs": true,
                 "face": "'PragmataPro', 'Sarasa Fixed SC'",
                 "size": 10
-            }
+            },
+            "scrollbarState": "hidden"
         },
         "list": 
         [
@@ -100,6 +101,7 @@
             }
         ]
     },
+    "rendering.graphicsAPI": "direct3d11",
     "schemes": 
     [
         {
