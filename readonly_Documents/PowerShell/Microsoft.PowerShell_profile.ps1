@@ -4,9 +4,11 @@
 # see https://yazi-rs.github.io/docs/installation#windows
 $Env:YAZI_FILE_ONE = "C:\Users\ningw\scoop\apps\git\current\usr\bin\file.exe"
 
-# exa/eza, the number of spaces to print between icon and filename.
-# TODO: when eza change this to the proper name, replace it.
-$Env:EXA_ICON_SPACING = 2
+# eza config directory
+$env:EZA_CONFIG_DIR = "$env:USERPROFILE\.config\eza"
+# the number of spaces to print between icon and filename.
+$Env:EZA_ICON_SPACING = 2
+
 
 #endregion Environment Variables
 
