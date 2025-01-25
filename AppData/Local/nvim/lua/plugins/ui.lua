@@ -16,9 +16,9 @@ return {
           -- custom item formatter to support icon specific highlight
           icon = function(item)
             if item.file and item.icon == "file" or item.icon == "directory" then
-              local miniicons = require("mini.icons")
-              local miniicon, hl, _ = miniicons.get(item.icon, item.file)
-              return { miniicon, width = 2, hl = hl or "icon"}
+              local icon_provider = require("mini.icons")
+              local icon, hl, _ = icon_provider.get(item.icon, item.file)
+              return { icon, width = 2, hl = hl or "icon"}
             end
             return { item.icon, width = 2, hl = item.icon.hl or "Constant" }
           end,
@@ -121,20 +121,7 @@ return {
             }
           end,
           { pane = 2, icon = { " ", hl = "MiniIconsAzure" }, title = "Recent Files", section = "recent_files", indent = 2, padding = 1, enabled = function() return vim.o.columns > 80 end, }, -- only enabled if the number of columns is greater than 80
-          { pane = 2, icon = { " ", hl = "MiniIconsAzure" }, title = "Projects", section = "projects", indent = 2, padding = 1, enabled = function() return vim.o.columns > 80 end, }, -- only enabled if the number of columns is greater than 80
-          { pane = 2, icon = {}},
-          {
-            pane = 2,
-            icon = { " ", hl = "MiniIconsAzure" },
-            title = "Git Status",
-            section = "terminal",
-            enabled = function() return Snacks.git.get_root() ~= nil and vim.o.columns > 80 end,
-            cmd = "git status --short --branch --renames",
-            height = 5,
-            padding = 1,
-            ttl = 5 * 60,
-            indent = 3,
-          },
+          { pane = 2, icon = { " ", hl = "MiniIconsAzure" }, title = "Projects", section = "projects", indent = 2, padding = 1, enabled = function() return vim.o.columns > 80 end, }, -- only enabled if the number of columns is greater than 80
         },
       },
     },
@@ -164,7 +151,7 @@ return {
     end,
     config = function()
       local highlights = require("neo-tree.ui.highlights")
-      local miniicons = require("mini.icons")
+      local icon_provider = require("mini.icons")
 
       -- configs
       require("neo-tree").setup({
@@ -200,13 +187,13 @@ return {
                 elseif node:is_expanded() then
                   icon = config.folder_open or "-"
                 else
-                  local miniicon _, _ = miniicons.get("directory", node.name)
-                  icon = miniicon or config.folder_closed or "+"
+                  local icon_override _, _ = icon_provider.get("directory", node.name)
+                  icon = icon_override or config.folder_closed or "+"
                 end
               elseif node.type == "file" or node.type == "terminal" then
-                local miniicon, hl, _ = miniicons.get("file", node.name)
-                icon = miniicon or icon
-                highlight = hl or highlight
+                local icon_override, highlight_override, _ = icon_provider.get("file", node.name)
+                icon = icon_override or icon
+                highlight = highlight_override or highlight
               end
 
               return {
@@ -233,11 +220,25 @@ return {
     },
     opts = {
       options = {
+        buffer_close_icon = '󰅖 ',
+        modified_icon = '● ',
+        close_icon = ' ',
+        left_trunc_marker = ' ',
+        right_trunc_marker = ' ',
+        color_icons = true,
+
+        -- use mini.icons as provider
+        get_element_icon = function(element)
+          local icon_provider = require("mini.icons")
+          local icon, hl, _ = icon_provider.get("extension", element.extension)
+          return icon, hl
+        end,
+
         -- bufferline offset for neo-tree
         offsets = {
           {
             filetype = "neo-tree",
-            text = "NeoTree",
+            text = "Explorer",
             highlight = "Directory",
             text_align = "center",
             separator = true,
@@ -268,9 +269,15 @@ return {
             "branch",
             icon = " ",
           },
-          "diff",
+          {
+            "filetype",
+            colored = true,
+            icon_only = true,
+          },
           {
             "filename",
+            file_status = true,
+            newfile_status = true,
             symbols = {
               modified = "●",
               readonly = "",
@@ -279,18 +286,22 @@ return {
             },
           },
         },
-        lualine_c = {},
+        lualine_c = {
+          {
+            "diff",
+            symbols = { added = ' ', modified = ' ', removed = ' ' }
+          },
+        },
         lualine_x = { "diagnostics" },
         lualine_y = {
           "encoding",
           {
-            "filetype",
-            colored = false,
-            icon_only = true,
-            padding = { left = 1, right = 2 }, -- extra padding to the right
-          },
-          {
             "fileformat",
+            symbols = {
+              unix = '󰌽',
+              dos = '󰍲',
+              mac = '󰀵',
+            },
             padding = { left = 1, right = 2 }, -- extra padding to the right
           },
         },
@@ -520,13 +531,18 @@ return {
   {
     "folke/trouble.nvim",
     dependencies = { "echasnovski/mini.icons" },
+    cmd = "Trouble",
+    opts = {},
     keys = {
       {
-        "<leader>td", -- td, toggle diagnostics
-        function()
-          require("trouble").toggle()
-        end,
-        desc = "Toggle Trouble",
+        "<leader>td", -- td, toggle diagnostics for current buffer
+        "<cmd>Trouble diagnostics toggle filter.buf=0<cr>",
+        desc = "Toggle Diagnostics (Current Buffer)",
+      },
+      {
+        "<leader>tD", -- td, toggle diagnostics
+        "<cmd>Trouble diagnostics toggle<cr>",
+        desc = "Toggle Diagnostics",
       },
     },
   },
@@ -598,5 +614,20 @@ return {
       --   If not available, we use `mini` as the fallback
       "rcarriga/nvim-notify",
     }
-  }
+  },
+
+  -- color highlighter: nvim-highlight-colors
+  {
+    "brenoprata10/nvim-highlight-colors",
+    event = "BufReadPost",
+    opts = {
+      render = "virtual",
+      virtual_symbol = "",
+      virtual_symbol_position = "inline",
+      exclude_filetypes = { "lazy" },
+    },
+    config = function(_, opts)
+      require("nvim-highlight-colors").setup(opts)
+    end
+  },
 }

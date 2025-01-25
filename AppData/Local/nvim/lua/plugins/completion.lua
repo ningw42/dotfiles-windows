@@ -123,7 +123,7 @@ return {
         docker_compose_language_service = {},
         dockerls = {},
         lua_ls = {},
-        nil_ls = {},
+        nixd = {},
         pyright = {},
         yamlls = {},
       },
@@ -152,4 +152,3 @@ return {
     },
   },
 }
-
