@@ -3,7 +3,7 @@ import = [ "themes/gruvbox_dark.toml" ]
 
 [window]
 dimensions = { columns = 160, lines = 40 }
-padding = { x = 2, y = 0 }
+padding = { x = 2, y = 2 }
 
 [font]
 normal = { family = "PragmataPro", style = "Regular" }
@@ -11,6 +11,10 @@ bold = { family = "PragmataPro", style = "Bold" }
 italic = { family = "PragmataPro", style = "Italic" }
 bold_italic = { family = "PragmataPro", style = "Bold Italic" }
 size = 10
+builtin_box_drawing = false
+
+[selection]
+save_to_clipboard = true
 
 [terminal]
 shell = { program = "pwsh" }
