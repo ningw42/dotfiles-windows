@@ -1,12 +1,10 @@
 #region Environment Variables
 
-# yazi's file executable.
+# yazi: file(1) executable
 # see https://yazi-rs.github.io/docs/installation#windows
 $Env:YAZI_FILE_ONE = "C:\Users\ningw\scoop\apps\git\current\usr\bin\file.exe"
 
-# eza config directory
-$env:EZA_CONFIG_DIR = "$env:USERPROFILE\.config\eza"
-# the number of spaces to print between icon and filename.
+# eza: the number of spaces to print between icon and filename.
 $Env:EZA_ICON_SPACING = 2
 
 
