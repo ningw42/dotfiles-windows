@@ -36,7 +36,7 @@ return {
         use_nvim_cmp_as_default = false,
         -- Set to "mono" for "Nerd Font Mono" or "normal" for "Nerd Font"
         -- Adjusts spacing to ensure icons are aligned
-        nerd_font_variant = "normal"
+        nerd_font_variant = "normal",
       },
 
       completion = {
@@ -52,7 +52,9 @@ return {
             components = {
               -- new column type, index
               index = {
-                text = function(ctx) return ctx.idx == 10 and "0" or ctx.idx >= 10 and " " or tostring(ctx.idx) end,
+                text = function(ctx)
+                  return ctx.idx == 10 and "0" or ctx.idx >= 10 and " " or tostring(ctx.idx)
+                end,
               },
 
               -- custom kind_icon with mini.icons
@@ -79,7 +81,9 @@ return {
               -- custom source_name text
               source_name = {
                 width = { max = 30 },
-                text = function(ctx) return "[" .. ctx.source_name .. "]" end,
+                text = function(ctx)
+                  return "[" .. ctx.source_name .. "]"
+                end,
                 highlight = "BlinkCmpKind",
               },
             },
@@ -103,7 +107,7 @@ return {
         },
       },
     },
-    opts_extend = { "sources.default" }
+    opts_extend = { "sources.default" },
   },
 
   -- LSP servers and clients communicate which features they support through "capabilities".
@@ -136,7 +140,7 @@ return {
         config.capabilities = require("blink.cmp").get_lsp_capabilities(config.capabilities)
         lspconfig[server].setup(config)
       end
-    end
+    end,
   },
 
   -- Configures lua_ls for editing neovim configuration

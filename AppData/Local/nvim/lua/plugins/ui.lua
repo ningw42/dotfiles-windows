@@ -18,7 +18,7 @@ return {
             if item.file and item.icon == "file" or item.icon == "directory" then
               local icon_provider = require("mini.icons")
               local icon, hl, _ = icon_provider.get(item.icon, item.file)
-              return { icon, width = 2, hl = hl or "icon"}
+              return { icon, width = 2, hl = hl or "icon" }
             end
             return { item.icon, width = 2, hl = item.icon.hl or "Constant" }
           end,
@@ -48,62 +48,64 @@ return {
           -- weekday ascii art
           function()
             local weekday_ascii_arts = {
-              ['Monday'] = [[
+              ["Monday"] = [[
 ███╗   ███╗ ██████╗ ███╗   ██╗
 ████╗ ████║██╔═══██╗████╗  ██║
 ██╔████╔██║██║   ██║██╔██╗ ██║
 ██║╚██╔╝██║██║   ██║██║╚██╗██║
 ██║ ╚═╝ ██║╚██████╔╝██║ ╚████║
 ╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝]],
-              ['Tuesday'] = [[
+              ["Tuesday"] = [[
 ████████╗██╗   ██╗███████╗
 ╚══██╔══╝██║   ██║██╔════╝
    ██║   ██║   ██║█████╗  
    ██║   ██║   ██║██╔══╝  
    ██║   ╚██████╔╝███████╗
    ╚═╝    ╚═════╝ ╚══════╝]],
-              ['Wednesday'] = [[
+              ["Wednesday"] = [[
 ██╗    ██╗███████╗██████╗ 
 ██║    ██║██╔════╝██╔══██╗
 ██║ █╗ ██║█████╗  ██║  ██║
 ██║███╗██║██╔══╝  ██║  ██║
 ╚███╔███╔╝███████╗██████╔╝
  ╚══╝╚══╝ ╚══════╝╚═════╝ ]],
-              ['Thursday'] = [[
+              ["Thursday"] = [[
 ████████╗██╗  ██╗██╗   ██╗
 ╚══██╔══╝██║  ██║██║   ██║
    ██║   ███████║██║   ██║
    ██║   ██╔══██║██║   ██║
    ██║   ██║  ██║╚██████╔╝
    ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ]],
-              ['Friday'] = [[
+              ["Friday"] = [[
 ███████╗██████╗ ██╗
 ██╔════╝██╔══██╗██║
 █████╗  ██████╔╝██║
 ██╔══╝  ██╔══██╗██║
 ██║     ██║  ██║██║
 ╚═╝     ╚═╝  ╚═╝╚═╝]],
-              ['Saturday'] = [[
+              ["Saturday"] = [[
 ███████╗ █████╗ ████████╗
 ██╔════╝██╔══██╗╚══██╔══╝
 ███████╗███████║   ██║   
 ╚════██║██╔══██║   ██║   
 ███████║██║  ██║   ██║   
 ╚══════╝╚═╝  ╚═╝   ╚═╝   ]],
-              ['Sunday'] = [[
+              ["Sunday"] = [[
 ███████╗██╗   ██╗███╗   ██╗
 ██╔════╝██║   ██║████╗  ██║
 ███████╗██║   ██║██╔██╗ ██║
 ╚════██║██║   ██║██║╚██╗██║
 ███████║╚██████╔╝██║ ╚████║
-╚══════╝ ╚═════╝ ╚═╝  ╚═══╝]]
+╚══════╝ ╚═════╝ ╚═╝  ╚═══╝]],
             }
-            local weekdays = { 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday' }
-            local weekday = weekdays[os.date('*t').wday]
+            local weekdays = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" }
+            local weekday = weekdays[os.date("*t").wday]
             local weekday_ascii_art = weekday_ascii_arts[weekday]
             return {
               pane = 2,
-              enabled = function() return vim.o.columns > 80 end, -- only enabled if the number of columns is greater than 80
+              enabled = function()
+                return vim.o.columns > 80
+              end, -- only enabled if the number of columns is greater than 80
               text = { weekday_ascii_art, hl = "MiniIconsCyan" },
               align = "center",
               padding = 1,
@@ -111,17 +113,39 @@ return {
           end,
           -- timestamp
           function()
-            local timestamp = os.date('%Y-%m-%d %H:%M:%S')
+            local timestamp = os.date("%Y-%m-%d %H:%M:%S")
             return {
               pane = 2,
-              enabled = function() return vim.o.columns > 80 end, -- only enabled if the number of columns is greater than 80
+              enabled = function()
+                return vim.o.columns > 80
+              end, -- only enabled if the number of columns is greater than 80
               text = { "  " .. timestamp, hl = "MiniIconsCyan" },
               align = "center",
               padding = 1,
             }
           end,
-          { pane = 2, icon = { " ", hl = "MiniIconsAzure" }, title = "Recent Files", section = "recent_files", indent = 2, padding = 1, enabled = function() return vim.o.columns > 80 end, }, -- only enabled if the number of columns is greater than 80
-          { pane = 2, icon = { " ", hl = "MiniIconsAzure" }, title = "Projects", section = "projects", indent = 2, padding = 1, enabled = function() return vim.o.columns > 80 end, }, -- only enabled if the number of columns is greater than 80
+          {
+            pane = 2,
+            icon = { " ", hl = "MiniIconsAzure" },
+            title = "Recent Files",
+            section = "recent_files",
+            indent = 2,
+            padding = 1,
+            enabled = function()
+              return vim.o.columns > 80
+            end,
+          }, -- only enabled if the number of columns is greater than 80
+          {
+            pane = 2,
+            icon = { " ", hl = "MiniIconsAzure" },
+            title = "Projects",
+            section = "projects",
+            indent = 2,
+            padding = 1,
+            enabled = function()
+              return vim.o.columns > 80
+            end,
+          }, -- only enabled if the number of columns is greater than 80
         },
       },
     },
@@ -187,7 +211,8 @@ return {
                 elseif node:is_expanded() then
                   icon = config.folder_open or "-"
                 else
-                  local icon_override _, _ = icon_provider.get("directory", node.name)
+                  local icon_override
+                  _, _ = icon_provider.get("directory", node.name)
                   icon = icon_override or config.folder_closed or "+"
                 end
               elseif node.type == "file" or node.type == "terminal" then
@@ -200,7 +225,7 @@ return {
                 text = icon .. padding,
                 highlight = highlight,
               }
-            end
+            end,
           },
         },
       })
@@ -220,11 +245,11 @@ return {
     },
     opts = {
       options = {
-        buffer_close_icon = '󰅖 ',
-        modified_icon = '● ',
-        close_icon = ' ',
-        left_trunc_marker = ' ',
-        right_trunc_marker = ' ',
+        buffer_close_icon = "󰅖 ",
+        modified_icon = "● ",
+        close_icon = " ",
+        left_trunc_marker = " ",
+        right_trunc_marker = " ",
         color_icons = true,
 
         -- use mini.icons as provider
@@ -258,7 +283,7 @@ return {
         theme = "gruvbox_dark",
         globalstatus = true,
         -- disable lualine for dashboard.nvim and neo-tree
-        disabled_filetypes = { statusline = { "dashboard", "neo-tree" } },
+        -- disabled_filetypes = { statusline = { "dashboard", "neo-tree" } },
         component_separators = { left = "", right = "" },
         section_separators = { left = "", right = "" },
       },
@@ -289,7 +314,7 @@ return {
         lualine_c = {
           {
             "diff",
-            symbols = { added = ' ', modified = ' ', removed = ' ' }
+            symbols = { added = " ", modified = " ", removed = " " },
           },
         },
         lualine_x = { "diagnostics" },
@@ -298,9 +323,9 @@ return {
           {
             "fileformat",
             symbols = {
-              unix = '󰌽',
-              dos = '󰍲',
-              mac = '󰀵',
+              unix = "󰌽",
+              dos = "󰍲",
+              mac = "󰀵",
             },
             padding = { left = 1, right = 2 }, -- extra padding to the right
           },
@@ -318,7 +343,16 @@ return {
           },
         },
       },
-      extensions = { "neo-tree" },
+      winbar = {
+        lualine_c = {
+          {
+            "navic",
+            color_correction = nil,
+            navic_opts = nil,
+          },
+        },
+      },
+      extensions = { "neo-tree", "lazy", "trouble" },
     },
   },
 
@@ -613,7 +647,7 @@ return {
       --   `nvim-notify` is only needed, if you want to use the notification view.
       --   If not available, we use `mini` as the fallback
       "rcarriga/nvim-notify",
-    }
+    },
   },
 
   -- color highlighter: nvim-highlight-colors
@@ -623,11 +657,76 @@ return {
     opts = {
       render = "virtual",
       virtual_symbol = "",
-      virtual_symbol_position = "inline",
+      virtual_symbol_prefix = "",
+      virtual_symbol_suffix = "",
+      virtual_symbol_position = "eol",
       exclude_filetypes = { "lazy" },
+
+      ---Highlight short hex colors e.g. '#fff'
+      enable_short_hex = false,
+      ---Highlight named colors, e.g. 'green'
+      enable_named_colors = false,
     },
     config = function(_, opts)
       require("nvim-highlight-colors").setup(opts)
-    end
+    end,
+  },
+
+  -- breadcrumbs: nvim-navic
+  {
+    "SmiteshP/nvim-navic",
+    event = "LspAttach",
+    dependencies = {
+      "neovim/nvim-lspconfig",
+    },
+    opts = {
+      icons = {
+        File = " ",
+        Module = " ",
+        Namespace = " ",
+        Package = " ",
+        Class = " ",
+        Method = " ",
+        Property = " ",
+        Field = " ",
+        Constructor = " ",
+        Enum = " ",
+        Interface = " ",
+        Function = " ",
+        Variable = " ",
+        Constant = " ",
+        String = " ",
+        Number = " ",
+        Boolean = " ",
+        Array = " ",
+        Object = " ",
+        Key = " ",
+        Null = " ",
+        EnumMember = " ",
+        Struct = " ",
+        Event = " ",
+        Operator = " ",
+        TypeParameter = " ",
+      },
+      lsp = {
+        auto_attach = true,
+        preference = nil,
+      },
+      highlight = true,
+      separator = " > ",
+      depth_limit = 0,
+      depth_limit_indicator = "..",
+      safe_output = true,
+      lazy_update_context = false,
+      click = false,
+      format_text = function(text)
+        return text
+      end,
+    },
+    config = function(_, opts)
+      -- always show winbar
+      vim.opt.winbar = " "
+      require("nvim-navic").setup(opts)
+    end,
   },
 }

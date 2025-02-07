@@ -7,27 +7,15 @@ return {
     opts = {},
   },
 
-  -- comments: mini.comment
+  -- comments: ts-comments
   {
-    "echasnovski/mini.comment",
-    version = "*",
-    event = "VeryLazy",
-    dependencies = {
-      {
-        "JoosepAlviste/nvim-ts-context-commentstring",
-        lazy = true,
-        opts = {
-          enable_autocmd = false,
-        },
-      },
-    },
+    "folke/ts-comments.nvim",
     opts = {
-      options = {
-        custom_commentstring = function()
-          return require("ts_context_commentstring.internal").calculate_commentstring() or vim.bo.commentstring
-        end,
+      lang = {
+        ron = "// %s", -- Rusty Object Notation
       },
     },
+    event = "VeryLazy",
   },
 
   -- selection highlight: vim-illuminate
@@ -53,5 +41,22 @@ return {
     config = function(_, opts)
       require("illuminate").configure(opts)
     end,
+  },
+
+  -- markdown preview: markview
+  {
+    "OXY2DEV/markview.nvim",
+    lazy = false,
+    opts = {
+      preview = {
+        icon_provider = "mini",
+      },
+    },
+  },
+
+  -- better help view: helpview
+  {
+    "OXY2DEV/helpview.nvim",
+    lazy = false,
   },
 }
