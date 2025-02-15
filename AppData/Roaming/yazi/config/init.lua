@@ -52,12 +52,15 @@ require("full-border"):setup {
 
 -- yatline-gruvbox
 -- https://github.com/imsi32/yatline-gruvbox.yazi/blob/main/README.md
-local gruvbox_theme = require("yatline-gruvbox"):setup("dark") -- or "light"
+-- local yatline_theme = require("yatline-gruvbox"):setup("dark") -- or "light"
+-- yatline-gruvbox
+-- https://github.com/imsi32/yatline-catppuccin.yazi/blob/main/README.md
+local yatline_theme = require("yatline-catppuccin"):setup("frappe") -- or "latte" | "frappe" | "macchiato"
 
 -- yatline
 -- https://github.com/imsi32/yatline.yazi
 require("yatline"):setup({
-  theme = gruvbox_theme,
+  theme = yatline_theme,
 	section_separator = { open = "", close = "" },
 	part_separator = { open = "", close = "" },
 	inverse_separator = { open = "", close = "" },

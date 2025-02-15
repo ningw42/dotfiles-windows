@@ -1,0 +1,6 @@
+[flavor]
+{{ if eq .colorscheme "gruvbox-dark" }}
+dark = "gruvbox-dark"
+{{ else if eq .colorscheme "catppuccin-frappe" }}
+dark = "catppuccin-frappe"
+{{ end }}
