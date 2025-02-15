@@ -3,9 +3,9 @@
 <plist version="1.0">
   <dict>
     <key>name</key>
-    <string>Catppuccin Frappé</string>
+    <string>Catppuccin Frappe</string>
     <key>semanticClass</key>
-    <string>theme.dark.catppuccin-frappé</string>
+    <string>theme.dark.catppuccin-frappe</string>
     <key>uuid</key>
     <string>e0ada983-8938-490c-86f0-97a1a0ec58e4</string>
     <key>author</key>

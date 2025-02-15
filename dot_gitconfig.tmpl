@@ -18,6 +18,11 @@
   side-by-side = true
   navigate = true  # use n and N to move between diff sections
   dark = true      # or light = true, or omit for auto-detection
+{{ if eq .colorscheme "gruvbox-dark" }}
+  features = gruvmax-fang
+{{ else if eq .colorscheme "catppuccin-frappe" }}
+  features = catppuccin-frappe
+{{ end }}
 
 [merge]
   conflictstyle = zdiff3
@@ -39,3 +44,6 @@
 
 [commit]
   gpgsign = true
+
+[include]
+	path = "C:/Users/ningw/.config/delta/catppuccin.gitconfig"
