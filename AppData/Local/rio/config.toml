@@ -90,9 +90,9 @@ theme = "gruvboxdark"
 #
 # blinking-interval - Cursor update on milliseconds interval
 #
-# [cursor]
-# shape = 'block'
-# blinking = false
+[cursor]
+shape = 'block'
+blinking = false
 # blinking-interval = 800
 
 # Editor
@@ -191,7 +191,7 @@ backend = "DX12"
 family = "Iosevkata Nerd Font" # rio uses swash which seems to have bug, see https://github.com/dfrg/swash/issues/62
 #
 # You can also specify extra fonts to load
-# extras = [{ family = "Sarasa Fixed SC" }]
+extras = [{ family = "Sarasa Fixed SC" }]
 #
 # In case you want to specify any font feature:
 # [fonts]
@@ -259,12 +259,12 @@ size = 14
 # "color-automation" - Set a specific color for the tab whenever a specific program is running, or in a specific directory.
 #
 # Example:
-# [navigation]
-# mode = "bookmark"
-# clickable = false
-# hide-if-single = true
-# use-current-path = false
-# color-automation = []
+[navigation]
+mode = "BottomTab"
+clickable = false
+hide-if-single = true
+use-current-path = false
+color-automation = []
 
 # Shell
 #
@@ -342,10 +342,10 @@ size = 14
 # program = "/bin/fish"
 # args = ["--login"]
 #
-# [platform]
-# # Microsoft Windows overwrite
-# windows.shell.program = "pwsh"
-# windows.shell.args = ["-l"]
+[platform]
+# Microsoft Windows overwrite
+windows.shell.program = "pwsh"
+windows.shell.args = ["-l"]
 #
 # # Linux overwrite
 # linux.shell.program = "tmux"
