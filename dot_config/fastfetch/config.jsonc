@@ -6,74 +6,204 @@
             "top": 2
         }
     },
-    "modules": [
-        "title",
+    "display": {
+        "separator": "",
+        "constants": [
+            // CONSTANT {$1} - VERTICAL BARS AT START AND 75th CHARACTERS FORWARD AND BACKWARD
+            "\u001b[90m│                                                      │\u001b[54D\u001b[39m",
+            // CONSTANT {$2} - VERTICAL BARS AT START AND 75th CHARACTERS FORWARD AND BACKWARD
+            "\u001b[90m│                                        │\u001b[40D\u001b[39m",
+            // CONSTANT {$3} - TABLE HEADER
+            "\u001b[90m╭──────────────────────────────────────────────────────╮\u001b[39m",
+            // CONSTANT {$4} - TABLE SEPARATOR DOWN
+            "\u001b[90m├─────────────┬────────────────────────────────────────┤\u001b[39m",
+            // CONSTANT {$5} - TABLE SEPARATOR UP
+            "\u001b[90m├─────────────┴────────────────────────────────────────┤\u001b[39m",
+            // CONSTANT {$6} - TABLE FOOTER
+            "\u001b[90m╰─────────────┴────────────────────────────────────────╯\u001b[39m",
+            // CONSTANT {$7}~{$9} - RESERVED
+            "",
+            "",
+            "",
 
-        "break",
+            // CONSTANT {$10} - HOST ICON - nf-md-desktop_classic
+            "󰟀",
+            // CONSTANT {$11} - OS ICON - nf-md-linux, nf-md-microsoft, nf-md-apple
+            "󰌽",
+            // "󰍲",
+            // "󰀵",
+            // CONSTANT {$12} - KERNEL ICON - nf-fa-cog
+            "",
+            // CONSTANT {$13} - LOCALE ICON - nf-fa-language
+            "",
+            // CONSTANT {$14} - LOADAVG ICON - nf-fa-hourglass_1
+            "",
+            // CONSTANT {$15} - UPTIME ICON - nf-seti-clock
+            "",
+            // CONSTANT {$16}~{$19} - RESERVED
+            "",
+            "",
+            "",
+            "",
+
+            // CONSTANT {$20} - CPU ICON - nf-oct-cpu
+            "",
+            // CONSTANT {$21} - GPU ICON - nf-md-expansion_card_variant
+            "󰾲",
+            // CONSTANT {$22} - MEMORY ICON - nf-fa-memory
+            "",
+            // CONSTANT {$23} - DISK ICON - nf-md-harddisk
+            "󰋊",
+            // CONSTANT {$24}~{$29} - RESERVED
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+
+            // CONSTANT {$30} - TERMINAL ICON - nf-dev-terminal
+            "",
+            // CONSTANT {$31} - SHELL ICON - nf-fa-terminal
+            "",
+            // CONSTANT {$32} - EDITOR ICON - nf-custom-neovim,
+            "",
+            // CONSTANT {$33} - PACKAGES ICON - nf-md-package_variant
+            "󰏖"
+        ]
+    },
+    // 012345678901234567890123456789012345678901234567890123456789012345678901234567890
+    // ╭──────────────────────────────────────────────────────╮
+    // │ 64 chars                                             │
+    // ├──────────┬───────────────────────────────────────────┤
+    // │ 13 chars │ 40 chars                                  │
+    // │          │                                           │
+    // ├──────────┴───────────────────────────────────────────┤
+    // │ 64 chars                                             │
+    // ├──────────┬───────────────────────────────────────────┤
+    // │ 13 chars │ 40 chars                                  │
+    // │          │                                           │
+    // ├──────────┴───────────────────────────────────────────┤
+    // │ 64 chars                                             │
+    // ├──────────┬───────────────────────────────────────────┤
+    // │ 13 chars │ 40 chars                                  │
+    // │          │                                           │
+    // ╰──────────┴───────────────────────────────────────────╯
+    "modules": [
         {
             "type": "custom",
-            "format": "\u001b[32;1mSystem\u001b[0m:" // bright green
+            "format": "{$3}"
+        },
+        {
+            "type": "custom",
+            "format": "{$1}System"
+        },
+        {
+            "type": "custom",
+            "format": "{$4}"
         },
         {
             "type": "host",
-            "key": "├─Host"
+            "key": "{#90}│ {$10}  Host     ",
+            "format": "{$2}{name} {version}"
         },
         {
             "type": "os",
-            "key": "├─OS"
+            "key": "{#90}│ {$11}  OS       ",
+            "format": "{$2}{pretty-name} [{arch}]"
         },
         {
             "type": "kernel",
-            "key": "├─Kernel"
+            "key": "{#90}│ {$12}  Kernel   ",
+            "format": "{$2}{sysname} {release}"
         },
         {
             "type": "locale",
-            "key": "├─Locale"
+            "key": "{#90}│ {$13}  Locale   ",
+            "format": "{$2}{result}"
+        },
+        {
+            "type": "loadavg",
+            "key": "{#90}│ {$14}  Load     ",
+            "format": "{$2}{loadavg1}, {loadavg2}, {loadavg3}"
         },
         {
             "type": "uptime",
-            "key": "└─Uptime"
+            "key": "{#90}│ {$15}  Uptime   ",
+            "format": "{$2}{days}.{hours}:{minutes}:{seconds} [{boot-time}]"
         },
-
-        "break",
         {
             "type": "custom",
-            "format": "\u001b[32;1mHardware\u001b[0m:" // bright green
+            "format": "{$5}"
+        },
+
+        {
+            "type": "custom",
+            "format": "{$1}Hardware"
+        },
+        {
+            "type": "custom",
+            "format": "{$4}"
         },
         {
             "type": "cpu",
-            "key": "├─CPU"
+            "key": "{#90}│ {$20}  CPU      ",
+            "format": "{$2}{name} ({cores-physical}C/{cores-logical}T)"
         },
         {
             "type": "gpu",
-            "key": "├─GPU"
+            "key": "{#90}│ {$21}  GPU      ",
+            "format": "{$2}{vendor} {name}"
         },
         {
             "type": "memory",
-            "key": "├─Memory"
+            "key": "{#90}│ {$22}  Memory   ",
+            "format": "{$2}{used} / {total} ({percentage})"
         },
         {
             "type": "disk",
-            "key": "└─Disk",
-            "folders": "/"
+            "folders": "/",
+            "key": "{#90}│ {$23}  Disk     ",
+            "format": "{$2}{size-used} / {size-total} ({size-percentage}) {filesystem}"
         },
-
-        "break",
         {
             "type": "custom",
-            "format": "\u001b[32;1mSoftware\u001b[0m:" // bright green
+            "format": "{$5}"
+        },
+
+        {
+            "type": "custom",
+            "format": "{$1}Software"
+        },
+        {
+            "type": "custom",
+            "format": "{$4}"
         },
         {
             "type": "terminal",
-            "key": "├─Terminal"
+            "key": "{#90}│ {$30}  Terminal ",
+            "format": "{$2}{pretty-name}"
         },
         {
             "type": "shell",
-            "key": "├─Shell"
+            "key": "{#90}│ {$31}  Shell    ",
+            "format": "{$2}{pretty-name} {version}"
+        },
+        {
+            "type": "editor",
+            "key": "{#90}│ {$32}  Editor   ",
+            "format": "{$2}{name} {version}"
         },
         {
             "type": "packages",
-            "key": "└─Packages"
+            "key": "{#90}│ {$33}  Packages ",
+            // "format": "{$2}{nix-system} (nix-system), {nix-user} (nix-user)" // linux
+            "format": "{$2}{winget} (winget), {scoop} (scoop)" // windows
+            // "format": "{$2}{brew} (homebrew)" // macos
+        },
+        {
+            "type": "custom",
+            "format": "{$6}"
         },
 
         "break",
