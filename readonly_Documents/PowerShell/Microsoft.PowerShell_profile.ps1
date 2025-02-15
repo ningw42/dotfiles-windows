@@ -4,9 +4,11 @@
 # see https://yazi-rs.github.io/docs/installation#windows
 $Env:YAZI_FILE_ONE = "C:\Users\ningw\scoop\apps\git\current\usr\bin\file.exe"
 
-# eza: the number of spaces to print between icon and filename.
+# eza: the number of spaces to print between icon and filename
 $Env:EZA_ICON_SPACING = 2
 
+# bat config directory
+$Env:BAT_CONFIG_DIR = "C:\Users\ningw\.config\bat"
 
 #endregion Environment Variables
 
