@@ -20,9 +20,11 @@ config.initial_rows = 40
 config.default_prog = { 'pwsh.exe' }
 
 -- Color Scheme
--- config.color_scheme = 'GruvboxDark'
--- config.color_scheme = 'Everforest Dark Soft (Gogh)'
+{{ if eq .colorscheme "gruvbox-dark" }}
+config.color_scheme = 'GruvboxDark'
+{{ else if eq .colorscheme "catppuccin-frappe" }}
 config.color_scheme = 'Catppuccin Frappe'
+{{ end }}
 
 -- Tab Bar
 config.tab_bar_at_bottom = true

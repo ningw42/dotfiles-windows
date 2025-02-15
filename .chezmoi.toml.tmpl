@@ -3,6 +3,8 @@
 {{- $git_signingkey := promptStringOnce . "git_signingkey" "git signing key" -}}
 
 [data]
+  # colorscheme = "gruvbox-dark"
+  colorscheme = "catppuccin-frappe"
   git_username = {{ $git_username | quote }}
   git_useremail = {{ $git_useremail | quote }}
   git_signingkey = {{ $git_signingkey | quote }}
