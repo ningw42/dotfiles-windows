@@ -20,7 +20,9 @@ config.initial_rows = 40
 config.default_prog = { 'pwsh.exe' }
 
 -- Color Scheme
-config.color_scheme = 'GruvboxDark'
+-- config.color_scheme = 'GruvboxDark'
+-- config.color_scheme = 'Everforest Dark Soft (Gogh)'
+config.color_scheme = 'Catppuccin Frappe'
 
 -- Tab Bar
 config.tab_bar_at_bottom = true
@@ -30,6 +32,86 @@ config.window_decorations = 'RESIZE'
 config.window_frame = {
 	font = font_fallback_list,
 	font_size = 10.0,
+
+  -- The overall background color of the tab bar when
+  -- the window is focused
+  active_titlebar_bg = '#414559',
+
+  -- The overall background color of the tab bar when
+  -- the window is not focused
+  inactive_titlebar_bg = '#414559',
+}
+config.colors = {
+  tab_bar = {
+    -- The color of the inactive tab bar edge/divider
+    inactive_tab_edge = '#737994',
+
+    -- The active tab is the one that has focus in the window
+    active_tab = {
+      -- The color of the background area for the tab
+      bg_color = '#232634',
+      -- The color of the text for the tab
+      fg_color = '#c6d0f5',
+
+      -- Specify whether you want "Half", "Normal" or "Bold" intensity for the
+      -- label shown for this tab.
+      -- The default is "Normal"
+      intensity = 'Bold',
+
+      -- Specify whether you want "None", "Single" or "Double" underline for
+      -- label shown for this tab.
+      -- The default is "None"
+      underline = 'None',
+
+      -- Specify whether you want the text to be italic (true) or not (false)
+      -- for this tab.  The default is false.
+      italic = false,
+
+      -- Specify whether you want the text to be rendered with strikethrough (true)
+      -- or not for this tab.  The default is false.
+      strikethrough = false,
+    },
+
+    -- Inactive tabs are the tabs that do not have focus
+    inactive_tab = {
+      bg_color = '#303446',
+      fg_color = '#a5adce',
+
+      -- The same options that were listed under the `active_tab` section above
+      -- can also be used for `inactive_tab`.
+    },
+
+    -- You can configure some alternate styling when the mouse pointer
+    -- moves over inactive tabs
+    inactive_tab_hover = {
+      bg_color = '#292c3c',
+      fg_color = '#a5adce',
+      italic = true,
+
+      -- The same options that were listed under the `active_tab` section above
+      -- can also be used for `inactive_tab_hover`.
+    },
+
+    -- The new tab button that let you create new tabs
+    new_tab = {
+      bg_color = '#303446',
+      fg_color = '#a5adce',
+
+      -- The same options that were listed under the `active_tab` section above
+      -- can also be used for `new_tab`.
+    },
+
+    -- You can configure some alternate styling when the mouse pointer
+    -- moves over the new tab button
+    new_tab_hover = {
+      bg_color = '#292c3c',
+      fg_color = '#a5adce',
+      italic = true,
+
+      -- The same options that were listed under the `active_tab` section above
+      -- can also be used for `new_tab_hover`.
+    },
+  }
 }
 config.window_padding = {
   left = '0.5cell',
