@@ -1,0 +1,52 @@
+{{ if eq .colorscheme "gruvbox-dark" }}
+(
+  selected_tab: Some("#fbf1c7"),          // fg0
+  command_fg: Some("#fbf1c7"),            // fg0
+  selection_bg: Some("#504945"),          // bg2
+  selection_fg: Some("#fbf1c7"),          // fg0
+  cmdbar_bg: Some("#282828"),             // bg0
+  cmdbar_extra_lines_bg: Some("#282828"), // bg0
+  disabled_fg: Some("#a89984"),           // fg4
+  diff_line_add: Some("#b8bb26"),         // bright green
+  diff_line_delete: Some("#fb4934"),      // bright red
+  diff_file_added: Some("#98971a"),       // green
+  diff_file_removed: Some("#cc241d"),     // red
+  diff_file_moved: Some("#d79921"),       // yellow
+  diff_file_modified: Some("#d79921"),    // yellow
+  commit_hash: Some("#689d6a"),           // aqua
+  commit_time: Some("#d79921"),           // yellow
+  commit_author: Some("#458588"),         // blue
+  danger_fg: Some("#fb4934"),             // bright red
+  // push_gauge_bg: Some("#458588"),      // no idea what's this
+  // push_gauge_fg: Some("#fbf1c7"),      // also this
+  tag_fg: Some("#b16286"),                // purple
+  branch_fg: Some("#d65d0e"),             // orange
+  line_break: Some(""),                   // disable the default line break symbol
+  // block_title_focused
+)
+{{ else if eq .colorscheme "catppuccin-frappe" }}
+(
+  selected_tab: Some("Reset"),
+  command_fg: Some("#c6d0f5"),
+  selection_bg: Some("#626880"),
+  selection_fg: Some("#c6d0f5"),
+  cmdbar_bg: Some("#292c3c"),
+  cmdbar_extra_lines_bg: Some("#292c3c"),
+  disabled_fg: Some("#838ba7"),
+  diff_line_add: Some("#a6d189"),
+  diff_line_delete: Some("#e78284"),
+  diff_file_added: Some("#a6d189"),
+  diff_file_removed: Some("#ea999c"),
+  diff_file_moved: Some("#ca9ee6"),
+  diff_file_modified: Some("#ef9f76"),
+  commit_hash: Some("#babbf1"),
+  commit_time: Some("#b5bfe2"),
+  commit_author: Some("#85c1dc"),
+  danger_fg: Some("#e78284"),
+  push_gauge_bg: Some("#8caaee"),
+  push_gauge_fg: Some("#303446"),
+  tag_fg: Some("#f2d5cf"),
+  branch_fg: Some("#81c8be"),
+  line_break: Some(""),                   // disable the default line break symbol
+)
+{{ end }}
