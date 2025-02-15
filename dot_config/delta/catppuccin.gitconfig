@@ -27,7 +27,7 @@
 		bold cyan => syntax "#b4def1", \
 		bold yellow => syntax "#ebd9bf"
 	# Should match the name of the bat theme
-	syntax-theme = Catppuccin Latte
+	syntax-theme = catppuccin-latte
 
 [delta "catppuccin-frappe"]
 	blame-palette = "#303446 #292c3c #232634 #414559 #51576d"
@@ -58,7 +58,7 @@
 		bold cyan => syntax "#4a5b6b", \
 		bold yellow => syntax "#5d5958"
 	# Should match the name of the bat theme
-	syntax-theme = Catppuccin Frappe
+	syntax-theme = catppuccin-frappe
 
 [delta "catppuccin-macchiato"]
 	blame-palette = "#24273a #1e2030 #181926 #363a4f #494d64"
@@ -89,7 +89,7 @@
 		bold cyan => syntax "#3f5364", \
 		bold yellow => syntax "#575253"
 	# Should match the name of the bat theme
-	syntax-theme = Catppuccin Macchiato
+	syntax-theme = catppuccin-macchiato
 
 [delta "catppuccin-mocha"]
 	blame-palette = "#1e1e2e #181825 #11111b #313244 #45475a"
@@ -120,4 +120,4 @@
 		bold cyan => syntax "#384d5d", \
 		bold yellow => syntax "#544f4e"
 	# Should match the name of the bat theme
-	syntax-theme = Catppuccin Mocha
+	syntax-theme = catppuccin-mocha
