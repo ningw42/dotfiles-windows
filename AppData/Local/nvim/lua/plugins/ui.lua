@@ -280,7 +280,6 @@ return {
     opts = {
       options = {
         icons_enabled = true,
-        theme = "gruvbox_dark",
         globalstatus = true,
         -- disable lualine for dashboard.nvim and neo-tree
         -- disabled_filetypes = { statusline = { "dashboard", "neo-tree" } },

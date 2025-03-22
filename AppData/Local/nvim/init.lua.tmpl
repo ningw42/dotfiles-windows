@@ -18,9 +18,22 @@ vim.opt.rtp:prepend(lazypath)
 -- Make sure to setup `mapleader` and `maplocalleader` before
 -- loading lazy.nvim so that mappings are correct.
 -- This is also a good place to setup other settings (vim.opt)
--- <Leader> is set to `space`
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
+
+{{ if eq .colorscheme "catppuccin-frappe" }}
+vim.g.colorscheme = "catppuccin"
+vim.g.colorscheme_flavor = "frappe"
+vim.g.colorscheme_background = "dark"
+{{ else if eq .colorscheme "everforest-dark" }}
+vim.g.colorscheme = "everforest"
+vim.g.colorscheme_flavor = "medium"
+vim.g.colorscheme_background = "dark"
+{{ else if eq .colorscheme "gruvbox-dark" }}
+vim.g.colorscheme = "gruvbox"
+vim.g.colorscheme_flavor = "medium"
+vim.g.colorscheme_background = "dark"
+{{ end }}
 
 -- Setup lazy.nvim
 require("lazy").setup({
@@ -35,7 +48,7 @@ require("lazy").setup({
   checker = { enabled = true },
 })
 
--- general neovim/vim configurations
+-- general neovim/vim configurations that could be loaded after lazy.nvim
 local opt = vim.opt
 opt.number = true -- line number
 opt.relativenumber = true -- relative line number
@@ -61,4 +74,27 @@ opt.listchars = { -- define how invisible characters are shown
   trail = "·",
   precedes = "‹",
   nbsp = "␣",
+}
+
+-- use OSC 52 to copy from neovim, but not paste into neovim.
+-- see https://neovim.io/doc/user/provider.html#clipboard-osc52
+-- and https://github.com/neovim/neovim/discussions/28010#discussioncomment-9877494
+-- 1) accessing clipboard with OSC 52 by default may be a security concern and not all terminal supports it
+-- 2) we can always use terminal's paste
+local function paste()
+  return {
+    vim.fn.split(vim.fn.getreg(""), "\n"),
+    vim.fn.getregtype(""),
+  }
+end
+vim.g.clipboard = {
+  name = "OSC 52",
+  copy = {
+    ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
+    ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
+  },
+  paste = {
+    ["+"] = paste,
+    ["*"] = paste,
+  },
 }

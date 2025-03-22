@@ -91,11 +91,14 @@ return {
         },
       },
 
+      cmdline = {
+        sources = {},
+      },
+
       -- Default list of enabled providers defined so that you can extend it
       -- elsewhere in your config, without redefining it, due to `opts_extend`
       sources = {
         default = { "lazydev", "lsp", "path", "snippets", "buffer" },
-        cmdline = {},
         providers = {
           -- enable LazyDev as a source
           lazydev = {
@@ -130,6 +133,7 @@ return {
         nixd = {},
         pyright = {},
         yamlls = {},
+        taplo = {},
       },
     },
     config = function(_, opts)
