@@ -112,6 +112,49 @@ local colors = {
 }
 {{ else if eq .colorscheme "gruvbox-dark" }}
 config.color_scheme = 'GruvboxDark'
+local colors = {
+  -- The overall background color of the tab bar when
+  -- the window is focused
+  active_titlebar_bg = '#1d2021', -- bg0_h
+  -- The overall background color of the tab bar when
+  -- the window is not focused
+  inactive_titlebar_bg = '#1d2021', -- bg0_h
+
+  -- The color of the inactive tab bar edge/divider
+  inactive_tab_edge = '#a89984', -- fg4
+  -- The active tab is the one that has focus in the window
+  active_tab = {
+    -- The color of the background area for the tab
+    bg_color = '#282828', -- bg0
+    -- The color of the text for the tab
+    fg_color = '#fbf1c7', -- fg0
+  },
+
+  -- Inactive tabs are the tabs that do not have focus
+  inactive_tab = {
+    bg_color = '#1d2021', -- bg0_h
+    fg_color = '#bdae93', -- fg3
+  },
+  -- You can configure some alternate styling when the mouse pointer
+  -- moves over inactive tabs
+  inactive_tab_hover = {
+    bg_color = '#282828', -- bg0
+    fg_color = '#fbf1c7', -- fg0
+  },
+
+  -- The new tab button that let you create new tabs
+  new_tab = {
+    bg_color = '#1d2021', -- bg0_h
+    fg_color = '#bdae93', -- fg3
+  },
+
+  -- You can configure some alternate styling when the mouse pointer
+  -- moves over the new tab button
+  new_tab_hover = {
+    bg_color = '#282828', -- bg0
+    fg_color = '#fbf1c7', -- fg0
+  },
+}
 {{ end }}
 
 -- Tab Bar
