@@ -186,9 +186,9 @@ backend = "DX12"
 #
 # You can also set family on root to overwrite all fonts.
 [fonts]
-# family = "PragmataPro"
+family = "PragmataPro"
 # family = "PragmataPro Mono"
-family = "Iosevkata Nerd Font" # rio uses swash which seems to have bug, see https://github.com/dfrg/swash/issues/62
+# family = "Iosevkata Nerd Font" # rio uses swash which seems to have bug, see https://github.com/dfrg/swash/issues/62
 #
 # You can also specify extra fonts to load
 extras = [{ family = "Sarasa Fixed SC" }]
