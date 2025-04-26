@@ -273,88 +273,6 @@ return {
     },
   },
 
-  -- statusline: lualine.nvim
-  {
-    "nvim-lualine/lualine.nvim",
-    event = "VimEnter",
-    opts = {
-      options = {
-        icons_enabled = true,
-        globalstatus = true,
-        -- disable lualine for dashboard.nvim and neo-tree
-        -- disabled_filetypes = { statusline = { "dashboard", "neo-tree" } },
-        component_separators = { left = "", right = "" },
-        section_separators = { left = "", right = "" },
-      },
-      sections = {
-        lualine_a = { "mode" },
-        lualine_b = {
-          {
-            "branch",
-            icon = " ",
-          },
-          {
-            "filetype",
-            colored = true,
-            icon_only = true,
-          },
-          {
-            "filename",
-            file_status = true,
-            newfile_status = true,
-            symbols = {
-              modified = "●",
-              readonly = "",
-              unnamed = "[New]",
-              newfile = "",
-            },
-          },
-        },
-        lualine_c = {
-          {
-            "diff",
-            symbols = { added = " ", modified = " ", removed = " " },
-          },
-        },
-        lualine_x = { "diagnostics" },
-        lualine_y = {
-          "encoding",
-          {
-            "fileformat",
-            symbols = {
-              unix = "󰌽",
-              dos = "󰍲",
-              mac = "󰀵",
-            },
-            padding = { left = 1, right = 2 }, -- extra padding to the right
-          },
-        },
-        lualine_z = {
-          "progress",
-          {
-            "location",
-            fmt = function()
-              local line = vim.fn.line(".")
-              local col = vim.fn.virtcol(".")
-              local total_line = vim.fn.line("$")
-              return string.format(":%d/%d :%d", line, total_line, col)
-            end,
-          },
-        },
-      },
-      winbar = {
-        lualine_c = {
-          {
-            "navic",
-            color_correction = nil,
-            navic_opts = nil,
-          },
-        },
-      },
-      extensions = { "neo-tree", "lazy", "trouble" },
-    },
-  },
-
   -- indent guides: indent-blankline
   {
     "lukas-reineke/indent-blankline.nvim",
@@ -407,12 +325,19 @@ return {
     event = { "BufReadPre", "BufNewFile" },
     opts = {
       signs = {
-        add = { text = "▎" },
-        change = { text = "▎" },
+        add = { text = "▐" },
+        change = { text = "▐" },
         delete = { text = "" },
         topdelete = { text = "" },
-        changedelete = { text = "▎" },
-        untracked = { text = "▎" },
+        changedelete = { text = "▐" },
+        untracked = { text = "▐" },
+      },
+      signs_staged = {
+        add = { text = "▐" },
+        change = { text = "▐" },
+        delete = { text = "" },
+        topdelete = { text = "" },
+        changedelete = { text = "▐" },
       },
     },
   },
@@ -726,6 +651,144 @@ return {
       -- always show winbar
       vim.opt.winbar = " "
       require("nvim-navic").setup(opts)
+    end,
+  },
+
+  -- toggleterm, A neovim lua plugin to help easily manage multiple terminal windows.
+  {
+    "akinsho/toggleterm.nvim",
+    version = "*",
+    keys = {
+      {
+        "<leader>tt", -- tt, toggle terminal
+        "<cmd>lua Toggleterm_term()<CR>",
+        desc = "Toggle terminal",
+      },
+      {
+        "<leader>tg", -- tg, toggle terminal launching lazygit
+        "<cmd>lua Toggleterm_lazygit()<CR>",
+        desc = "Toggle git",
+      },
+    },
+    opts = {
+      shade_terminals = false,
+      start_in_insert = true,
+      float_opts = {
+        border = "curved",
+        title_pos = "center",
+      },
+    },
+    config = function(_, opts)
+      require("toggleterm").setup(opts)
+      local Terminal = require("toggleterm.terminal").Terminal
+
+      local lazygit = Terminal:new({
+        cmd = "lazygit",
+        dir = "git_dir",
+        hidden = true,
+        direction = "float",
+      })
+      function Toggleterm_lazygit()
+        lazygit:toggle()
+      end
+
+      local term = Terminal:new({
+        dir = "git_dir",
+        hidden = true,
+        direction = "float",
+      })
+      function Toggleterm_term()
+        term:toggle()
+      end
+    end,
+  },
+
+  -- Status column plugin that provides a configurable 'statuscolumn' and click handlers.
+  -- align linenumber and relativelinenumber
+  {
+    "luukvbaal/statuscol.nvim",
+    lazy = false,
+    config = function()
+      local builtin = require("statuscol.builtin")
+      require("statuscol").setup({
+        relculright = true,
+        ft_ignore = {
+          "help",
+          "dashboard",
+          "snacks_dashboard",
+          "neo-tree",
+          "Trouble",
+          "lazy",
+          "notify",
+        },
+        segments = {
+          -- sign
+          { text = { "%s" }, click = "v:lua.ScSa" },
+          -- line number
+          {
+            text = { builtin.lnumfunc, " " },
+            condition = { true, builtin.not_empty },
+            click = "v:lua.ScLa",
+          },
+          -- fold
+          { text = { builtin.foldfunc, " " }, click = "v:lua.ScFa" },
+        },
+      })
+    end,
+  },
+
+  -- expand/collapse (fold)
+  {
+    "kevinhwang91/nvim-ufo",
+    dependencies = {
+      "kevinhwang91/promise-async",
+    },
+    config = function()
+      -- https://github.com/kevinhwang91/nvim-ufo#customize-fold-text
+      local fold_virt_text_handler = function(virtText, lnum, endLnum, width, truncate)
+        local newVirtText = {}
+        local suffix = (" 󰁂 %d "):format(endLnum - lnum)
+        local sufWidth = vim.fn.strdisplaywidth(suffix)
+        local targetWidth = width - sufWidth
+        local curWidth = 0
+        for _, chunk in ipairs(virtText) do
+          local chunkText = chunk[1]
+          local chunkWidth = vim.fn.strdisplaywidth(chunkText)
+          if targetWidth > curWidth + chunkWidth then
+            table.insert(newVirtText, chunk)
+          else
+            chunkText = truncate(chunkText, targetWidth - curWidth)
+            local hlGroup = chunk[2]
+            table.insert(newVirtText, { chunkText, hlGroup })
+            chunkWidth = vim.fn.strdisplaywidth(chunkText)
+            -- str width returned from truncate() may less than 2nd argument, need padding
+            if curWidth + chunkWidth < targetWidth then
+              suffix = suffix .. (" "):rep(targetWidth - curWidth - chunkWidth)
+            end
+            break
+          end
+          curWidth = curWidth + chunkWidth
+        end
+        table.insert(newVirtText, { suffix, "MoreMsg" })
+        return newVirtText
+      end
+
+      local ignored_filetypes = {
+        lazy = true,
+        snacks_dashboard = true,
+      }
+      local provider_selector = function(_, filetype, _)
+        if ignored_filetypes[filetype] then
+          return ""
+        end
+
+        return { "treesitter", "indent" }
+      end
+
+      require("ufo").setup({
+        provider_selector = provider_selector,
+        fold_virt_text_handler = fold_virt_text_handler,
+      })
     end,
   },
 }

@@ -92,7 +92,11 @@ return {
       },
 
       cmdline = {
-        sources = {},
+        keymap = {
+          -- recommended, as the default keymap will only show and select the next item
+          ["<Tab>"] = { "show", "accept" },
+        },
+        completion = { menu = { auto_show = true } },
       },
 
       -- Default list of enabled providers defined so that you can extend it
@@ -144,6 +148,18 @@ return {
         config.capabilities = require("blink.cmp").get_lsp_capabilities(config.capabilities)
         lspconfig[server].setup(config)
       end
+
+      -- diagnostics signs
+      vim.diagnostic.config({
+        signs = {
+          text = {
+            [vim.diagnostic.severity.ERROR] = " ", -- nf-cod-error
+            [vim.diagnostic.severity.WARN] = " ", -- nf-cod-warning
+            [vim.diagnostic.severity.INFO] = " ", -- nf-cod-info
+            [vim.diagnostic.severity.HINT] = " ", -- nf-fa-lightbulb
+          },
+        },
+      })
     end,
   },
 

@@ -59,4 +59,9 @@ return {
     "OXY2DEV/helpview.nvim",
     lazy = false,
   },
+
+  -- rainbow parentheses: rainbow-delimiters
+  {
+    "HiPhish/rainbow-delimiters.nvim",
+  },
 }

@@ -24,6 +24,7 @@ return {
         indent_blankline = { enabled = true },
         which_key = true,
         neotree = true,
+        rainbow_delimiters = true,
       },
     },
     config = function(_, opts)

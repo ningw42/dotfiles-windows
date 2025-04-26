@@ -75,6 +75,18 @@ opt.listchars = { -- define how invisible characters are shown
   precedes = "‹",
   nbsp = "␣",
 }
+opt.fillchars = {
+  foldopen = "",
+  foldclose = "",
+  fold = " ",
+  foldsep = " ",
+  diff = "╱",
+  eob = " ",
+}
+opt.foldcolumn = "1" -- '0' is not bad
+opt.foldlevel = 99 -- Using ufo provider need a large value, feel free to decrease the value
+opt.foldlevelstart = 99
+opt.foldenable = true
 
 -- use OSC 52 to copy from neovim, but not paste into neovim.
 -- see https://neovim.io/doc/user/provider.html#clipboard-osc52
