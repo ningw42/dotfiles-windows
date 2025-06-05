@@ -776,6 +776,8 @@ return {
       local ignored_filetypes = {
         lazy = true,
         snacks_dashboard = true,
+        ["neo-tree"] = true,
+        trouble = true,
       }
       local provider_selector = function(_, filetype, _)
         if ignored_filetypes[filetype] then
