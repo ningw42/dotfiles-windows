@@ -38,7 +38,7 @@ return {
         "akinsho/bufferline.nvim",
         optional = true,
         opts = function(_, opts)
-          opts.highlights = require("catppuccin.groups.integrations.bufferline").get()
+          opts.highlights = require("catppuccin.special.bufferline").get_theme()
         end,
       },
       {
