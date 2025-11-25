@@ -258,6 +258,31 @@ config.font = font_fallback_list
 config.font_size = 10.0
 config.line_height = 1.0
 
+-- Key Binding
+config.keys = {
+  -- Ctrl+Shift+T = New tab
+  {
+    key = 't',
+    mods = 'CTRL|SHIFT',
+    action = wezterm.action.SpawnTab 'CurrentPaneDomain',
+  },
+  -- Ctrl+Shift+W = Close tab
+  -- Ctrl+Shift+X = Activate copy mode
+  -- Ctrl+Shift+Space = Activate quick select mode
+  -- Ctrl+Shift+[ = Navigate to the left tab
+  {
+    key = '{',
+    mods = 'CTRL|SHIFT',
+    action = wezterm.action.ActivateTabRelative(-1),
+  },
+  -- Ctrl+Shift+] = Navigate to the right tab
+  {
+    key = '}',
+    mods = 'CTRL|SHIFT',
+    action = wezterm.action.ActivateTabRelative(1),
+  },
+}
+
 -- WezTerm reads ssh configuration
 config.ssh_backend = 'Ssh2'
 
