@@ -33,6 +33,14 @@ vim.g.colorscheme_background = "dark"
 vim.g.colorscheme = "gruvbox"
 vim.g.colorscheme_flavor = "medium"
 vim.g.colorscheme_background = "dark"
+{{ else if eq .colorscheme "rose-pine" }}
+vim.g.colorscheme = "rose-pine"
+vim.g.colorscheme_flavor = "main"
+vim.g.colorscheme_background = "dark"
+{{ else if eq .colorscheme "rose-pine-moon" }}
+vim.g.colorscheme = "rose-pine"
+vim.g.colorscheme_flavor = "moon"
+vim.g.colorscheme_background = "dark"
 {{ end }}
 
 -- Setup lazy.nvim

@@ -114,4 +114,32 @@ return {
       },
     },
   },
+
+  -- rose-pine
+  {
+    "rose-pine/neovim",
+    enabled = vim.g.colorscheme == "rose-pine",
+    name = "rose-pine",
+    config = function()
+      vim.cmd("colorscheme " .. "rose-pine-" .. vim.g.colorscheme_flavor)
+    end,
+    specs = {
+      {
+        "akinsho/bufferline.nvim",
+        optional = true,
+        opts = function(_, opts)
+          opts.highlights = require("rose-pine.plugins.bufferline")
+        end,
+      },
+      {
+        "nvim-lualine/lualine.nvim",
+        optional = true,
+        opts = {
+          options = {
+            theme = "rose-pine",
+          },
+        },
+      },
+    },
+  }
 }
