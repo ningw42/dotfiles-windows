@@ -51,6 +51,10 @@ return {
       preview = {
         icon_provider = "mini",
       },
+      experimental = {
+        -- see https://github.com/OXY2DEV/markview.nvim/issues/365
+        check_rtp_message = false,
+      },
     },
   },
 
@@ -63,5 +67,15 @@ return {
   -- rainbow parentheses: rainbow-delimiters
   {
     "HiPhish/rainbow-delimiters.nvim",
+  },
+
+  -- sops in neovim: nvim-sops
+  {
+    "lucidph3nx/nvim-sops",
+    event = { "BufEnter" },
+    keys = {
+      { "<leader>ef", vim.cmd.SopsEncrypt, desc = "[E]ncrypt [F]ile" },
+      { "<leader>df", vim.cmd.SopsDecrypt, desc = "[D]ecrypt [F]ile" },
+    },
   },
 }

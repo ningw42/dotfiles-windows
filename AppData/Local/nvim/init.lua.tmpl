@@ -21,9 +21,21 @@ vim.opt.rtp:prepend(lazypath)
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
-{{ if eq .colorscheme "catppuccin-frappe" }}
+{{ if eq .colorscheme "catppuccin-latte" }}
+vim.g.colorscheme = "catppuccin"
+vim.g.colorscheme_flavor = "latte"
+vim.g.colorscheme_background = "light"
+{{ else if eq .colorscheme "catppuccin-frappe" }}
 vim.g.colorscheme = "catppuccin"
 vim.g.colorscheme_flavor = "frappe"
+vim.g.colorscheme_background = "dark"
+{{ else if eq .colorscheme "catppuccin-macchiato" }}
+vim.g.colorscheme = "catppuccin"
+vim.g.colorscheme_flavor = "macchiato"
+vim.g.colorscheme_background = "dark"
+{{ else if eq .colorscheme "catppuccin-mocha" }}
+vim.g.colorscheme = "catppuccin"
+vim.g.colorscheme_flavor = "mocha"
 vim.g.colorscheme_background = "dark"
 {{ else if eq .colorscheme "everforest-dark" }}
 vim.g.colorscheme = "everforest"

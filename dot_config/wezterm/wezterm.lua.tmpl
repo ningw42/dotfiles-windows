@@ -43,7 +43,55 @@ config.initial_rows = 40
 config.default_prog = { 'pwsh.exe' }
 
 -- Color Scheme
-{{ if eq .colorscheme "catppuccin-frappe" }}
+{{ if eq .colorscheme "catppuccin-latte" }}
+config.color_scheme = 'Catppuccin Latte'
+local window_frame_colors = {
+  -- The overall background color of the tab bar when
+  -- the window is focused
+  active_titlebar_bg = '#dce0e8', -- Crust
+  -- The overall background color of the tab bar when
+  -- the window is not focused
+  inactive_titlebar_bg = '#dce0e8', -- Crust
+}
+local tab_bar_colors = {
+  tab_bar = {
+    -- The color of the inactive tab bar edge/divider
+    inactive_tab_edge = '#9ca0b0', -- Overlay 0
+    -- The active tab is the one that has focus in the window
+    active_tab = {
+      -- The color of the background area for the tab
+      bg_color = '#eff1f5', -- Base
+      -- The color of the text for the tab
+      fg_color = '#4c4f69', -- Text
+    },
+
+    -- Inactive tabs are the tabs that do not have focus
+    inactive_tab = {
+      bg_color = '#dce0e8', -- Crust
+      fg_color = '#8c8fa1', -- Overlay 1
+    },
+    -- You can configure some alternate styling when the mouse pointer
+    -- moves over inactive tabs
+    inactive_tab_hover = {
+      bg_color = '#eff1f5', -- Base
+      fg_color = '#4c4f69', -- Text
+    },
+
+    -- The new tab button that let you create new tabs
+    new_tab = {
+      bg_color = '#dce0e8', -- Crust
+      fg_color = '#8c8fa1', -- Overlay 1
+    },
+
+    -- You can configure some alternate styling when the mouse pointer
+    -- moves over the new tab button
+    new_tab_hover = {
+      bg_color = '#eff1f5', -- Base
+      fg_color = '#4c4f69', -- Text
+    },
+  },
+}
+{{ else if eq .colorscheme "catppuccin-frappe" }}
 config.color_scheme = 'Catppuccin Frappe'
 local window_frame_colors = {
   -- The overall background color of the tab bar when
@@ -54,39 +102,137 @@ local window_frame_colors = {
   inactive_titlebar_bg = '#232634', -- Crust
 }
 local tab_bar_colors = {
-  -- The color of the inactive tab bar edge/divider
-  inactive_tab_edge = '#737994', -- Overlay 0
-  -- The active tab is the one that has focus in the window
-  active_tab = {
-    -- The color of the background area for the tab
-    bg_color = '#303446', -- Base
-    -- The color of the text for the tab
-    fg_color = '#c6d0f5', -- Text
-  },
+  tab_bar = {
+    -- The color of the inactive tab bar edge/divider
+    inactive_tab_edge = '#737994', -- Overlay 0
+    -- The active tab is the one that has focus in the window
+    active_tab = {
+      -- The color of the background area for the tab
+      bg_color = '#303446', -- Base
+      -- The color of the text for the tab
+      fg_color = '#c6d0f5', -- Text
+    },
 
-  -- Inactive tabs are the tabs that do not have focus
-  inactive_tab = {
-    bg_color = '#232634', -- Crust
-    fg_color = '#838ba7', -- Overlay 1
-  },
-  -- You can configure some alternate styling when the mouse pointer
-  -- moves over inactive tabs
-  inactive_tab_hover = {
-    bg_color = '#303446', -- Base
-    fg_color = '#c6d0f5', -- Text
-  },
+    -- Inactive tabs are the tabs that do not have focus
+    inactive_tab = {
+      bg_color = '#232634', -- Crust
+      fg_color = '#838ba7', -- Overlay 1
+    },
+    -- You can configure some alternate styling when the mouse pointer
+    -- moves over inactive tabs
+    inactive_tab_hover = {
+      bg_color = '#303446', -- Base
+      fg_color = '#c6d0f5', -- Text
+    },
 
-  -- The new tab button that let you create new tabs
-  new_tab = {
-    bg_color = '#232634', -- Crust
-    fg_color = '#838ba7', -- Overlay 1
-  },
+    -- The new tab button that let you create new tabs
+    new_tab = {
+      bg_color = '#232634', -- Crust
+      fg_color = '#838ba7', -- Overlay 1
+    },
 
-  -- You can configure some alternate styling when the mouse pointer
-  -- moves over the new tab button
-  new_tab_hover = {
-    bg_color = '#303446', -- Base
-    fg_color = '#c6d0f5', -- Text
+    -- You can configure some alternate styling when the mouse pointer
+    -- moves over the new tab button
+    new_tab_hover = {
+      bg_color = '#303446', -- Base
+      fg_color = '#c6d0f5', -- Text
+    },
+  },
+}
+{{ else if eq .colorscheme "catppuccin-macchiato" }}
+config.color_scheme = 'Catppuccin Macchiato'
+local window_frame_colors = {
+  -- The overall background color of the tab bar when
+  -- the window is focused
+  active_titlebar_bg = '#181926', -- Crust
+  -- The overall background color of the tab bar when
+  -- the window is not focused
+  inactive_titlebar_bg = '#181926', -- Crust
+}
+local tab_bar_colors = {
+  tab_bar = {
+    -- The color of the inactive tab bar edge/divider
+    inactive_tab_edge = '#6e738d', -- Overlay 0
+    -- The active tab is the one that has focus in the window
+    active_tab = {
+      -- The color of the background area for the tab
+      bg_color = '#24273a', -- Base
+      -- The color of the text for the tab
+      fg_color = '#cad3f5', -- Text
+    },
+
+    -- Inactive tabs are the tabs that do not have focus
+    inactive_tab = {
+      bg_color = '#181926', -- Crust
+      fg_color = '#8087a2', -- Overlay 1
+    },
+    -- You can configure some alternate styling when the mouse pointer
+    -- moves over inactive tabs
+    inactive_tab_hover = {
+      bg_color = '#24273a', -- Base
+      fg_color = '#cad3f5', -- Text
+    },
+
+    -- The new tab button that let you create new tabs
+    new_tab = {
+      bg_color = '#181926', -- Crust
+      fg_color = '#8087a2', -- Overlay 1
+    },
+
+    -- You can configure some alternate styling when the mouse pointer
+    -- moves over the new tab button
+    new_tab_hover = {
+      bg_color = '#24273a', -- Base
+      fg_color = '#cad3f5', -- Text
+    },
+  },
+}
+{{ else if eq .colorscheme "catppuccin-mocha" }}
+config.color_scheme = 'Catppuccin Mocha'
+local window_frame_colors = {
+  -- The overall background color of the tab bar when
+  -- the window is focused
+  active_titlebar_bg = '#11111b', -- Crust
+  -- The overall background color of the tab bar when
+  -- the window is not focused
+  inactive_titlebar_bg = '#11111b', -- Crust
+}
+local tab_bar_colors = {
+  tab_bar = {
+    -- The color of the inactive tab bar edge/divider
+    inactive_tab_edge = '#737994', -- Overlay 0
+    -- The active tab is the one that has focus in the window
+    active_tab = {
+      -- The color of the background area for the tab
+      bg_color = '#1e1e2e', -- Base
+      -- The color of the text for the tab
+      fg_color = '#cdd6f4', -- Text
+    },
+
+    -- Inactive tabs are the tabs that do not have focus
+    inactive_tab = {
+      bg_color = '#11111b', -- Crust
+      fg_color = '#7f849c', -- Overlay 1
+    },
+    -- You can configure some alternate styling when the mouse pointer
+    -- moves over inactive tabs
+    inactive_tab_hover = {
+      bg_color = '#1e1e2e', -- Base
+      fg_color = '#cdd6f4', -- Text
+    },
+
+    -- The new tab button that let you create new tabs
+    new_tab = {
+      bg_color = '#11111b', -- Crust
+      fg_color = '#7f849c', -- Overlay 1
+    },
+
+    -- You can configure some alternate styling when the mouse pointer
+    -- moves over the new tab button
+    new_tab_hover = {
+      bg_color = '#1e1e2e', -- Base
+      fg_color = '#cdd6f4', -- Text
+    },
   },
 }
 {{ else if eq .colorscheme "everforest-dark" }}
@@ -100,39 +246,41 @@ local window_frame_colors = {
   inactive_titlebar_bg = '#232a2e', -- bg_dim
 }
 local tab_bar_colors = {
-  -- The color of the inactive tab bar edge/divider
-  inactive_tab_edge = '#4f585e', -- bg4
-  -- The active tab is the one that has focus in the window
-  active_tab = {
-    -- The color of the background area for the tab
-    bg_color = '#2d353b', -- bg0
-    -- The color of the text for the tab
-    fg_color = '#d3c6aa', -- fg
-  },
+  tab_bar = {
+    -- The color of the inactive tab bar edge/divider
+    inactive_tab_edge = '#4f585e', -- bg4
+    -- The active tab is the one that has focus in the window
+    active_tab = {
+      -- The color of the background area for the tab
+      bg_color = '#2d353b', -- bg0
+      -- The color of the text for the tab
+      fg_color = '#d3c6aa', -- fg
+    },
 
-  -- Inactive tabs are the tabs that do not have focus
-  inactive_tab = {
-    bg_color = '#232a2e', -- bg_dim
-    fg_color = '#56635f', -- bg5
-  },
-  -- You can configure some alternate styling when the mouse pointer
-  -- moves over inactive tabs
-  inactive_tab_hover = {
-    bg_color = '#2d353b', -- bg0
-    fg_color = '#d3c6aa', -- fg
-  },
+    -- Inactive tabs are the tabs that do not have focus
+    inactive_tab = {
+      bg_color = '#232a2e', -- bg_dim
+      fg_color = '#56635f', -- bg5
+    },
+    -- You can configure some alternate styling when the mouse pointer
+    -- moves over inactive tabs
+    inactive_tab_hover = {
+      bg_color = '#2d353b', -- bg0
+      fg_color = '#d3c6aa', -- fg
+    },
 
-  -- The new tab button that let you create new tabs
-  new_tab = {
-    bg_color = '#232a2e', -- bg_dim
-    fg_color = '#56635f', -- bg5
-  },
+    -- The new tab button that let you create new tabs
+    new_tab = {
+      bg_color = '#232a2e', -- bg_dim
+      fg_color = '#56635f', -- bg5
+    },
 
-  -- You can configure some alternate styling when the mouse pointer
-  -- moves over the new tab button
-  new_tab_hover = {
-    bg_color = '#2d353b', -- bg0
-    fg_color = '#d3c6aa', -- fg
+    -- You can configure some alternate styling when the mouse pointer
+    -- moves over the new tab button
+    new_tab_hover = {
+      bg_color = '#2d353b', -- bg0
+      fg_color = '#d3c6aa', -- fg
+    },
   },
 }
 {{ else if eq .colorscheme "gruvbox-dark" }}
@@ -146,39 +294,41 @@ local window_frame_colors = {
   inactive_titlebar_bg = '#1d2021', -- bg0_h
 }
 local tab_bar_colors = {
-  -- The color of the inactive tab bar edge/divider
-  inactive_tab_edge = '#a89984', -- fg4
-  -- The active tab is the one that has focus in the window
-  active_tab = {
-    -- The color of the background area for the tab
-    bg_color = '#282828', -- bg0
-    -- The color of the text for the tab
-    fg_color = '#fbf1c7', -- fg0
-  },
+  tab_bar = {
+    -- The color of the inactive tab bar edge/divider
+    inactive_tab_edge = '#a89984', -- fg4
+    -- The active tab is the one that has focus in the window
+    active_tab = {
+      -- The color of the background area for the tab
+      bg_color = '#282828', -- bg0
+      -- The color of the text for the tab
+      fg_color = '#fbf1c7', -- fg0
+    },
 
-  -- Inactive tabs are the tabs that do not have focus
-  inactive_tab = {
-    bg_color = '#1d2021', -- bg0_h
-    fg_color = '#bdae93', -- fg3
-  },
-  -- You can configure some alternate styling when the mouse pointer
-  -- moves over inactive tabs
-  inactive_tab_hover = {
-    bg_color = '#282828', -- bg0
-    fg_color = '#fbf1c7', -- fg0
-  },
+    -- Inactive tabs are the tabs that do not have focus
+    inactive_tab = {
+      bg_color = '#1d2021', -- bg0_h
+      fg_color = '#bdae93', -- fg3
+    },
+    -- You can configure some alternate styling when the mouse pointer
+    -- moves over inactive tabs
+    inactive_tab_hover = {
+      bg_color = '#282828', -- bg0
+      fg_color = '#fbf1c7', -- fg0
+    },
 
-  -- The new tab button that let you create new tabs
-  new_tab = {
-    bg_color = '#1d2021', -- bg0_h
-    fg_color = '#bdae93', -- fg3
-  },
+    -- The new tab button that let you create new tabs
+    new_tab = {
+      bg_color = '#1d2021', -- bg0_h
+      fg_color = '#bdae93', -- fg3
+    },
 
-  -- You can configure some alternate styling when the mouse pointer
-  -- moves over the new tab button
-  new_tab_hover = {
-    bg_color = '#282828', -- bg0
-    fg_color = '#fbf1c7', -- fg0
+    -- You can configure some alternate styling when the mouse pointer
+    -- moves over the new tab button
+    new_tab_hover = {
+      bg_color = '#282828', -- bg0
+      fg_color = '#fbf1c7', -- fg0
+    },
   },
 }
 {{ else if eq .colorscheme "rose-pine" }}

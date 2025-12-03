@@ -121,6 +121,14 @@ return {
     enabled = vim.g.colorscheme == "rose-pine",
     name = "rose-pine",
     config = function()
+      require("rose-pine").setup({
+        -- these are the missing highligh groups (compared to catppuccin) that heirline required
+        highlight_groups = {
+          diffRemoved = { fg = "love", bg = "love", blend = 20 },
+          diffAdded = { fg = "foam", bg = "foam", blend = 20 },
+          diffChanged = { fg = "rose", bg = "rose", blend = 20 },
+        },
+      })
       vim.cmd("colorscheme " .. "rose-pine-" .. vim.g.colorscheme_flavor)
     end,
     specs = {
@@ -141,5 +149,5 @@ return {
         },
       },
     },
-  }
+  },
 }

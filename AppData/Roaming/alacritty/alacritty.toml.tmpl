@@ -1,9 +1,5 @@
 [general]
-{{ if eq .colorscheme "gruvbox-dark" }}
-import = [ "themes/gruvbox-dark.toml" ]
-{{ else if eq .colorscheme "catppuccin-frappe" }}
-import = [ "themes/catppuccin-frappe.toml" ]
-{{ end }}
+import = [ "themes/{{.colorscheme}}.toml" ]
 
 [window]
 dimensions = { columns = 160, lines = 40 }

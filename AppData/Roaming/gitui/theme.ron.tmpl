@@ -24,6 +24,31 @@
   line_break: Some(""),                   // disable the default line break symbol
   // block_title_focused
 )
+{{ else if eq .colorscheme "catppuccin-latte" }}
+(
+  selected_tab: Some("Reset"),
+  command_fg: Some("#4c4f69"),
+  selection_bg: Some("#acb0be"),
+  selection_fg: Some("#4c4f69"),
+  cmdbar_bg: Some("#e6e9ef"),
+  cmdbar_extra_lines_bg: Some("#e6e9ef"),
+  disabled_fg: Some("#8c8fa1"),
+  diff_line_add: Some("#40a02b"),
+  diff_line_delete: Some("#d20f39"),
+  diff_file_added: Some("#40a02b"),
+  diff_file_removed: Some("#e64553"),
+  diff_file_moved: Some("#8839ef"),
+  diff_file_modified: Some("#fe640b"),
+  commit_hash: Some("#7287fd"),
+  commit_time: Some("#5c5f77"),
+  commit_author: Some("#209fb5"),
+  danger_fg: Some("#d20f39"),
+  push_gauge_bg: Some("#1e66f5"),
+  push_gauge_fg: Some("#eff1f5"),
+  tag_fg: Some("#dc8a78"),
+  branch_fg: Some("#179299")
+  line_break: Some(""),                   // disable the default line break symbol
+)
 {{ else if eq .colorscheme "catppuccin-frappe" }}
 (
   selected_tab: Some("Reset"),
@@ -47,6 +72,56 @@
   push_gauge_fg: Some("#303446"),
   tag_fg: Some("#f2d5cf"),
   branch_fg: Some("#81c8be"),
+  line_break: Some(""),                   // disable the default line break symbol
+)
+{{ else if eq .colorscheme "catppuccin-macchiato" }}
+(
+  selected_tab: Some("Reset"),
+  command_fg: Some("#cad3f5"),
+  selection_bg: Some("#5b6078"),
+  selection_fg: Some("#cad3f5"),
+  cmdbar_bg: Some("#1e2030"),
+  cmdbar_extra_lines_bg: Some("#1e2030"),
+  disabled_fg: Some("#8087a2"),
+  diff_line_add: Some("#a6da95"),
+  diff_line_delete: Some("#ed8796"),
+  diff_file_added: Some("#a6da95"),
+  diff_file_removed: Some("#ee99a0"),
+  diff_file_moved: Some("#c6a0f6"),
+  diff_file_modified: Some("#f5a97f"),
+  commit_hash: Some("#b7bdf8"),
+  commit_time: Some("#b8c0e0"),
+  commit_author: Some("#7dc4e4"),
+  danger_fg: Some("#ed8796"),
+  push_gauge_bg: Some("#8aadf4"),
+  push_gauge_fg: Some("#24273a"),
+  tag_fg: Some("#f4dbd6"),
+  branch_fg: Some("#8bd5ca")
+  line_break: Some(""),                   // disable the default line break symbol
+)
+{{ else if eq .colorscheme "catppuccin-mocha" }}
+(
+  selected_tab: Some("Reset"),
+  command_fg: Some("#cdd6f4"),
+  selection_bg: Some("#585b70"),
+  selection_fg: Some("#cdd6f4"),
+  cmdbar_bg: Some("#181825"),
+  cmdbar_extra_lines_bg: Some("#181825"),
+  disabled_fg: Some("#7f849c"),
+  diff_line_add: Some("#a6e3a1"),
+  diff_line_delete: Some("#f38ba8"),
+  diff_file_added: Some("#a6e3a1"),
+  diff_file_removed: Some("#eba0ac"),
+  diff_file_moved: Some("#cba6f7"),
+  diff_file_modified: Some("#fab387"),
+  commit_hash: Some("#b4befe"),
+  commit_time: Some("#bac2de"),
+  commit_author: Some("#74c7ec"),
+  danger_fg: Some("#f38ba8"),
+  push_gauge_bg: Some("#89b4fa"),
+  push_gauge_fg: Some("#1e1e2e"),
+  tag_fg: Some("#f5e0dc"),
+  branch_fg: Some("#94e2d5")
   line_break: Some(""),                   // disable the default line break symbol
 )
 {{ end }}
