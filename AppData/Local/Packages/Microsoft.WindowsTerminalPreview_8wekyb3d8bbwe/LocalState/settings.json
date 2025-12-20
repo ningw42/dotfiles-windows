@@ -23,11 +23,11 @@
         },
         {
             "id": "Terminal.PrevTab",
-            "keys": "ctrl+shift+h"
+            "keys": "ctrl+shift+["
         },
         {
             "id": "Terminal.NextTab",
-            "keys": "ctrl+shift+l"
+            "keys": "ctrl+shift+]"
         },
         {
             "id": "Terminal.CopyToClipboard",
