@@ -36,6 +36,10 @@
         {
             "id": "Terminal.PasteFromClipboard",
             "keys": "ctrl+shift+v"
+        },
+        {
+            "id": "Terminal.ToggleMarkMode",
+            "keys": "ctrl+shift+space"
         }
     ],
     "newTabMenu": 
@@ -44,21 +48,21 @@
             "type": "remainingProfiles"
         }
     ],
-    "profiles": 
+    "profiles":
     {
-        "defaults": 
+        "defaults":
         {
             "antialiasingMode": "cleartype",
             "colorScheme": "Catppuccin Mocha",
             "cursorShape": "filledBox",
-            "font": 
+            "font":
             {
-                "builtinGlyphs": false,
-                "cellHeight": "1.1",
+                "builtinGlyphs": true,
                 "colorGlyphs": true,
                 "face": "'PragmataPro', 'Sarasa Fixed SC'",
-                "size": 10
+                "size": 11
             },
+            "padding": "4",
             "scrollbarState": "hidden"
         },
         "list": 
@@ -101,7 +105,7 @@
             }
         ]
     },
-    "rendering.graphicsAPI": "direct3d11",
+    "rendering.graphicsAPI": "direct2d",
     "schemes": 
     [
         {
