@@ -10,6 +10,8 @@ $Env:EZA_ICON_SPACING = 2
 # bat config directory
 $Env:BAT_CONFIG_DIR = "C:\Users\ningw\.config\bat"
 
+# lazygit config
+$Env:LG_CONFIG_FILE = "C:\Users\ningw\AppData\Local\lazygit\config.yml,C:\Users\ningw\AppData\Local\lazygit\color.yml";
 #endregion Environment Variables
 
 
@@ -52,6 +54,11 @@ Function ll
 Function lt
 {
   eza --header --icons --long --octal-permissions --binary --group --time-style='+%F %T' --color-scale=age --no-quotes --group-directories-first --all --tree $args
+}
+
+Function lg
+{
+  lazygit
 }
 
 #endregion Functions

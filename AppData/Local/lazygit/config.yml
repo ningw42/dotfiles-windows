@@ -1,0 +1,35 @@
+# Config relating to the Lazygit UI
+gui:
+  language: en
+  # Nerd fonts version to use.
+  # One of: '2' | '3' | empty string (default)
+  # If empty, do not show icons.
+  nerdFontsVersion: "3"
+  # Config relating to the spinner.
+  spinner:
+    # The frames of the spinner animation.
+    frames: # dots14
+      - "⠉⠉"
+      - "⠈⠙"
+      - "⠀⠹"
+      - "⠀⢸"
+      - "⠀⣰"
+      - "⢀⣠"
+      - "⣀⣀"
+      - "⣄⡀"
+      - "⣆⠀"
+      - "⡇⠀"
+      - "⠏⠀"
+    # The "speed" of the spinner in milliseconds.
+    rate: 80
+# Config relating to git
+git:
+  # See https://github.com/jesseduffield/lazygit/blob/master/docs/Custom_Pagers.md
+  pagers:
+    - pager: "delta --dark --paging=never"
+# Config relating to things outside of Lazygit like how files are opened, copying to clipboard, etc
+os:
+  # Command for editing a file. Should contain "{{filename}}".
+  edit: "nvim {{filename}}"
+# If true, display a confirmation when subprocess terminates. This allows you to view the output of the subprocess before returning to Lazygit.
+promptToReturnFromSubprocess: false
