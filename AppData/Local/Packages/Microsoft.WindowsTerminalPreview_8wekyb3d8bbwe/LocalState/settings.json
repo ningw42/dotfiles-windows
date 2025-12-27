@@ -60,7 +60,7 @@
                 "builtinGlyphs": true,
                 "colorGlyphs": true,
                 "face": "'PragmataPro', 'Sarasa Fixed SC'",
-                "size": 11
+                "size": 12
             },
             "padding": "4",
             "scrollbarState": "hidden"
