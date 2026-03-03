@@ -1,3 +1,4 @@
+--- @since 25.5.31
 --- @diagnostic disable: undefined-global, undefined-field
 --- @alias Mode Mode Comes from Yazi.
 --- @alias Rect Rect Comes from Yazi.
@@ -62,10 +63,14 @@ local tab_width
 local selected_icon
 local copied_icon
 local cut_icon
+local files_icon
+local filtereds_icon
 
 local selected_fg
 local copied_fg
 local cut_fg
+local files_fg
+local filtereds_fg
 
 local task_total_icon
 local task_succ_icon
@@ -100,17 +105,39 @@ local function set_mode_style(mode)
 	end
 end
 
+--- Helper function to apply style table to a component
+--- @param component Span The component to style
+--- @param style table The style table with fg and/or bg fields
+local function apply_style_table(component, style)
+	if not style then
+		return component
+	end
+	-- Apply manually
+	if style.fg          then component:fg(style.fg)  end
+	if style.bg          then component:bg(style.bg)  end
+	if style.bold        then component:bold()        end
+	if style.dim         then component:dim()         end
+	if style.italic      then component:italic()      end
+	if style.underline   then component:underline()   end
+	if style.blink       then component:blink()       end
+	if style.blink_rapid then component:blink_rapid() end
+	if style.reverse     then component:reverse()     end
+	if style.hidden      then component:hidden()      end
+	if style.crossed     then component:crossed()     end
+	return component
+end
+
 --- Sets the style of the component according to the its type.
 --- @param component Span Component that will be styled.
 --- @param component_type ComponentType Which section component will be in [ a | b | c ].
 --- @see Style To see how to style, in Yazi's documentation.
 local function set_component_style(component, component_type)
 	if component_type == ComponentType.A then
-		component:style(style_a):bold()
+		apply_style_table(component, style_a):bold()
 	elseif component_type == ComponentType.B then
-		component:style(style_b)
+		apply_style_table(component, style_b)
 	else
-		component:style(style_c)
+		apply_style_table(component, style_c)
 	end
 end
 
@@ -142,8 +169,8 @@ local function connect_separator(component, side, separator_type)
 		close = ui.Span(part_separator_close)
 	end
 
-	open:style(separator_style)
-	close:style(separator_style)
+	apply_style_table(open, separator_style)
+	apply_style_table(close, separator_style)
 
 	if side == Side.LEFT then
 		return ui.Line({ component, close })
@@ -420,12 +447,20 @@ function Yatline.string.get:hovered_mime()
 end
 
 --- Gets the hovered file's user and group ownership of the current active tab.
+--- Unix-like systems only.
 --- @return string ownership Current active tab's hovered file's user and group ownership.
 function Yatline.string.get:hovered_ownership()
 	local hovered = cx.active.current.hovered
 
 	if hovered then
-		return ya.user_name(hovered.cha.uid) .. ":" .. ya.group_name(hovered.cha.gid)
+		if not hovered.cha.uid or not hovered.cha.gid then
+			return ""
+		end
+
+		local username = ya.user_name(hovered.cha.uid) or tostring(hovered.cha.uid)
+		local groupname = ya.group_name(hovered.cha.gid) or tostring(hovered.cha.gid)
+
+		return username .. ":" .. groupname
 	else
 		return ""
 	end
@@ -444,7 +479,7 @@ function Yatline.string.get:hovered_file_extension(show_icon)
 		if cha.is_dir then
 			name = "dir"
 		else
-			name = get_file_extension(hovered.url:name())
+			name = get_file_extension(hovered.url.name)
 		end
 
 		if show_icon then
@@ -470,7 +505,7 @@ function Yatline.string.get:tab_path(config)
 	local cwd = cx.active.current.cwd
 	local filter = cx.active.current.files.filter
 
-	local search = cwd.is_search and string.format(" (search: %s", cwd:frag()) or ""
+	local search = cwd.is_search and string.format(" (search: %s", cwd.frag) or ""
 
 	local suffix
 	if not filter then
@@ -589,7 +624,7 @@ function Yatline.line.get:tabs(side)
 	for i = 1, tabs do
 		local text = i
 		if tab_width > 2 then
-			text = ya.truncate(text .. " " .. cx.tabs[i]:name(), { max = tab_width })
+			text = ui.truncate(text .. " " .. cx.tabs[i].name, { max = tab_width })
 		end
 
 		separator_style = { bg = nil, fg = nil }
@@ -615,7 +650,7 @@ function Yatline.line.get:tabs(side)
 			if show_background then
 				set_component_style(span, ComponentType.C)
 			else
-				span:style({ fg = style_c.fg })
+        span:fg(style_c.fg)
 			end
 
 			if i == cx.tabs.idx - 1 then
@@ -647,8 +682,8 @@ function Yatline.line.get:tabs(side)
 					close = ui.Span(part_separator_close)
 				end
 
-				open:style(separator_style)
-				close:style(separator_style)
+				apply_style_table(open, separator_style)
+				apply_style_table(close, separator_style)
 
 				if in_side == Side.LEFT then
 					lines[#lines + 1] = ui.Line({ span, close })
@@ -709,6 +744,7 @@ function Yatline.coloreds.create(coloreds, component_type)
 end
 
 --- Gets the hovered file's permissions of the current active tab.
+--- Unix-like systems only.
 --- @return Coloreds coloreds Current active tab's hovered file's permissions
 function Yatline.coloreds.get:permissions()
 	local hovered = cx.active.current.hovered
@@ -748,11 +784,13 @@ function Yatline.coloreds.get:permissions()
 	end
 end
 
---- Gets the number of selected and yanked files of the active tab.
---- @return Coloreds coloreds Active tab's number of selected and yanked files.
-function Yatline.coloreds.get:count()
+--- Gets the number of selected and yanked files and also number of files or filtered files of the active tab.
+--- @param filter? boolean Whether or not number of files (or filtered files) will be shown.
+--- @return Coloreds coloreds Active tab's number of selected and yanked files and also number of files or filtered files
+function Yatline.coloreds.get:count(filter)
 	local num_yanked = #cx.yanked
 	local num_selected = #cx.active.selected
+	local num_files = #cx.active.current.files
 
 	local yanked_fg, yanked_icon
 	if cx.yanked.is_cut then
@@ -763,10 +801,28 @@ function Yatline.coloreds.get:count()
 		yanked_icon = copied_icon
 	end
 
-	local coloreds = {
-		{ string.format(" %s %d ", selected_icon, num_selected), selected_fg },
-		{ string.format(" %s %d ", yanked_icon, num_yanked), yanked_fg },
-	}
+	local files_count_fg, files_count_icon
+	if cx.active.current.files.filter or cx.active.current.cwd.is_search then
+		files_count_icon = filtereds_icon
+		files_count_fg = filtereds_fg
+	else
+		files_count_icon = files_icon
+		files_count_fg = files_fg
+	end
+
+	local coloreds
+	if filter then
+		coloreds = {
+			{ string.format(" %s %d ", files_count_icon, num_files), files_count_fg },
+			{ string.format(" %s %d ", selected_icon, num_selected), selected_fg },
+			{ string.format(" %s %d ", yanked_icon, num_yanked), yanked_fg },
+		}
+	else
+		coloreds = {
+			{ string.format(" %s %d ", selected_icon, num_selected), selected_fg },
+			{ string.format(" %s %d ", yanked_icon, num_yanked), yanked_fg },
+		}
+	end
 
 	return coloreds
 end
@@ -966,8 +1022,10 @@ local function config_side(side)
 
 			if component_group then
 				if component.custom then
-					section_components[#section_components + 1] =
-						{ component_group.create(component.name, in_section), component_group.has_separator }
+					if component.name ~= nil and component.name ~= "" and #component.name ~= 0 then
+						section_components[#section_components + 1] =
+							{ component_group.create(component.name, in_section), component_group.has_separator }
+					end
 				else
 					local getter = component_group.get[component.name]
 
@@ -1044,15 +1102,71 @@ end
 local function config_paragraph(area, line)
 	local line_array = { line } or {}
 	if show_background then
-		return ui.Text(line_array):area(area):style(style_c)
+    return apply_style_table(ui.Text(line_array):area(area), style_c)
 	else
 		return ui.Text(line_array):area(area)
 	end
 end
 
 return {
-	setup = function(_, config)
+	setup = function(_, config, pre_theme)
 		config = config or {}
+
+		if config == 0 then
+			config = {
+				show_background = false,
+
+				header_line = {
+					left = {
+						section_a = {
+							{ type = "line", custom = false, name = "tabs", params = { "left" } },
+						},
+						section_b = {},
+						section_c = {},
+					},
+					right = {
+						section_a = {
+							{ type = "string", custom = false, name = "date", params = { "%A, %d %B %Y" } },
+						},
+						section_b = {
+							{ type = "string", custom = false, name = "date", params = { "%X" } },
+						},
+						section_c = {},
+					},
+				},
+
+				status_line = {
+					left = {
+						section_a = {
+							{ type = "string", custom = false, name = "tab_mode" },
+						},
+						section_b = {
+							{ type = "string", custom = false, name = "hovered_size" },
+						},
+						section_c = {
+							{ type = "string", custom = false, name = "hovered_path" },
+							{ type = "coloreds", custom = false, name = "count" },
+						},
+					},
+					right = {
+						section_a = {
+							{ type = "string", custom = false, name = "cursor_position" },
+						},
+						section_b = {
+							{ type = "string", custom = false, name = "cursor_percentage" },
+						},
+						section_c = {
+							{ type = "string", custom = false, name = "hovered_file_extension", params = { true } },
+							{ type = "coloreds", custom = false, name = "permissions" },
+						},
+					},
+				},
+			}
+		end
+
+		if pre_theme then
+			config.theme = pre_theme
+		end
 
 		tab_width = config.tab_width or 20
 
@@ -1081,8 +1195,16 @@ return {
 				right = { section_a = {}, section_b = {}, section_c = {} },
 			}
 
+		config.theme = (not rt.term.light and config.theme_dark)
+			or (rt.term.light and config.theme_light)
+			or config.theme
+
 		if config.theme then
-			config = config.theme
+			for key, value in pairs(config.theme) do
+				if not config[key] then
+					config[key] = value
+				end
+			end
 		end
 
 		if config.section_separator then
@@ -1156,6 +1278,22 @@ return {
 			cut_fg = "red"
 		end
 
+		if config.files then
+			files_icon = config.files.icon
+			files_fg = config.files.fg
+		else
+			files_icon = ""
+			files_fg = "blue"
+		end
+
+		if config.filtereds then
+			filtereds_icon = config.filtereds.icon
+			filtereds_fg = config.filtereds.fg
+		else
+			filtereds_icon = ""
+			filtereds_fg = "magenta"
+		end
+
 		if config.total then
 			task_total_icon = config.total.icon
 			task_total_fg = config.total.fg
@@ -1196,17 +1334,19 @@ return {
 			task_processed_fg = "green"
 		end
 
+		config = nil
+
 		Progress.partial_render = function(self)
 			local progress = cx.tasks.progress
 			if progress.total == 0 then
-				return { config_paragraph(self._area) }
+				return config_paragraph(self._area)
 			end
 
 			local gauge = ui.Gauge():area(self._area)
 			if progress.fail == 0 then
-				gauge = gauge:gauge_style(THEME.status.progress_normal)
+				gauge = gauge:gauge_style(th.status.progress_normal)
 			else
-				gauge = gauge:gauge_style(THEME.status.progress_error)
+				gauge = gauge:gauge_style(th.status.progress_error)
 			end
 
 			local percent = 99
@@ -1215,11 +1355,12 @@ return {
 			end
 
 			local left = progress.total - progress.succ
-			return {
+      return apply_style_table(
 				gauge
 					:percent(percent)
-					:label(ui.Span(string.format("%3d%%, %d left", percent, left)):style(THEME.status.progress_label)),
-			}
+					:label(ui.Span(string.format("%3d%%, %d left", percent, left)),
+				th.status.progress_label)
+			)
 		end
 
 		if display_header_line then
@@ -1230,7 +1371,7 @@ return {
 
 					return {
 						config_paragraph(self._area, left_line),
-						ui.Text(right_line):area(self._area):align(ui.Text.RIGHT),
+						right_line:area(self._area):align(ui.Align.RIGHT),
 					}
 				end
 
@@ -1256,8 +1397,8 @@ return {
 
 					return {
 						config_paragraph(self._area, left_line),
-						ui.Text(right_line):area(self._area):align(ui.Text.RIGHT),
-						table.unpack(Progress:new(self._area, right_width):redraw()),
+						right_line:area(self._area):align(ui.Align.RIGHT),
+						table.unpack(ui.redraw(Progress:new(self._area, right_width))),
 					}
 				end
 
@@ -1305,6 +1446,8 @@ return {
 					i = i + 1
 				end
 			end
+
+			table.insert(childrens, Modal:new(self._area))
 
 			self._children = childrens
 		end

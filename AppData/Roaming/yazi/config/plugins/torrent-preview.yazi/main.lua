@@ -2,12 +2,10 @@ local M = {}
 
 function M:peek(job)
 	local child = Command("transmission-show")
-		:args({
-			tostring(job.file.url),
-		})
-		:stdout(Command.PIPED)
-		:stderr(Command.PIPED)
-		:spawn()
+			:arg(tostring(job.file.url))
+			:stdout(Command.PIPED)
+			:stderr(Command.PIPED)
+			:spawn()
 
 	if not child then
 		return require("code"):peek(job)
@@ -33,8 +31,8 @@ function M:peek(job)
 	if job.skip > 0 and i < job.skip + limit then
 		ya.manager_emit("peek", { math.max(0, i - limit), only_if = job.file.url, upper_bound = true })
 	else
-		lines = lines:gsub("\t", string.rep(" ", PREVIEW.tab_size))
-		ya.preview_widgets(job, { ui.Text.parse(lines):area(job.area) })
+		lines = lines:gsub("\t", string.rep(" ", rt.preview.tab_size))
+		ya.preview_widget(job, { ui.Text.parse(lines):area(job.area) })
 	end
 end
 
