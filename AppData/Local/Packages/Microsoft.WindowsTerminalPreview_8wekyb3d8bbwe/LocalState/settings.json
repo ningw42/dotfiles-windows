@@ -59,8 +59,9 @@
             {
                 "builtinGlyphs": true,
                 "colorGlyphs": true,
-                "face": "'PragmataPro', 'Sarasa Fixed SC'",
-                "size": 12
+                "face": "'Berkeley Mono Retina', 'Symbols Nerd Font', 'Sarasa Fixed SC'",
+                "weight": 375,
+                "size": 14
             },
             "padding": "4",
             "scrollbarState": "hidden"
