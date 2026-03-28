@@ -4,33 +4,30 @@
     [
       {
         "id": "1bff62c9-b9e3-405a-9702-dbb7d8b57434",
-        "type": "model",
-        "color": "hex:74C7EC",
-        "rawValue": true
+        "type": "custom-command",
+        "color": "hex:F2CDCD",
+        "commandPath": "pwsh %USERPROFILE%/.config/ccstatusline/ccsl-model-alias.ps1",
+        "timeout": 1000
       },
       {
         "id": "e5019aaf-0073-4f35-82a8-8f8f291ad44f",
         "type": "thinking-effort",
-        "color": "hex:74C7EC",
+        "color": "hex:F2CDCD",
         "rawValue": true
       },
       {
-        "id": "afe69595-a7d2-4585-91fa-167dd5acaf3e",
-        "type": "context-percentage-usable",
-        "color": "hex:A6E3A1",
-        "rawValue": true
+        "id": "39623bc2-e5fb-44c6-82b5-adfba5b67b5e",
+        "type": "custom-command",
+        "color": "hex:EBA0AC",
+        "commandPath": "pwsh %USERPROFILE%/.config/ccstatusline/ccsl-context-bar.ps1",
+        "timeout": 1000
       },
       {
-        "id": "55693f5a-aa26-48d3-8f21-8767fe31f15d",
-        "type": "tokens-total",
-        "color": "hex:B4BEFE",
-        "rawValue": true
-      },
-      {
-        "id": "1a9b3498-82d0-4acf-81a0-9d9d07139388",
-        "type": "total-speed",
-        "color": "hex:B4BEFE",
-        "rawValue": true
+        "id": "532891d3-1e0c-44f3-9f27-6d54030e105f",
+        "type": "custom-command",
+        "color": "hex:EBA0AC",
+        "commandPath": "pwsh %USERPROFILE%/.config/ccstatusline/ccsl-tokens-io.ps1",
+        "timeout": 1000
       },
       {
         "id": "481a3bb5-dd02-43ce-8bbf-583462659e05",
@@ -42,18 +39,24 @@
     [
       {
         "id": "975b998f-4997-4676-a258-9c762d4d2b22",
-        "type": "git-root-dir",
-        "color": "hex:F5E0DC"
+        "type": "custom-command",
+        "commandPath": "starship module directory",
+        "preserveColors": true,
+        "timeout": 2000
       },
       {
         "id": "82e5f73b-2de9-4f82-9156-6342a77e2c3a",
-        "type": "git-branch",
-        "color": "hex:F9E2AF"
+        "type": "custom-command",
+        "commandPath": "starship module git_branch",
+        "preserveColors": true,
+        "timeout": 2000
       },
       {
         "id": "bf197627-bfae-4844-a68e-550c191cc230",
-        "type": "git-changes",
-        "color": "hex:FAB387"
+        "type": "custom-command",
+        "commandPath": "starship module git_status",
+        "preserveColors": true,
+        "timeout": 2000
       }
     ],
     []
@@ -63,7 +66,7 @@
   "colorLevel": 3,
   "defaultPadding": " ",
   "inheritSeparatorColors": false,
-  "globalBold": true,
+  "globalBold": false,
   "powerline": {
     "enabled": false,
     "separators": [
