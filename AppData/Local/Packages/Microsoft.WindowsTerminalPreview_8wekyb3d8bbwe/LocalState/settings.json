@@ -60,6 +60,9 @@
                 "builtinGlyphs": true,
                 "colorGlyphs": true,
                 "face": "'Berkeley Mono Retina', 'Symbols Nerd Font', 'Sarasa Fixed SC'",
+                "features": {
+                    "ss02": 1
+                },
                 "weight": 375,
                 "size": 14
             },
