@@ -1,16 +1,16 @@
 "$schema" = "https://starship.rs/config-schema.json"
 
 format = """
-$directory\
-$git_branch\
-$git_status\
-$nix_shell\
+($directory )\
+($git_branch )\
+($git_status )\
+($nix_shell )\
 $fill\
-$cmd_duration\
-$os\
-$username\
+( $cmd_duration)\
+( $os)\
+( $username)\
 $hostname\
-$time\
+( $time)\
 $line_break\
 $character\
 """
@@ -149,7 +149,7 @@ crust = "#11111b"
 {{ if eq .colorscheme "catppuccin-latte" "catppuccin-frappe" "catppuccin-macchiato" "catppuccin-mocha" }}
 # modules to the left, remember to add an extra space to the right of them.
 [directory]
-format = "[$read_only]($read_only_style)[$path]($style) "
+format = "[$read_only]($read_only_style)[$path]($style)"
 read_only = " "                                          # an extra space is appended because it would always has a space if we do it in directory.format
 style = "fg:sapphire"
 read_only_style = "fg:yellow"
@@ -159,28 +159,29 @@ use_os_path_sep = true                                    # OS specific path sep
 fish_style_pwd_dir_length = 1                             # "~/Dev/Nix/nixpkgs/pkgs" will be "~/D/N/nixpkgs/pkgs" instead of "nixpkgs/pkgs"
 
 [git_branch]
-symbol = ""
+symbol = " "
 style = "fg:green"
-format = "[$symbol  $branch ]($style)"
+format = "[$symbol $branch]($style)"
 
 [git_status]
-format = "($ahead_behind )($all_status )" # parentheses make them conditional strings, so that we won't end up with an extra space
+format = "($ahead_behind )$all_status" # parentheses make them conditional strings, so that we won't end up with an extra space
 # branch status ($ahead_behind)
 ahead = "[⇡${count}](fg:green)"
 behind = "[⇣${count}](fg:red)"
 diverged = "[⇡${ahead_count}](fg:green)[⇣${behind_count}](fg:red)"
 up_to_date = ""
 # file status ($all_status)
-conflicted = "[=${count}](fg:yellow)"
-untracked = "[?${count}](fg:yellow)"
-stashed = "[\\$${count}](fg:yellow)"  # "$" has to be excaped by "\$", so it becomes "\\$" in literal. the output would be "$3" if there are 3 stashes.
-modified = "[!${count}](fg:yellow)"
-staged = "[+${count}](fg:green)"
-renamed = "[»${count}](fg:yellow)"
-deleted = "[✘${count}](fg:red)"
+conflicted = "[ ${count}](fg:yellow)"
+untracked = "[ ${count}](fg:yellow)"
+stashed = "[ ${count}](fg:yellow)"
+modified = "[ ${count}](fg:yellow)"
+staged = "[ ${count}](fg:green)"
+renamed = "[ ${count}](fg:yellow)"
+deleted = "[ ${count}](fg:red)"
+typechanged = ""
 
 [nix_shell]
-format = "[$symbol  $state\\($name\\) ]($style)" # "(" has to be escaped by "\(", so it becomes "\\(" in literal.
+format = "[$symbol  $state\\($name\\)]($style)" # "(" has to be escaped by "\(", so it becomes "\\(" in literal.
 symbol = ""
 style = "fg:sapphire"
 
@@ -195,7 +196,7 @@ style = "fg:surface0"
 # status of the previous command, not enabled in global format because it hasn't been configured properly
 [status]
 disabled = false
-format = " [$symbol$status]($style)"
+format = "[$symbol$status]($style)"
 symbol = "❌"
 success_symbol = ""
 not_executable_symbol = ""
@@ -205,12 +206,12 @@ signal_symbol = ""
 
 [cmd_duration]
 min_time = 5000                    # 5s
-format = "[   $duration]($style)"
+format = "[  $duration]($style)"
 style = "fg:yellow"
 
 [os]
 style = "fg:overlay2"
-format = "[ $symbol]($style)"
+format = "[$symbol]($style)"
 disabled = false
 
 # just the OSs I use
@@ -223,7 +224,7 @@ NixOS = " "
 show_always = true
 style_user = "fg:overlay2"
 style_root = "fg:red"
-format = "[ $user]($style)"
+format = "[$user]($style)"
 
 [hostname]
 ssh_only = false
@@ -234,7 +235,7 @@ format = "[@$hostname]($style)"
 disabled = false
 time_format = "%T"
 style = "fg:blue"
-format = "[   $time ]($style)" # an extra space is appened at the last for fish's unknown truncation for the last character. https://github.com/starship/starship/discussions/6468
+format = "[  $time ]($style)" # an extra space is appened at the last for fish's unknown truncation for the last character. https://github.com/starship/starship/discussions/6468
 
 
 # second line
