@@ -61,6 +61,11 @@ Function lg
   lazygit
 }
 
+Function cc
+{
+  claude --model "opus[1m]"
+}
+
 #endregion Functions
 
 
