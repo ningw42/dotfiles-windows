@@ -4,10 +4,107 @@ local wezterm = require 'wezterm'
 -- This will hold the configuration.
 local config = wezterm.config_builder()
 
+local font_rules = {
+  {
+    intensity = 'Normal',
+    italic = false,
+    font = wezterm.font_with_fallback {
+      {
+        family = 'Berkeley Mono',
+        stretch = 'ExtraCondensed',
+        weight = 375,
+        style = 'Normal',
+        harfbuzz_features = { 'ss02=1' }
+      },
+      'Symbols Nerd Font Berkeley Mono',
+      'Sarasa Fixed SC',
+    }
+  },
+  {
+    intensity = 'Normal',
+    italic = true,
+    font = wezterm.font_with_fallback {
+      {
+        family = 'Berkeley Mono',
+        stretch = 'ExtraCondensed',
+        weight = 375,
+        style = 'Oblique',
+        harfbuzz_features = { 'ss02=1' }
+      },
+      'Symbols Nerd Font Berkeley Mono',
+      'Sarasa Fixed SC',
+    }
+  },
+  {
+    intensity = 'Half',
+    italic = false,
+    font = wezterm.font_with_fallback {
+      {
+        family = 'Berkeley Mono',
+        stretch = 'ExtraCondensed',
+        weight = 'DemiBold',
+        style = 'Normal',
+        harfbuzz_features = { 'ss02=1' }
+      },
+      'Symbols Nerd Font Berkeley Mono',
+      'Sarasa Fixed SC',
+    }
+  },
+  {
+    intensity = 'Half',
+    italic = true,
+    font = wezterm.font_with_fallback {
+      {
+        family = 'Berkeley Mono',
+        stretch = 'ExtraCondensed',
+        weight = 'DemiBold',
+        style = 'Oblique',
+        harfbuzz_features = { 'ss02=1' }
+      },
+      'Symbols Nerd Font Berkeley Mono',
+      'Sarasa Fixed SC',
+    }
+  },
+  {
+    intensity = 'Bold',
+    italic = false,
+    font = wezterm.font_with_fallback {
+      {
+        family = 'Berkeley Mono',
+        stretch = 'ExtraCondensed',
+        weight = 'Bold',
+        style = 'Normal',
+        harfbuzz_features = { 'ss02=1' }
+      },
+      'Symbols Nerd Font Berkeley Mono',
+      'Sarasa Fixed SC',
+    }
+  },
+  {
+    intensity = 'Bold',
+    italic = true,
+    font = wezterm.font_with_fallback {
+      {
+        family = 'Berkeley Mono',
+        stretch = 'ExtraCondensed',
+        weight = 'Bold',
+        style = 'Oblique',
+        harfbuzz_features = { 'ss02=1' }
+      },
+      'Symbols Nerd Font Berkeley Mono',
+      'Sarasa Fixed SC',
+    }
+  },
+}
+-- config.font_rules = font_rules
+
 -- Global constants
 local font_fallback_list = wezterm.font_with_fallback {
-	-- 'Iosevkata Nerd Font',
-	'PragmataPro',
+	'Iosevkata',
+	'Symbols Nerd Font Iosevkata',
+	-- 'PragmataPro',
+  -- 'Berkeley Mono',
+  -- 'Symbols Nerd Font Berkeley Mono',
 	'Sarasa Fixed SC',
 }
 
