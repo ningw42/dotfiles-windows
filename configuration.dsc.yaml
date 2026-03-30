@@ -1,0 +1,229 @@
+# yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
+properties:
+  configurationVersion: 0.2.0
+  resources:
+    # ============================================================
+    # Scoop Package Manager
+    # ============================================================
+
+    # Bootstrap Scoop
+    - resource: PSDscResources/Script
+      id: ScoopBootstrap
+      directives:
+        description: Install Scoop package manager
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          Test-Path "$env:USERPROFILE\scoop\shims\scoop.cmd"
+        SetScript: |
+          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+          Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+        GetScript: |
+          @{ Result = if (Test-Path "$env:USERPROFILE\scoop\shims\scoop.cmd") { 'Installed' } else { 'NotInstalled' } }
+
+    # Add extras bucket (needed for lazygit)
+    - resource: PSDscResources/Script
+      id: ScoopBucketExtras
+      dependsOn:
+        - ScoopBootstrap
+      directives:
+        description: Add Scoop extras bucket
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          $buckets = & "$env:USERPROFILE\scoop\shims\scoop.cmd" bucket list 2>&1 | Out-String
+          $buckets -match 'extras'
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" bucket add extras
+        GetScript: |
+          $buckets = & "$env:USERPROFILE\scoop\shims\scoop.cmd" bucket list 2>&1 | Out-String
+          @{ Result = if ($buckets -match 'extras') { 'Installed' } else { 'NotInstalled' } }
+
+    # ============================================================
+    # Scoop CLI Tools
+    # ============================================================
+
+    # Core tools: git, chezmoi
+    - resource: PSDscResources/Script
+      id: ScoopCoreTools
+      dependsOn:
+        - ScoopBootstrap
+      directives:
+        description: "Install core CLI tools via Scoop: git, chezmoi"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          $apps = @('git', 'chezmoi')
+          $scoopApps = "$env:USERPROFILE\scoop\apps"
+          @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install git chezmoi
+        GetScript: |
+          $apps = @('git', 'chezmoi')
+          $scoopApps = "$env:USERPROFILE\scoop\apps"
+          $allInstalled = @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
+          @{ Result = if ($allInstalled) { 'Installed' } else { 'NotInstalled' } }
+
+    # Neovim and its build/runtime dependencies
+    - resource: PSDscResources/Script
+      id: ScoopNeovimDeps
+      dependsOn:
+        - ScoopBootstrap
+      directives:
+        description: "Install Neovim and dependencies via Scoop: neovim, llvm, nodejs, fzf, ripgrep"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          $apps = @('neovim', 'llvm', 'nodejs', 'fzf', 'ripgrep')
+          $scoopApps = "$env:USERPROFILE\scoop\apps"
+          @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install neovim llvm nodejs fzf ripgrep
+        GetScript: |
+          $apps = @('neovim', 'llvm', 'nodejs', 'fzf', 'ripgrep')
+          $scoopApps = "$env:USERPROFILE\scoop\apps"
+          $allInstalled = @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
+          @{ Result = if ($allInstalled) { 'Installed' } else { 'NotInstalled' } }
+
+    # Yazi and its direct dependencies
+    - resource: PSDscResources/Script
+      id: ScoopYaziDeps
+      dependsOn:
+        - ScoopBootstrap
+      directives:
+        description: "Install Yazi and dependencies via Scoop: yazi, ffmpeg, 7zip, jq, poppler, fd, imagemagick, zoxide"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          $apps = @('yazi', 'ffmpeg', '7zip', 'jq', 'poppler', 'fd', 'imagemagick', 'zoxide')
+          $scoopApps = "$env:USERPROFILE\scoop\apps"
+          @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install yazi ffmpeg 7zip jq poppler fd imagemagick zoxide
+        GetScript: |
+          $apps = @('yazi', 'ffmpeg', '7zip', 'jq', 'poppler', 'fd', 'imagemagick', 'zoxide')
+          $scoopApps = "$env:USERPROFILE\scoop\apps"
+          $allInstalled = @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
+          @{ Result = if ($allInstalled) { 'Installed' } else { 'NotInstalled' } }
+
+    # Yazi plugin dependencies
+    - resource: PSDscResources/Script
+      id: ScoopYaziPluginDeps
+      dependsOn:
+        - ScoopBootstrap
+      directives:
+        description: "Install Yazi plugin dependencies via Scoop: exiftool, eza, glow, hexyl, mediainfo"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          $apps = @('exiftool', 'eza', 'glow', 'hexyl', 'mediainfo')
+          $scoopApps = "$env:USERPROFILE\scoop\apps"
+          @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install exiftool eza glow hexyl mediainfo
+        GetScript: |
+          $apps = @('exiftool', 'eza', 'glow', 'hexyl', 'mediainfo')
+          $scoopApps = "$env:USERPROFILE\scoop\apps"
+          $allInstalled = @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
+          @{ Result = if ($allInstalled) { 'Installed' } else { 'NotInstalled' } }
+
+    # Shell prompt, git tools, and system info
+    - resource: PSDscResources/Script
+      id: ScoopShellAndGitTools
+      dependsOn:
+        - ScoopBootstrap
+      directives:
+        description: "Install shell and git tools via Scoop: starship, bat, delta, gitui, fastfetch"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          $apps = @('starship', 'bat', 'delta', 'gitui', 'fastfetch')
+          $scoopApps = "$env:USERPROFILE\scoop\apps"
+          @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install starship bat delta gitui fastfetch
+        GetScript: |
+          $apps = @('starship', 'bat', 'delta', 'gitui', 'fastfetch')
+          $scoopApps = "$env:USERPROFILE\scoop\apps"
+          $allInstalled = @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
+          @{ Result = if ($allInstalled) { 'Installed' } else { 'NotInstalled' } }
+
+    # Lazygit (from extras bucket)
+    - resource: PSDscResources/Script
+      id: ScoopLazygit
+      dependsOn:
+        - ScoopBucketExtras
+      directives:
+        description: "Install lazygit via Scoop (extras bucket)"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          Test-Path "$env:USERPROFILE\scoop\apps\lazygit\current"
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install lazygit
+        GetScript: |
+          @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\lazygit\current") { 'Installed' } else { 'NotInstalled' } }
+
+    # ============================================================
+    # WinGet GUI Apps
+    # ============================================================
+
+    # PowerShell (pwsh)
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: WinGetPowerShell
+      directives:
+        description: Install PowerShell (pwsh) via WinGet
+        allowPrerelease: true
+      settings:
+        id: Microsoft.PowerShell
+        source: winget
+
+    # WezTerm
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: WinGetWezTerm
+      directives:
+        description: Install WezTerm terminal emulator
+        allowPrerelease: true
+      settings:
+        id: wez.wezterm
+        source: winget
+
+    # Alacritty
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: WinGetAlacritty
+      directives:
+        description: Install Alacritty terminal emulator
+        allowPrerelease: true
+      settings:
+        id: Alacritty.Alacritty
+        source: winget
+
+    # Rio
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: WinGetRio
+      directives:
+        description: Install Rio terminal emulator
+        allowPrerelease: true
+      settings:
+        id: raphamorim.rio
+        source: winget
+
+    # Neovide
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: WinGetNeovide
+      directives:
+        description: Install Neovide GUI for Neovim
+        allowPrerelease: true
+      settings:
+        id: Neovide.Neovide
+        source: winget
+
+    # Windows Terminal Preview
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: WinGetWindowsTerminalPreview
+      directives:
+        description: Install Windows Terminal Preview
+        allowPrerelease: true
+      settings:
+        id: Microsoft.WindowsTerminal.Preview
+        source: winget
