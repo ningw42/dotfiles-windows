@@ -2,16 +2,16 @@
 
 # yazi: file(1) executable
 # see https://yazi-rs.github.io/docs/installation#windows
-$Env:YAZI_FILE_ONE = "C:\Users\ningw\scoop\apps\git\current\usr\bin\file.exe"
+$Env:YAZI_FILE_ONE = "$Env:USERPROFILE\scoop\apps\git\current\usr\bin\file.exe"
 
 # eza: the number of spaces to print between icon and filename
 $Env:EZA_ICON_SPACING = 2
 
 # bat config directory
-$Env:BAT_CONFIG_DIR = "C:\Users\ningw\.config\bat"
+$Env:BAT_CONFIG_DIR = "$Env:USERPROFILE\.config\bat"
 
 # lazygit config
-$Env:LG_CONFIG_FILE = "C:\Users\ningw\AppData\Local\lazygit\config.yml,C:\Users\ningw\AppData\Local\lazygit\{{ .colorscheme }}-blue.yml";
+$Env:LG_CONFIG_FILE = "$Env:LOCALAPPDATA\lazygit\config.yml,$Env:LOCALAPPDATA\lazygit\{{ .colorscheme }}-blue.yml";
 #endregion Environment Variables
 
 

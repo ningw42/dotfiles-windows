@@ -40,10 +40,10 @@
   format = ssh
 
 [gpg "ssh"]
-  program = "C:/Users/ningw/AppData/Local/Microsoft/WindowsApps/op-ssh-sign.exe"
+  program = "{{ env "LOCALAPPDATA" | replace "\\" "/" }}/Microsoft/WindowsApps/op-ssh-sign.exe"
 
 [commit]
   gpgsign = true
 
 [include]
-	path = "C:/Users/ningw/.config/delta/catppuccin.gitconfig"
+	path = "{{ .chezmoi.homeDir }}/.config/delta/catppuccin.gitconfig"
