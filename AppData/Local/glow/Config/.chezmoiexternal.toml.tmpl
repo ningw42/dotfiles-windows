@@ -1,0 +1,21 @@
+{{ if eq .colorscheme "catppuccin-latte" }}
+["catppuccin-latte.json"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/glamour/main/themes/catppuccin-latte.json"
+    checksum.sha256 = "9f03b09de084d92c40bf4c40daa25729f92aac16b0b9cb4c788ef49c59eb7ed7"
+{{ else if eq .colorscheme "catppuccin-frappe" }}
+["catppuccin-frappe.json"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/glamour/main/themes/catppuccin-frappe.json"
+    checksum.sha256 = "03c41d15703f4ba4b69a2b0962f550be41547750ba09be821dbb08cf3e1f861d"
+{{ else if eq .colorscheme "catppuccin-macchiato" }}
+["catppuccin-macchiato.json"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/glamour/main/themes/catppuccin-macchiato.json"
+    checksum.sha256 = "0ed70dd1ce65628dce47825d5b64329fee12200b2a6eb4c71c0639e0d914e70c"
+{{ else if eq .colorscheme "catppuccin-mocha" }}
+["catppuccin-mocha.json"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/glamour/main/themes/catppuccin-mocha.json"
+    checksum.sha256 = "e11c510590cedaf260f331d1c45a75ef6353f3a07ca1317b7cc01d0745f9c396"
+{{ end }}

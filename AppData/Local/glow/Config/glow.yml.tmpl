@@ -1,0 +1,5 @@
+{{ if hasPrefix "catppuccin-" .colorscheme -}}
+style: "{{ env "LOCALAPPDATA" | replace "\\" "/" }}/glow/Config/{{ .colorscheme }}.json"
+{{ else -}}
+style: "auto"
+{{ end -}}
