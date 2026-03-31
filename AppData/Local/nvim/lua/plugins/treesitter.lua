@@ -1,6 +1,13 @@
 return {
   {
+    "nvim-treesitter/nvim-treesitter-textobjects",
+    branch = "main",
+    version = false,
+  },
+
+  {
     "nvim-treesitter/nvim-treesitter",
+    branch = "main",
     version = false, -- last release is way too old and doesn't work on Windows
     build = ":TSUpdate",
     dependencies = {
@@ -73,7 +80,7 @@ return {
       },
     },
     config = function(_, opts)
-      require("nvim-treesitter.configs").setup(opts)
+      require("nvim-treesitter").install(opts.ensure_installed)
     end,
   },
 }
