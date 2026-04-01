@@ -1,0 +1,21 @@
+{{ if eq .colorscheme "catppuccin-latte" }}
+["themes/catppuccin-latte.toml"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-latte.toml"
+    checksum.sha256 = "add4020af6910d8baa02bb765f6e12f631c38c092689815a2549d5acbdca3418"
+{{ else if eq .colorscheme "catppuccin-frappe" }}
+["themes/catppuccin-frappe.toml"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-frappe.toml"
+    checksum.sha256 = "bac9843f0f984f03928342369564527382aedd1d9f6b49273a2f3bf99e28124f"
+{{ else if eq .colorscheme "catppuccin-macchiato" }}
+["themes/catppuccin-macchiato.toml"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-macchiato.toml"
+    checksum.sha256 = "fd06f991f47937a99331c2fa97aa9476c1b7db0a64a44487bb9aa35f7188507c"
+{{ else if eq .colorscheme "catppuccin-mocha" }}
+["themes/catppuccin-mocha.toml"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-mocha.toml"
+    checksum.sha256 = "949cef17c3ec50420b82c70b22e3aa2ea0a5d27dfcc13284192bd5284b5db2c5"
+{{ end }}
