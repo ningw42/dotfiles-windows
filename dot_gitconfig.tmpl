@@ -20,8 +20,8 @@
   dark = true      # or light = true, or omit for auto-detection
 {{ if eq .colorscheme "gruvbox-dark" }}
   features = gruvmax-fang
-{{ else if eq .colorscheme "catppuccin-frappe" }}
-  features = catppuccin-frappe
+{{ else if hasPrefix "catppuccin-" .colorscheme }}
+  features = {{ .colorscheme }}
 {{ end }}
 
 [merge]
