@@ -1,0 +1,4 @@
+["catppuccin.gitconfig"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/delta/main/catppuccin.gitconfig"
+    checksum.sha256 = "f0580ada6b1e3767b718b25116a2ababec314474a12d1a796c917ef93d63b455"
