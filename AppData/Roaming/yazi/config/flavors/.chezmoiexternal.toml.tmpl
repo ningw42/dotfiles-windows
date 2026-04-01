@@ -1,0 +1,37 @@
+{{ if eq .colorscheme "catppuccin-latte" }}
+["catppuccin-latte.yazi/flavor.toml"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/latte/catppuccin-latte-blue.toml"
+    checksum.sha256 = "40031455b209d0f1aae25524c78006cac0f301e8a4abd768f729c0cc58bde2fc"
+["catppuccin-latte.yazi/tmtheme.xml"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Latte.tmTheme"
+    checksum.sha256 = "a2ddb65bfcf7328802ee4770d1e34ef4093a20fd5c300be3138c99f8a45ed5cb"
+{{ else if eq .colorscheme "catppuccin-frappe" }}
+["catppuccin-frappe.yazi/flavor.toml"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/frappe/catppuccin-frappe-blue.toml"
+    checksum.sha256 = "f3d7b53c8447ac5823690d4d2e6ebfc96528dfbe6114005fcbc6247ce7540dd4"
+["catppuccin-frappe.yazi/tmtheme.xml"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Frappe.tmTheme"
+    checksum.sha256 = "3446d8a3cfb9eb559bc65a3894e6ae8f3579030fac6130c4f96ff524f3e2784f"
+{{ else if eq .colorscheme "catppuccin-macchiato" }}
+["catppuccin-macchiato.yazi/flavor.toml"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/macchiato/catppuccin-macchiato-blue.toml"
+    checksum.sha256 = "15ba144a6458c7bcfea2b1e77f5c52e0416924e9ef6a547b39e8af6eb24a1f8b"
+["catppuccin-macchiato.yazi/tmtheme.xml"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Macchiato.tmTheme"
+    checksum.sha256 = "110090f655b970e569d82fb3780c161769b59ba234c290d0039c1e8c49bb5a06"
+{{ else if eq .colorscheme "catppuccin-mocha" }}
+["catppuccin-mocha.yazi/flavor.toml"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/mocha/catppuccin-mocha-blue.toml"
+    checksum.sha256 = "048544961b812f002d1024fdee3d05a9218a8914631d6cb8b629d917d36f05f6"
+["catppuccin-mocha.yazi/tmtheme.xml"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Mocha.tmTheme"
+    checksum.sha256 = "395566f08ceb301b936b91c077690ef94f7aeb651b121553f201c99c2bd4aa77"
+{{ end }}
