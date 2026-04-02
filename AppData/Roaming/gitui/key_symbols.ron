@@ -1,0 +1,24 @@
+// https://github.com/extrawurst/gitui/blob/master/src/keys/symbols.rs
+// https://github.com/drmingdrmer/cheatsheet/blob/master/sheets/unicode/from-xahlee-info/keyboard-keys.txt
+// some of the chars have an extra space because the font (PragmataPro) I use today doesn't render them in just one cell
+// once I switch to a different font (i.e. Iosevkata) or PragmataPro fixes it, we don't need them.
+(
+    enter: Some("⏎"), // extra space
+    left: Some("←"), // extra space
+    right: Some("→"), // extra space
+    up: Some("↑"),
+    down: Some("↓"),
+    backspace: Some("⌫"), // extra space
+    home: Some("⤒"),
+    end: Some("⤓"),
+    page_up: Some("⇞"),
+    page_down: Some("⇟"),
+    tab: Some("⇥"), // extra space
+    back_tab: Some("⇤"), // extra space
+    delete: Some("⌦"), // extra space
+    insert: Some("⎀"), // extra space
+    esc: Some("⎋"),
+    control: Some("⌃"),
+    shift: Some("⇧"),
+    alt: Some("⌥"), // extra space
+)
