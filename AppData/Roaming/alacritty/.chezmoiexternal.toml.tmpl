@@ -1,4 +1,14 @@
-{{ if eq .colorscheme "catppuccin-latte" }}
+{{ if eq .colorscheme "gruvbox-dark" }}
+["themes/gruvbox-dark.toml"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/alacritty/alacritty-theme/master/themes/gruvbox_dark.toml"
+    checksum.sha256 = "6850b0e5d07bed32b3613d4c7da50e0fc36542239a5ff5188b524494e9edda75"
+{{ else if eq .colorscheme "everforest-dark" }}
+["themes/everforest-dark.toml"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/alacritty/alacritty-theme/master/themes/everforest_dark_medium.toml"
+    checksum.sha256 = "0b6f445b955a8d3972136e47ead1a83ba4985b553e69f6bb9ef293bbf2e5ad27"
+{{ else if eq .colorscheme "catppuccin-latte" }}
 ["themes/catppuccin-latte.toml"]
     type = "file"
     url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-latte.toml"
