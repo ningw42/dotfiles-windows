@@ -15,9 +15,7 @@ return {
       "nvim-treesitter/nvim-treesitter-context",
     },
     opts = {
-      highlight = { enable = true },
-      indent = { enable = true },
-      ensure_installed = {
+      languages = {
         "bash",
         "beancount",
         "c",
@@ -33,6 +31,7 @@ return {
         "go",
         "gomod",
         "gosum",
+        "gotmpl",
         "gpg",
         "html",
         "ini",
@@ -69,18 +68,12 @@ return {
         "xml",
         "yaml",
       },
-      incremental_selection = {
-        enable = true,
-        keymaps = {
-          init_selection = "<C-space>",
-          node_incremental = "<C-space>",
-          scope_incremental = false,
-          node_decremental = "<bs>",
-        },
-      },
     },
     config = function(_, opts)
-      require("nvim-treesitter").install(opts.ensure_installed)
+      require("nvim-treesitter").setup({
+        install_dir = vim.fn.stdpath("data") .. "/site"
+      })
+      require("nvim-treesitter").install(opts.languages)
     end,
   },
 }
