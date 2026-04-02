@@ -20,7 +20,7 @@ $character\
 # modules to the left, remember to add an extra space to the right of them.
 [directory]
 format = "[$read_only]($read_only_style)[$path]($style)"
-read_only = " "                                          # an extra space is appended because it would always has a space if we do it in directory.format
+read_only = " "                                          # an extra space is appended because it would always has a space if we do it in directory.format
 style = "fg:accent"
 read_only_style = "fg:warning"
 truncation_length = 3
@@ -29,25 +29,25 @@ use_os_path_sep = true                                    # OS specific path sep
 fish_style_pwd_dir_length = 1                             # "~/Dev/Nix/nixpkgs/pkgs" will be "~/D/N/nixpkgs/pkgs" instead of "nixpkgs/pkgs"
 
 [git_branch]
-symbol = " "
+symbol = " "
 style = "fg:success"
 format = "[$symbol $branch]($style)"
 
 [git_status]
 format = "($ahead_behind )$all_status" # parentheses make them conditional strings, so that we won't end up with an extra space
 # branch status ($ahead_behind)
-ahead = "[⇡${count}](fg:success)"
-behind = "[⇣${count}](fg:error)"
-diverged = "[⇡${ahead_count}](fg:success)[⇣${behind_count}](fg:error)"
+ahead = "[⇡${count}](fg:green)"
+behind = "[⇣${count}](fg:red)"
+diverged = "[⇡${ahead_count}](fg:green)[⇣${behind_count}](fg:red)"
 up_to_date = ""
 # file status ($all_status)
-conflicted = "[ ${count}](fg:warning_dim)"
-untracked = "[ ${count}](fg:warning_dim)"
-stashed = "[ ${count}](fg:warning_dim)"
-modified = "[ ${count}](fg:warning_dim)"
-staged = "[ ${count}](fg:success_dim)"
-renamed = "[ ${count}](fg:warning_dim)"
-deleted = "[ ${count}](fg:error_dim)"
+conflicted = "[ ${count}](fg:yellow)"
+untracked = "[ ${count}](fg:yellow)"
+stashed = "[ ${count}](fg:yellow)"
+modified = "[ ${count}](fg:yellow)"
+staged = "[ ${count}](fg:green)"
+renamed = "[ ${count}](fg:yellow)"
+deleted = "[ ${count}](fg:red)"
 typechanged = ""
 
 [nix_shell]
@@ -76,7 +76,7 @@ signal_symbol = ""
 
 [cmd_duration]
 min_time = 5000                    # 5s
-format = "[  $duration]($style)"
+format = "[  $duration]($style)"
 style = "fg:warning_dim"
 
 [os]
@@ -88,7 +88,7 @@ disabled = false
 [os.symbols]
 Windows = "󰍲 "
 Macos = "󰀵 "
-NixOS = " "
+NixOS = " "
 
 [username]
 show_always = true
@@ -105,7 +105,7 @@ format = "[@$hostname]($style)"
 disabled = false
 time_format = "%T"
 style = "fg:info"
-format = "[  $time ]($style)" # an extra space is appened at the last for fish's unknown truncation for the last character. https://github.com/starship/starship/discussions/6468
+format = "[  $time ]($style)" # an extra space is appened at the last for fish's unknown truncation for the last character. https://github.com/starship/starship/discussions/6468
 
 
 # second line
