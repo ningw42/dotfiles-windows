@@ -231,9 +231,9 @@ return {
       local FileFormat = {
         static = {
           symbols = {
-            unix = "󰌽",
-            dos = "󰍲",
-            mac = "󰀵",
+            unix = "󰌽 ",
+            dos = "󰍲 ",
+            mac = "󰀵 ",
           },
           highlights = {
             unix = { fg = "MiniIconsCyan" },
@@ -247,7 +247,7 @@ return {
           self.highlight = self.highlights[self.fmt]
         end,
         provider = function(self)
-          return self.fmt ~= "unix" and self.symbol -- hide if it's unix
+          return self.symbol
         end,
         hl = function(self)
           return self.highlight
