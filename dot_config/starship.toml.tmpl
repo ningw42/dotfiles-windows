@@ -15,181 +15,51 @@ $line_break\
 $character\
 """
 
-{{ if eq .colorscheme "catppuccin-latte" }}
-palette = "catppuccin_latte"
+{{ includeTemplate (printf "starship/%s.toml" .colorscheme) . }}
 
-[palettes.catppuccin_latte]
-rosewater = "#dc8a78"
-flamingo = "#dd7878"
-pink = "#ea76cb"
-mauve = "#8839ef"
-red = "#d20f39"
-maroon = "#e64553"
-peach = "#fe640b"
-yellow = "#df8e1d"
-green = "#40a02b"
-teal = "#179299"
-sky = "#04a5e5"
-sapphire = "#209fb5"
-blue = "#1e66f5"
-lavender = "#7287fd"
-text = "#4c4f69"
-subtext1 = "#5c5f77"
-subtext0 = "#6c6f85"
-overlay2 = "#7c7f93"
-overlay1 = "#8c8fa1"
-overlay0 = "#9ca0b0"
-surface2 = "#acb0be"
-surface1 = "#bcc0cc"
-surface0 = "#ccd0da"
-base = "#eff1f5"
-mantle = "#e6e9ef"
-crust = "#dce0e8"
-{{ end }}
-
-
-{{ if eq .colorscheme "catppuccin-frappe" }}
-palette = "catppuccin_frappe"
-
-[palettes.catppuccin_frappe]
-rosewater = "#f2d5cf"
-flamingo = "#eebebe"
-pink = "#f4b8e4"
-mauve = "#ca9ee6"
-red = "#e78284"
-maroon = "#ea999c"
-peach = "#ef9f76"
-yellow = "#e5c890"
-green = "#a6d189"
-teal = "#81c8be"
-sky = "#99d1db"
-sapphire = "#85c1dc"
-blue = "#8caaee"
-lavender = "#babbf1"
-text = "#c6d0f5"
-subtext1 = "#b5bfe2"
-subtext0 = "#a5adce"
-overlay2 = "#949cbb"
-overlay1 = "#838ba7"
-overlay0 = "#737994"
-surface2 = "#626880"
-surface1 = "#51576d"
-surface0 = "#414559"
-base = "#303446"
-mantle = "#292c3c"
-crust = "#232634"
-{{ end }}
-
-
-{{ if eq .colorscheme "catppuccin-macchiato" }}
-palette = "catppuccin_macchiato"
-
-[palettes.catppuccin_macchiato]
-rosewater = "#f4dbd6"
-flamingo = "#f0c6c6"
-pink = "#f5bde6"
-mauve = "#c6a0f6"
-red = "#ed8796"
-maroon = "#ee99a0"
-peach = "#f5a97f"
-yellow = "#eed49f"
-green = "#a6da95"
-teal = "#8bd5ca"
-sky = "#91d7e3"
-sapphire = "#7dc4e4"
-blue = "#8aadf4"
-lavender = "#b7bdf8"
-text = "#cad3f5"
-subtext1 = "#b8c0e0"
-subtext0 = "#a5adcb"
-overlay2 = "#939ab7"
-overlay1 = "#8087a2"
-overlay0 = "#6e738d"
-surface2 = "#5b6078"
-surface1 = "#494d64"
-surface0 = "#363a4f"
-base = "#24273a"
-mantle = "#1e2030"
-crust = "#181926"
-{{ end }}
-
-
-{{ if eq .colorscheme "catppuccin-mocha" }}
-palette = "catppuccin_mocha"
-
-[palettes.catppuccin_mocha]
-rosewater = "#f5e0dc"
-flamingo = "#f2cdcd"
-pink = "#f5c2e7"
-mauve = "#cba6f7"
-red = "#f38ba8"
-maroon = "#eba0ac"
-peach = "#fab387"
-yellow = "#f9e2af"
-green = "#a6e3a1"
-teal = "#94e2d5"
-sky = "#89dceb"
-sapphire = "#74c7ec"
-blue = "#89b4fa"
-lavender = "#b4befe"
-text = "#cdd6f4"
-subtext1 = "#bac2de"
-subtext0 = "#a6adc8"
-overlay2 = "#9399b2"
-overlay1 = "#7f849c"
-overlay0 = "#6c7086"
-surface2 = "#585b70"
-surface1 = "#45475a"
-surface0 = "#313244"
-base = "#1e1e2e"
-mantle = "#181825"
-crust = "#11111b"
-{{ end }}
-
-{{ if eq .colorscheme "catppuccin-latte" "catppuccin-frappe" "catppuccin-macchiato" "catppuccin-mocha" }}
 # modules to the left, remember to add an extra space to the right of them.
 [directory]
 format = "[$read_only]($read_only_style)[$path]($style)"
-read_only = " "                                          # an extra space is appended because it would always has a space if we do it in directory.format
-style = "fg:sapphire"
-read_only_style = "fg:yellow"
+read_only = " "                                          # an extra space is appended because it would always has a space if we do it in directory.format
+style = "fg:accent"
+read_only_style = "fg:warning"
 truncation_length = 3
 truncation_symbol = ".../"
 use_os_path_sep = true                                    # OS specific path separator. e.g. "\" for Windows
 fish_style_pwd_dir_length = 1                             # "~/Dev/Nix/nixpkgs/pkgs" will be "~/D/N/nixpkgs/pkgs" instead of "nixpkgs/pkgs"
 
 [git_branch]
-symbol = " "
-style = "fg:green"
+symbol = " "
+style = "fg:success"
 format = "[$symbol $branch]($style)"
 
 [git_status]
 format = "($ahead_behind )$all_status" # parentheses make them conditional strings, so that we won't end up with an extra space
 # branch status ($ahead_behind)
-ahead = "[⇡${count}](fg:green)"
-behind = "[⇣${count}](fg:red)"
-diverged = "[⇡${ahead_count}](fg:green)[⇣${behind_count}](fg:red)"
+ahead = "[⇡${count}](fg:success)"
+behind = "[⇣${count}](fg:error)"
+diverged = "[⇡${ahead_count}](fg:success)[⇣${behind_count}](fg:error)"
 up_to_date = ""
 # file status ($all_status)
-conflicted = "[ ${count}](fg:yellow)"
-untracked = "[ ${count}](fg:yellow)"
-stashed = "[ ${count}](fg:yellow)"
-modified = "[ ${count}](fg:yellow)"
-staged = "[ ${count}](fg:green)"
-renamed = "[ ${count}](fg:yellow)"
-deleted = "[ ${count}](fg:red)"
+conflicted = "[ ${count}](fg:warning_dim)"
+untracked = "[ ${count}](fg:warning_dim)"
+stashed = "[ ${count}](fg:warning_dim)"
+modified = "[ ${count}](fg:warning_dim)"
+staged = "[ ${count}](fg:success_dim)"
+renamed = "[ ${count}](fg:warning_dim)"
+deleted = "[ ${count}](fg:error_dim)"
 typechanged = ""
 
 [nix_shell]
 format = "[$symbol  $state\\($name\\)]($style)" # "(" has to be escaped by "\(", so it becomes "\\(" in literal.
-symbol = ""
-style = "fg:sapphire"
+symbol = ""
+style = "fg:accent"
 
 
 # module that conencts the left part and the right part
 [fill]
 symbol = "·"
-style = "fg:surface0"
+style = "fg:muted"
 
 
 # modules to the right, remember to add an extra space to the left of them.
@@ -199,18 +69,18 @@ disabled = false
 format = "[$symbol$status]($style)"
 symbol = "❌"
 success_symbol = ""
-not_executable_symbol = ""
+not_executable_symbol = ""
 not_found_symbol = "🔍"
 sigint_symbol = ""
 signal_symbol = ""
 
 [cmd_duration]
 min_time = 5000                    # 5s
-format = "[  $duration]($style)"
-style = "fg:yellow"
+format = "[  $duration]($style)"
+style = "fg:warning_dim"
 
 [os]
-style = "fg:overlay2"
+style = "fg:subtle"
 format = "[$symbol]($style)"
 disabled = false
 
@@ -218,24 +88,24 @@ disabled = false
 [os.symbols]
 Windows = "󰍲 "
 Macos = "󰀵 "
-NixOS = " "
+NixOS = " "
 
 [username]
 show_always = true
-style_user = "fg:overlay2"
-style_root = "fg:red"
+style_user = "fg:subtle"
+style_root = "fg:error"
 format = "[$user]($style)"
 
 [hostname]
 ssh_only = false
-style = "fg:overlay2"
+style = "fg:subtle"
 format = "[@$hostname]($style)"
 
 [time]
 disabled = false
 time_format = "%T"
-style = "fg:blue"
-format = "[  $time ]($style)" # an extra space is appened at the last for fish's unknown truncation for the last character. https://github.com/starship/starship/discussions/6468
+style = "fg:info"
+format = "[  $time ]($style)" # an extra space is appened at the last for fish's unknown truncation for the last character. https://github.com/starship/starship/discussions/6468
 
 
 # second line
@@ -248,293 +118,9 @@ disabled = false
 
 [character]
 disabled = false
-success_symbol = "[❯](bold fg:green)"
-error_symbol = "[❯](bold fg:red)"
-vimcmd_symbol = "[❮](bold fg:green)"
-vimcmd_replace_one_symbol = "[❮](bold fg:pink)"
-vimcmd_replace_symbol = "[❮](bold fg:pink)"
-vimcmd_visual_symbol = "[❮](bold fg:yellow)"
-{{ end }}
-
-{{ if eq .colorscheme "everforest-dark" }}
-palette = "everforest-dark"
-
-[palettes.everforest-dark]
-bg_dim = "#232a2e"
-bg0 = "#2d353b"
-bg1 = "#343f44"
-bg2 = "#3d484d"
-bg3 = "#475258"
-bg4 = "#4f585e"
-bg5 = "#56635f"
-bg_visual = "#514045"
-bg_red = "#543a48"
-bg_green = "#425047"
-bg_blue = "#3a515d"
-bg_yellow = "#4d4c43"
-
-fg = "#d3c6aa"
-red = "#e67e80"
-
-orange = "#e69875"
-yellow = "#dbbc7f"
-green = "#a7c080"
-aqua = "#83c092"
-blue = "#7fbbb3"
-purple = "#d699b6"
-grey0 = "#7a8478"
-grey1 = "#859289"
-grey2 = "#9da9a0"
-statusline1 = "#a7c080"
-statusline2 = "#d3c6aa"
-statusline3 = "#e67e80"
-
-# modules to the left, remember to add an extra space to the right of them.
-[directory]
-format = "[$read_only]($read_only_style)[$path]($style) "
-read_only = " "                                          # an extra space is appended because it would always has a space if we do it in directory.format
-style = "fg:blue"
-read_only_style = "fg:yellow"
-truncation_length = 3
-truncation_symbol = ".../"
-use_os_path_sep = true                                    # OS specific path separator. e.g. "\" for Windows
-fish_style_pwd_dir_length = 1                             # "~/Dev/Nix/nixpkgs/pkgs" will be "~/D/N/nixpkgs/pkgs" instead of "nixpkgs/pkgs"
-
-[git_branch]
-symbol = ""
-style = "fg:green"
-format = "[$symbol  $branch ]($style)"
-
-[git_status]
-format = "($ahead_behind )($all_status )" # parentheses make them conditional strings, so that we won't end up with an extra space
-# branch status ($ahead_behind)
-ahead = "[⇡${count}](fg:green)"
-behind = "[⇣${count}](fg:red)"
-diverged = "[⇡${ahead_count}](fg:green)[⇣${behind_count}](fg:red)"
-up_to_date = ""
-# file status ($all_status)
-conflicted = "[=${count}](fg:yellow)"
-untracked = "[?${count}](fg:yellow)"
-stashed = "[\\$${count}](fg:yellow)"  # "$" has to be excaped by "\$", so it becomes "\\$" in literal. the output would be "$3" if there are 3 stashes.
-modified = "[!${count}](fg:yellow)"
-staged = "[+${count}](fg:green)"
-renamed = "[»${count}](fg:yellow)"
-deleted = "[✘${count}](fg:red)"
-
-[nix_shell]
-format = "[$symbol  $state\\($name\\) ]($style)" # "(" has to be escaped by "\(", so it becomes "\\(" in literal.
-symbol = ""
-style = "fg:blue"
-
-
-# module that conencts the left part and the right part
-[fill]
-symbol = "·"
-style = "fg:bg1"
-
-
-# modules to the right, remember to add an extra space to the left of them.
-# status of the previous command, not enabled in global format because it hasn't been configured properly
-[status]
-disabled = false
-format = " [$symbol$status]($style)"
-symbol = "❌"
-success_symbol = ""
-not_executable_symbol = ""
-not_found_symbol = "🔍"
-sigint_symbol = ""
-signal_symbol = ""
-
-[cmd_duration]
-min_time = 5000                    # 5s
-format = "[   $duration]($style)"
-style = "fg:yellow"
-
-[os]
-style = "fg:bg3"
-format = "[ $symbol]($style)"
-disabled = false
-
-# just the OSs I use
-[os.symbols]
-Windows = "󰍲 "
-Macos = "󰀵 "
-NixOS = " "
-
-[username]
-show_always = true
-style_user = "fg:bg3"
-style_root = "fg:red"
-format = "[ $user]($style)"
-
-[hostname]
-ssh_only = false
-style = "fg:bg3"
-format = "[@$hostname]($style)"
-
-[time]
-disabled = false
-time_format = "%T"
-style = "fg:blue"
-format = "[   $time ]($style)" # an extra space is appened at the last for fish's unknown truncation for the last character. https://github.com/starship/starship/discussions/6468
-
-
-# second line
-[line_break]
-disabled = false
-
-# not enabled in global format
-[shell]
-disabled = false
-
-[character]
-disabled = false
-success_symbol = "[❯](bold fg:green)"
-error_symbol = "[❯](bold fg:red)"
-vimcmd_symbol = "[❮](bold fg:green)"
-vimcmd_replace_one_symbol = "[❮](bold fg:purple)"
-vimcmd_replace_symbol = "[❮](bold fg:purple)"
-vimcmd_visual_symbol = "[❮](bold fg:yellow)"
-{{ end }}
-
-{{ if eq .colorscheme "gruvbox-dark" }}
-palette = "gruvbox_dark"
-
-[palettes.gruvbox_dark]
-fg = "#ebdbb2" # alias of fg1
-fg0 = "#fbf1c7"
-fg1 = "#ebdbb2"
-fg2 = "#d5c4a1"
-fg3 = "#bdae93"
-fg4 = "#a89984"
-bg = "#282828" # alias of bg0
-bg0_soft = "#32302f"
-bg0_hard = "#1d2021"
-bg0 = "#282828"
-bg1 = "#3c3836"
-bg2 = "#504945"
-bg3 = "#665c54"
-bg4 = "#7c6f64"
-red = "#cc241d"
-green = "#98971a"
-yellow = "#d79921"
-blue = "#458588"
-purple = "#b16286"
-aqua = "#689d6a"
-orange = "#d65d0e"
-bright_red = "#fb4934"
-bright_green = "#b8bb26"
-bright_yellow = "#fabd2f"
-bright_blue = "#83a598"
-bright_purple = "#d3879b"
-bright_aqua = "#8ec07c"
-bright_orange = "#fe8019"
-
-# modules to the left, remember to add an extra space to the right of them.
-[directory]
-format = "[$read_only]($read_only_style)[$path]($style) "
-read_only = " " # an extra space is appended because it would always has a space if we do it in directory.format
-style = "fg:bright_blue"
-read_only_style = "fg:bright_yellow"
-truncation_length = 3
-truncation_symbol = ".../"
-use_os_path_sep = true # OS specific path separator. e.g. "\" for Windows
-fish_style_pwd_dir_length = 1 # "~/Dev/Nix/nixpkgs/pkgs" will be "~/D/N/nixpkgs/pkgs" instead of "nixpkgs/pkgs"
-
-[git_branch]
-symbol = ""
-style = "fg:bright_green"
-format = "[$symbol  $branch ]($style)"
-
-[git_status]
-format = "($ahead_behind )($all_status )" # parentheses make them conditional strings, so that we won't end up with an extra space
-# branch status ($ahead_behind)
-ahead = "[⇡${count}](fg:bright_green)"
-behind = "[⇣${count}](fg:bright_red)"
-diverged = "[⇡${ahead_count}](fg:bright_green)[⇣${behind_count}](fg:bright_red)"
-up_to_date = ""
-# file status ($all_status)
-conflicted = "[=${count}](fg:yellow)"
-untracked = "[?${count}](fg:yellow)"
-stashed = "[\\$${count}](fg:yellow)" # "$" has to be excaped by "\$", so it becomes "\\$" in literal. the output would be "$3" if there are 3 stashes.
-modified = "[!${count}](fg:yellow)"
-staged = "[+${count}](fg:green)"
-renamed = "[»${count}](fg:yellow)"
-deleted = "[✘${count}](fg:red)"
-
-[nix_shell]
-format = "[$symbol  $state\\($name\\) ]($style)" # "(" has to be escaped by "\(", so it becomes "\\(" in literal.
-symbol = ""
-style = "fg:bright_blue"
-
-
-# module that conencts the left part and the right part
-[fill]
-symbol = "·"
-style = "fg:bg1"
-
-
-# modules to the right, remember to add an extra space to the left of them.
-# status of the previous command, not enabled in global format because it hasn't been configured properly
-[status]
-disabled = false
-format = " [$symbol$status]($style)"
-symbol = "❌"
-success_symbol = ""
-not_executable_symbol = ""
-not_found_symbol = "🔍"
-sigint_symbol = ""
-signal_symbol = ""
-
-[cmd_duration]
-min_time = 5000 # 5s
-format = "[   $duration]($style)"
-style = "fg:yellow"
-
-[os]
-style = "fg:fg3"
-format = "[ $symbol]($style)"
-disabled = false
-
-# just the OSs I use
-[os.symbols]
-Windows = "󰍲 "
-Macos = "󰀵 "
-NixOS = " "
-
-[username]
-show_always = true
-style_user = "fg:fg3"
-style_root = "fg:bright_red"
-format = "[ $user]($style)"
-
-[hostname]
-ssh_only = false
-style = "fg:fg3"
-format = "[@$hostname]($style)"
-
-[time]
-disabled = false
-time_format = "%T"
-style = "fg:blue"
-format = "[   $time]($style)"
-
-
-# second line
-[line_break]
-disabled = false
-
-# not enabled in global format
-[shell]
-disabled = false
-
-[character]
-disabled = false
-success_symbol = "[❯](bold fg:bright_green)"
-error_symbol = "[❯](bold fg:bright_red)"
-vimcmd_symbol = "[❮](bold fg:bright_green)"
-vimcmd_replace_one_symbol = "[❮](bold fg:bright_purple)"
-vimcmd_replace_symbol = "[❮](bold fg:bright_purple)"
-vimcmd_visual_symbol = "[❮](bold fg:bright_yellow)"
-
-{{ end }}
+success_symbol = "[❯](bold fg:success)"
+error_symbol = "[❯](bold fg:error)"
+vimcmd_symbol = "[❮](bold fg:success)"
+vimcmd_replace_one_symbol = "[❮](bold fg:special)"
+vimcmd_replace_symbol = "[❮](bold fg:special)"
+vimcmd_visual_symbol = "[❮](bold fg:warning)"
