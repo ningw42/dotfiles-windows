@@ -3,65 +3,68 @@
   "lines": [
     [
       {
-        "id": "1bff62c9-b9e3-405a-9702-dbb7d8b57434",
-        "type": "custom-command",
-        "color": "hex:F2CDCD",
-        "commandPath": "pwsh %USERPROFILE%/.config/ccstatusline/ccsl-model-alias.ps1",
-        "timeout": 1000
-      },
-      {
-        "id": "e5019aaf-0073-4f35-82a8-8f8f291ad44f",
-        "type": "thinking-effort",
-        "color": "hex:F2CDCD",
-        "rawValue": true
-      },
-      {
-        "id": "39623bc2-e5fb-44c6-82b5-adfba5b67b5e",
-        "type": "custom-command",
-        "color": "hex:EBA0AC",
-        "commandPath": "pwsh %USERPROFILE%/.config/ccstatusline/ccsl-context-bar.ps1",
-        "timeout": 1000
-      },
-      {
-        "id": "532891d3-1e0c-44f3-9f27-6d54030e105f",
-        "type": "custom-command",
-        "color": "hex:EBA0AC",
-        "commandPath": "pwsh %USERPROFILE%/.config/ccstatusline/ccsl-tokens-io.ps1",
-        "timeout": 1000
-      },
-      {
-        "id": "481a3bb5-dd02-43ce-8bbf-583462659e05",
-        "type": "session-cost",
-        "color": "hex:94E2D5",
-        "rawValue": true
-      }
-    ],
-    [
-      {
         "id": "975b998f-4997-4676-a258-9c762d4d2b22",
         "type": "custom-command",
         "commandPath": "starship module directory",
         "preserveColors": true,
-        "timeout": 2000
+        "timeout": 5000
       },
       {
         "id": "82e5f73b-2de9-4f82-9156-6342a77e2c3a",
         "type": "custom-command",
         "commandPath": "starship module git_branch",
         "preserveColors": true,
-        "timeout": 2000
+        "timeout": 5000
       },
       {
         "id": "bf197627-bfae-4844-a68e-550c191cc230",
         "type": "custom-command",
         "commandPath": "starship module git_status",
         "preserveColors": true,
-        "timeout": 2000
+        "timeout": 5000
+      },
+      {
+        "id": "1bff62c9-b9e3-405a-9702-dbb7d8b57435",
+        "type": "flex-separator"
+      },
+      {
+        "id": "481a3bb5-dd02-43ce-8bbf-583462659e05",
+        "type": "session-cost",
+        "color": "hex:94E2D5",
+        "rawValue": true
+      },
+      {
+        "id": "532891d3-1e0c-44f3-9f27-6d54030e105f",
+        "type": "custom-command",
+        "color": "hex:EBA0AC",
+        "commandPath": "pwsh %USERPROFILE%/.config/ccstatusline/ccsl-tokens-io.ps1",
+        "timeout": 5000
+      },
+      {
+        "id": "39623bc2-e5fb-44c6-82b5-adfba5b67b5e",
+        "type": "custom-command",
+        "color": "hex:EBA0AC",
+        "commandPath": "pwsh %USERPROFILE%/.config/ccstatusline/ccsl-context-bar.ps1",
+        "timeout": 5000
+      },
+      {
+        "id": "1bff62c9-b9e3-405a-9702-dbb7d8b57434",
+        "type": "custom-command",
+        "color": "hex:F2CDCD",
+        "commandPath": "pwsh %USERPROFILE%/.config/ccstatusline/ccsl-model-alias.ps1",
+        "timeout": 5000
+      },
+      {
+        "id": "e5019aaf-0073-4f35-82a8-8f8f291ad44f",
+        "type": "thinking-effort",
+        "color": "hex:F2CDCD",
+        "rawValue": true
       }
     ],
+    [],
     []
   ],
-  "flexMode": "full-minus-40",
+  "flexMode": "full",
   "compactThreshold": 60,
   "colorLevel": 3,
   "defaultPadding": " ",
