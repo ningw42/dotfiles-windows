@@ -80,7 +80,9 @@ return {
       -- Mirrors the upstream "helm" dialect: same parser, different queries.
       local data_site = vim.fs.joinpath(vim.fn.stdpath("data"), "site")
       local gotmpl_parser = vim.fs.joinpath(data_site, "parser", "gotmpl.so")
-      local query_base = vim.fs.joinpath(data_site, "queries")
+      -- Write dialect queries to stdpath("config") (not data/site) so that
+      -- nvim-treesitter's updater doesn't discover them as installed parsers.
+      local query_base = vim.fs.joinpath(vim.fn.stdpath("config"), "queries")
       local registered_dialects = {}
 
       local function register_gotmpl_dialect(lang)
@@ -98,11 +100,11 @@ return {
         -- Create query dir with `; inherits: gotmpl` so that treesitter's
         -- native query resolution handles after/queries, extends, and
         -- runtimepath precedence automatically.
-        local dir = query_base .. "/" .. dialect
+        local dir = vim.fs.joinpath(query_base, dialect)
         vim.fn.mkdir(dir, "p")
 
         local function write_query(name, extra)
-          local f = io.open(dir .. "/" .. name .. ".scm", "w")
+          local f = io.open(vim.fs.joinpath(dir, name .. ".scm"), "w")
           if not f then return end
           f:write("; inherits: gotmpl\n")
           if extra then f:write("\n" .. extra) end
