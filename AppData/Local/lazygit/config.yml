@@ -12,18 +12,28 @@ gui:
   # Config relating to the spinner.
   spinner:
     # The frames of the spinner animation.
-    frames: # dots14
-      - "⠉⠉"
-      - "⠈⠙"
-      - "⠀⠹"
-      - "⠀⢸"
-      - "⠀⣰"
-      - "⢀⣠"
-      - "⣀⣀"
-      - "⣄⡀"
-      - "⣆⠀"
-      - "⡇⠀"
-      - "⠏⠀"
+    frames:
+      # see https://spectreconsole.net/console/reference/spinner-reference
+      # point
+      - "∙∙∙∙∙"
+      - "●∙∙∙∙"
+      - "∙●∙∙∙"
+      - "∙∙●∙∙"
+      - "∙∙∙●∙"
+      - "∙∙∙∙●"
+      - "∙∙∙∙∙"
+      # dots14
+      # - "⠉⠉"
+      # - "⠈⠙"
+      # - "⠀⠹"
+      # - "⠀⢸"
+      # - "⠀⣰"
+      # - "⢀⣠"
+      # - "⣀⣀"
+      # - "⣄⡀"
+      # - "⣆⠀"
+      # - "⡇⠀"
+      # - "⠏⠀"
     # The "speed" of the spinner in milliseconds.
     rate: 80
 # Config relating to git
