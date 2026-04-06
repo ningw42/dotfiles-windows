@@ -1,6 +1,10 @@
 # Config relating to the Lazygit UI
 gui:
   language: en
+  timeFormat: 2006-01-02 15:04:05 -07:00
+  shortTimeFormat: 15:04:05
+  showNumstatInFilesView: true
+  filterMode: fuzzy
   # Nerd fonts version to use.
   # One of: '2' | '3' | empty string (default)
   # If empty, do not show icons.
@@ -24,6 +28,9 @@ gui:
     rate: 80
 # Config relating to git
 git:
+  branchLogCmd: "git log --graph --color=always --abbrev-commit --decorate --date='format:%Y-%m-%d %H:%M:%S %z' --pretty=medium {{branchName}} --"
+  allBranchesLogCmds:
+    - "git log --graph --all --color=always --abbrev-commit --decorate --date='format:%Y-%m-%d %H:%M:%S %z' --pretty=medium"
   # See https://github.com/jesseduffield/lazygit/blob/master/docs/Custom_Pagers.md
   pagers:
     - pager: "delta --dark --paging=never"
