@@ -165,7 +165,7 @@ return {
       {
         "<leader>te", -- te, toggle explorer
         function()
-          require("neo-tree.command").execute({ toggle = true })
+          require("neo-tree.command").execute({ toggle = true, reveal = true })
         end,
         desc = "Toggle NeoTree",
       },
@@ -192,6 +192,7 @@ return {
           },
         },
         filesystem = {
+          follow_current_file = { enabled = true },
           -- show dotfiles but not .git directory
           filtered_items = {
             hide_dotfiles = false,
