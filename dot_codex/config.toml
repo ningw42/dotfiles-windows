@@ -1,0 +1,43 @@
+model = "gpt-5.4"
+model_provider = "litellm"
+model_context_window = 353346
+model_reasoning_effort = "xhigh"
+
+[model_providers.agent-maestro]
+name = "Agent Maestro"
+base_url = "http://localhost:23333/api/openai/v1/"
+wire_api = "responses"
+stream_idle_timeout_ms = 600000
+
+[model_providers.router-maestro]
+name = "Router Maestro"
+base_url = "https://router-maestro.ningw.net/api/openai/v1/"
+env_key = "CODEX_API_KEY"
+wire_api = "responses"
+stream_idle_timeout_ms = 600000
+
+[model_providers.litellm]
+name = "LiteLLM"
+base_url = "https://litellm.ningw.net/openai/v1/"
+env_key = "CODEX_API_KEY"
+wire_api = "responses"
+stream_idle_timeout_ms = 600000
+
+[projects.'\\?\C:\Users\ningw\GitHub\Hypersonic']
+trust_level = "trusted"
+
+[projects.'\\?\C:\Users\ningw\.local\share\chezmoi']
+trust_level = "trusted"
+
+# [windows]
+# sandbox = "elevated"
+
+[tui]
+status_line = ["model-with-reasoning", "current-dir", "project-root", "git-branch", "context-used"]
+
+[notice.model_migrations]
+"gpt-5.3-codex" = "gpt-5.4"
+
+[windows]
+sandbox = "elevated"
+

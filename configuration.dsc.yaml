@@ -164,6 +164,22 @@ properties:
         GetScript: |
           @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\lazygit\current") { 'Installed' } else { 'NotInstalled' } }
 
+    # age encryption (from extras bucket, required by chezmoi for secret management)
+    - resource: PSDscResources/Script
+      id: ScoopAge
+      dependsOn:
+        - ScoopBucketExtras
+      directives:
+        description: "Install age encryption via Scoop (extras bucket)"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          Test-Path "$env:USERPROFILE\scoop\apps\age\current"
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install age
+        GetScript: |
+          @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\age\current") { 'Installed' } else { 'NotInstalled' } }
+
     # ============================================================
     # WinGet GUI Apps
     # ============================================================

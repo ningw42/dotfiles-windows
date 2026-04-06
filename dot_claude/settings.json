@@ -1,0 +1,48 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://litellm.ningw.net",
+    "ANTHROPIC_MODEL": "claude-opus-4.6-1m",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-4.6-1m",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4.6",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4.5",
+    "DISABLE_AUTOUPDATER": "1",
+    "DISABLE_INSTALLATION_CHECKS": "1",
+    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "CLAUDE_CODE_NO_FLICKER": "1"
+  },
+  "model": "opus[1m]",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$json = [Console]::In.ReadToEnd() | ConvertFrom-Json; Import-Module BurntToast; New-BurntToastNotification -Text 'Claude Code', 'Claude has a question for you' -AppLogo \"$HOME\\.claude\\logo.svg\"",
+            "shell": "powershell",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$json = [Console]::In.ReadToEnd() | ConvertFrom-Json; Import-Module BurntToast; New-BurntToastNotification -Text $json.title, $json.message -AppLogo \"$HOME\\.claude\\logo.svg\"",
+            "shell": "powershell",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0
+  },
+  "effortLevel": "high"
+}

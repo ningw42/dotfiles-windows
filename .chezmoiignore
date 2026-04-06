@@ -1,3 +1,5 @@
 README.md
 configuration.dsc.yaml
 update_externals.py
+secrets.yaml
+.secrets.yaml.age
