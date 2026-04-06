@@ -43,12 +43,11 @@
 [gpg]
   format = ssh
 
-{{ if eq .password_manager "bitwarden" }}
 [gpg "ssh"]
+{{ if eq .password_manager "bitwarden" }}
   program = "C:/Windows/System32/OpenSSH/ssh-keygen.exe"
 {{ end }}
 {{ if eq .password_manager "1password" }}
-[gpg "ssh"]
   program = "{{ env "LOCALAPPDATA" | replace "\\" "/" }}/Microsoft/WindowsApps/op-ssh-sign.exe"
 {{ end }}
 
