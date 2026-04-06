@@ -20,7 +20,8 @@
   dark = true      # or light = true, or omit for auto-detection
 {{ if eq .colorscheme "gruvbox-dark" }}
   features = gruvmax-fang
-{{ else if hasPrefix "catppuccin-" .colorscheme }}
+{{ end}}
+{{ if hasPrefix "catppuccin-" .colorscheme }}
   features = {{ .colorscheme }}
 {{ end }}
 
@@ -42,8 +43,14 @@
 [gpg]
   format = ssh
 
+{{ if eq .password_manager "bitwarden" }}
+[gpg "ssh"]
+  program = "C:/Windows/System32/OpenSSH/ssh-keygen.exe"
+{{ end }}
+{{ if eq .password_manager "1password" }}
 [gpg "ssh"]
   program = "{{ env "LOCALAPPDATA" | replace "\\" "/" }}/Microsoft/WindowsApps/op-ssh-sign.exe"
+{{ end }}
 
 [commit]
   gpgsign = true

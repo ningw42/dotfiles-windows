@@ -1,16 +1,11 @@
+{{- $password_manager := promptStringOnce . "password_manager" "password manager in use" -}}
 {{- $git_username := promptStringOnce . "git_username" "git user name" -}}
 {{- $git_useremail := promptStringOnce . "git_useremail" "git email address" -}}
 {{- $git_signingkey := promptStringOnce . "git_signingkey" "git signing key" -}}
 
 [data]
-  # colorscheme = "gruvbox-dark"
-  # colorscheme = "catppuccin-latte"
-  # colorscheme = "catppuccin-frappe"
-  # colorscheme = "catppuccin-macchiato"
   colorscheme = "catppuccin-mocha"
-  # colorscheme = "everforest-dark"
-  # colorscheme = "rose-pine-moon"
-  # colorscheme = "rose-pine"
+  password_manager = {{ $password_manager | quote }}
   git_username = {{ $git_username | quote }}
   git_useremail = {{ $git_useremail | quote }}
   git_signingkey = {{ $git_signingkey | quote }}
