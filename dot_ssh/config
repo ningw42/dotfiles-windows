@@ -1,0 +1,23 @@
+ForwardAgent yes
+IdentityAgent \\\\.\\pipe\\openssh-ssh-agent
+
+Host kumiko
+  HostName 192.168.2.2
+  User ning
+
+Host yuki
+  HostName 192.168.2.6
+  User ning
+
+Host mizore
+  HostName 192.168.2.8
+  User ning
+
+Host nozomi
+  HostName nozomi.ningwang.me
+  User ning
+
+Host github.com
+  Hostname ssh.github.com
+  Port 443
+  User git
