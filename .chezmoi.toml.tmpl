@@ -1,10 +1,15 @@
-{{- $password_manager := promptStringOnce . "password_manager" "password manager in use" -}}
+{{- $colorscheme_choices := list "catppuccin-latte" "catppuccin-frappe" "catppuccin-macchiato" "catppuccin-mocha" "gruvbox-dark" -}}
+{{- $colorscheme := promptChoiceOnce . "colorscheme" "colorscheme to use" $colorscheme_choices -}}
+
+{{- $password_manager_choices := list "1password" "bitwarden" -}}
+{{- $password_manager := promptChoiceOnce . "password_manager" "password manager in use" $password_manager_choices -}}
+
 {{- $git_username := promptStringOnce . "git_username" "git user name" -}}
 {{- $git_useremail := promptStringOnce . "git_useremail" "git email address" -}}
 {{- $git_signingkey := promptStringOnce . "git_signingkey" "git signing key" -}}
 
 [data]
-  colorscheme = "catppuccin-mocha"
+  colorscheme = {{ $colorscheme | quote }}
   password_manager = {{ $password_manager | quote }}
   git_username = {{ $git_username | quote }}
   git_useremail = {{ $git_useremail | quote }}
