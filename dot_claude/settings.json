@@ -1,6 +1,6 @@
 {
   "env": {
-    "ANTHROPIC_BASE_URL": "https://litellm.ningw.net",
+    "ANTHROPIC_BASE_URL": "https://router-maestro.ningw.net/api/anthropic",
     "ANTHROPIC_MODEL": "claude-opus-4.6-1m",
     "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-4.6-1m",
     "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4.6",
