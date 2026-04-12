@@ -8,6 +8,9 @@
 {{- $git_useremail := promptStringOnce . "git_useremail" "git email address" -}}
 {{- $git_signingkey := promptStringOnce . "git_signingkey" "git signing key" -}}
 
+{{- $starship_title_choices := list "true" "false" -}}
+{{- $starship_title := promptChoiceOnce . "starship_title" "use starship to render tab title (slower but matches prompt)" $starship_title_choices -}}
+
 encryption = "age"
 
 [age]
@@ -20,3 +23,4 @@ encryption = "age"
   git_username = {{ $git_username | quote }}
   git_useremail = {{ $git_useremail | quote }}
   git_signingkey = {{ $git_signingkey | quote }}
+  starship_title = {{ $starship_title | quote }}
