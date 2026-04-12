@@ -44,5 +44,10 @@
     "command": "npx -y ccstatusline@latest",
     "padding": 0
   },
-  "effortLevel": "high"
+  "effortLevel": "high",
+  "permissions": {
+    "deny": [
+      "WebSearch"
+    ]
+  }
 }
