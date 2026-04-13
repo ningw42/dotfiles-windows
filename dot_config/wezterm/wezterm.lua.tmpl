@@ -644,15 +644,7 @@ wezterm.on('format-tab-title', function(tab, tabs, panes, cfg, hover, max_width)
     end
   end
 
-  -- Pad short titles so tabs don't get too narrow
-  local min_width = 10
-  local padding = min_width - #title
-  if padding > 0 then
-    local left = math.floor(padding / 2)
-    title = string.rep(' ', left) .. title .. string.rep(' ', padding - left)
-  end
-
-  return title
+  return '  ' .. title .. '  '
 end)
 
 -- WezTerm reads ssh configuration
