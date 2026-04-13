@@ -130,7 +130,7 @@ prepend_previewers = [
   # glow to preview markdown
   { url = "*/", run = 'piper -- eza --tree --level=3 --color=always --icons=always --group-directories-first --no-quotes "$1"' },
   # eza to preview directory
-  { url = "*.md", run = 'piper -- CLICOLOR_FORCE=1 COLORTERM=truecolor glow -w=$w --style ~/.config/glow/style.json "$1"' },
+  { url = "*.md", run = 'piper -- CLICOLOR_FORCE=1 COLORTERM=truecolor glow -w=$w --style {{ if hasPrefix "catppuccin-" .colorscheme }}"{{ env "LOCALAPPDATA" | replace "\\" "/" }}/glow/Config/{{ .colorscheme }}.json"{{ else }}"auto"{{ end }} "$1"' },
   # bat to preview csv
   { mime = "text/csv", run = 'piper -- bat -p --color=always "$1"' },
 
