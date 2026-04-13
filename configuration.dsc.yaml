@@ -43,23 +43,23 @@ properties:
     # Scoop CLI Tools
     # ============================================================
 
-    # Core tools: git, chezmoi
+    # Core tools: aria2, git, chezmoi
     - resource: PSDscResources/Script
       id: ScoopCoreTools
       dependsOn:
         - ScoopBootstrap
       directives:
-        description: "Install core CLI tools via Scoop: git, chezmoi"
+        description: "Install core CLI tools via Scoop: aria2, git, chezmoi"
         allowPrerelease: true
       settings:
         TestScript: |
-          $apps = @('git', 'chezmoi')
+          $apps = @('aria2', 'git', 'chezmoi')
           $scoopApps = "$env:USERPROFILE\scoop\apps"
           @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
         SetScript: |
-          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install git chezmoi
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install aria2 git chezmoi
         GetScript: |
-          $apps = @('git', 'chezmoi')
+          $apps = @('aria2', 'git', 'chezmoi')
           $scoopApps = "$env:USERPROFILE\scoop\apps"
           $allInstalled = @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
           @{ Result = if ($allInstalled) { 'Installed' } else { 'NotInstalled' } }
