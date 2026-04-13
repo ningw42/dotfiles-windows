@@ -13,7 +13,7 @@ from pathlib import Path
 PAIR_RE = re.compile(
     r'(?P<url_prefix>\s*url\s*=\s*")'
     r'(?P<url>[^"]+)'
-    r'(?P<url_suffix>")\n'
+    r'(?P<url_suffix>")(?:\n\s+[^\n]*)*\n'
     r'(?P<hash_prefix>\s*checksum\.sha256\s*=\s*")'
     r'(?P<hash>[0-9a-fA-F]{64})'
     r'(?P<hash_suffix>")',
