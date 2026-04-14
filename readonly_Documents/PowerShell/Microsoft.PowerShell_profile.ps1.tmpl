@@ -1,5 +1,4 @@
 #region Environment Variables
-{{- $secrets := include ".secrets.yaml.age" | decrypt | fromYaml }}
 
 # yazi: file(1) executable
 # see https://yazi-rs.github.io/docs/installation#windows
@@ -17,11 +16,18 @@ $Env:BAT_CONFIG_DIR = "$Env:USERPROFILE\.config\bat"
 # lazygit config
 $Env:LG_CONFIG_FILE = "$Env:LOCALAPPDATA\lazygit\config.yml,$Env:LOCALAPPDATA\lazygit\{{ .colorscheme }}-blue.yml";
 
-# claude: auth token for LiteLLM proxy
-$Env:ANTHROPIC_AUTH_TOKEN = "{{ $secrets.anthropic_auth_token }}"
-
-# codex: API key for LiteLLM / Router Maestro providers
-$Env:CODEX_API_KEY = "{{ $secrets.codex_api_key }}"
+# claude: prefer Router-Maestro over LiteLLM
+{{ if eq .password_manager "bitwarden" -}}
+$Env:ANTHROPIC_AUTH_TOKEN = "{{ (bitwarden "item" "RouterMaestroAPIKey").login.password }}"
+{{ else if eq .password_manager "1password" -}}
+$Env:ANTHROPIC_AUTH_TOKEN = "{{ onepasswordRead "op://Private/RouterMaestroAPIKey/password" }}"
+{{ end }}
+# codex: prefer LiteLLM over Router-Maestro
+{{ if eq .password_manager "bitwarden" -}}
+$Env:CODEX_API_KEY = "{{ (bitwarden "item" "LiteLLMMasterKey").login.password }}"
+{{ else if eq .password_manager "1password" -}}
+$Env:CODEX_API_KEY = "{{ onepasswordRead "op://Private/LiteLLMMasterKey/password" }}"
+{{ end -}}
 #endregion Environment Variables
 
 
