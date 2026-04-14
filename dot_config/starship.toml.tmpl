@@ -2,8 +2,7 @@
 
 format = """
 ($directory )\
-($git_branch)\
-($git_status )\
+($git_branch ($git_status))\
 ($nix_shell )\
 $fill\
 ( $cmd_duration)\
@@ -35,7 +34,7 @@ format = "[$symbol $branch]($style)"
 
 [git_status]
 # parentheses make them conditional strings, so that we won't end up with an extra space
-format = "( $ahead_behind)( $conflicted)( $stashed)( $deleted)( $renamed)( $modified)( $typechanged)( $staged)( $untracked)"
+format = "($ahead_behind )($conflicted )($stashed )($deleted )($renamed )($modified )($typechanged )($staged )($untracked )"
 # branch status ($ahead_behind)
 ahead = "[⇡${count}](fg:green)"
 behind = "[⇣${count}](fg:red)"
