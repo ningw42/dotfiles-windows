@@ -90,21 +90,10 @@ function Invoke-Starship-PreCommand {
         # OSC 7: current working directory
         $osc7 = "${esc}]7;file://${env:COMPUTERNAME}/${providerPath}${esc}\"
         # OSC 2: tab title
-{{ if and (hasKey . "starship_title") (eq .starship_title "true") }}
         # Use starship's directory module for fish-style truncated paths
         $title = (starship module directory 2>$null) -replace "`e\[[0-9;]*m", ""
         $title = $title.Trim()
         if (-not $title) { $title = $loc.ProviderPath }
-{{ else }}
-        # Simple home-to-~ substitution (zero overhead)
-        $title = $loc.ProviderPath
-        $homeDir = $env:USERPROFILE
-        if ($title -eq $homeDir) {
-            $title = "~"
-        } elseif ($title.StartsWith("${homeDir}\")) {
-            $title = "~\" + $title.Substring($homeDir.Length + 1)
-        }
-{{ end }}
         $osc2 = "${esc}]2;${title}${esc}\"
         $host.ui.Write("${osc7}${osc2}")
     }
