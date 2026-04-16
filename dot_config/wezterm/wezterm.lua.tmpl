@@ -652,7 +652,10 @@ config.ssh_backend = 'Ssh2'
 config.default_ssh_auth_sock = "\\\\.\\pipe\\openssh-ssh-agent"
 
 -- to match main monitor's refresh rate
-config.max_fps = 240
+config.max_fps = 120
+
+-- scrollbar
+config.enable_scroll_bar = true
 
 -- and finally, return the configuration to wezterm
 return config
