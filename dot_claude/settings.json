@@ -46,6 +46,7 @@
   },
   "effortLevel": "high",
   "skipAutoPermissionPrompt": true,
+  "skipDangerousModePermissionPrompt": true,
   "permissions": {
     "deny": [
       "WebSearch"
