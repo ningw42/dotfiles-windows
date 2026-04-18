@@ -55,11 +55,12 @@
             "antialiasingMode": "cleartype",
             "colorScheme": "Catppuccin Mocha",
             "cursorShape": "filledBox",
+            "intenseTextStyle": "bold",
             "font":
             {
                 "builtinGlyphs": true,
                 "colorGlyphs": true,
-                "face": "'Berkeley Mono Retina', 'Symbols Nerd Font Berkeley Mono', 'Sarasa Fixed SC'",
+                "face": "'Berkeley Mono', 'Symbols Nerd Font Berkeley Mono', 'Sarasa Fixed SC'",
                 "features": {
                     "ss02": 1
                 },
