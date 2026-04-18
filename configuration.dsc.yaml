@@ -164,6 +164,22 @@ properties:
         GetScript: |
           @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\lazygit\current") { 'Installed' } else { 'NotInstalled' } }
 
+    # moor pager (from extras bucket, used as $PAGER in PowerShell profile)
+    - resource: PSDscResources/Script
+      id: ScoopMoor
+      dependsOn:
+        - ScoopBucketExtras
+      directives:
+        description: "Install moor pager via Scoop (extras bucket)"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          Test-Path "$env:USERPROFILE\scoop\apps\moor\current"
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install moor
+        GetScript: |
+          @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\moor\current") { 'Installed' } else { 'NotInstalled' } }
+
     # age encryption (from extras bucket, required by chezmoi for secret management)
     - resource: PSDscResources/Script
       id: ScoopAge
