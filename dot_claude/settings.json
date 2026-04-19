@@ -12,6 +12,12 @@
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
     "CLAUDE_CODE_NO_FLICKER": "1"
   },
+  "permissions": {
+    "deny": [
+      "WebSearch"
+    ],
+    "defaultMode": "auto"
+  },
   "model": "claude-opus-4-6[1m]",
   "hooks": {
     "PreToolUse": [
@@ -45,13 +51,18 @@
     "command": "npx -y ccstatusline@latest",
     "padding": 0
   },
+  "extraKnownMarketplaces": {
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
+      }
+    }
+  },
   "effortLevel": "high",
-  "skipAutoPermissionPrompt": true,
   "skipDangerousModePermissionPrompt": true,
-  "permissions": {
-    "deny": [
-      "WebSearch"
-    ],
-    "defaultMode": "auto"
+  "skipAutoPermissionPrompt": true,
+  "enabledPlugins": {
+    "codex@openai-codex": true
   }
 }
