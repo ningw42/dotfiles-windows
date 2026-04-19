@@ -110,6 +110,10 @@ function Invoke-Starship-PreCommand {
 }
 #endregion Terminal Title
 
+# Skip interactive bits if it's a Codex session
+if ($env:CODEX_SANDBOX -ne $null) {
+    return
+}
 
 # This is recommended to be the last expression in $PROFILE
 Invoke-Expression (&starship init powershell)
