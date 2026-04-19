@@ -88,6 +88,13 @@ Function cc
 
 #endregion Functions
 
+# Codex shells do not always populate CODEX_SANDBOX, but they do expose
+# other Codex-specific variables. Skip interactive shell integrations there.
+$IsCodexSession = (
+    -not [string]::IsNullOrWhiteSpace($env:CODEX_SANDBOX) -or
+    -not [string]::IsNullOrWhiteSpace($env:CODEX_THREAD_ID) -or
+    -not [string]::IsNullOrWhiteSpace($env:CODEX_SANDBOX_NETWORK_DISABLED)
+)
 
 #region Terminal Title
 # Starship calls this before each prompt render.
@@ -111,7 +118,7 @@ function Invoke-Starship-PreCommand {
 #endregion Terminal Title
 
 # Skip interactive bits if it's a Codex session
-if ($env:CODEX_SANDBOX -ne $null) {
+if ($IsCodexSession) {
     return
 }
 
