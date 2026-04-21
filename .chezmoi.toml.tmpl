@@ -1,6 +1,10 @@
 {{- $colorscheme_choices := list "catppuccin-latte" "catppuccin-frappe" "catppuccin-macchiato" "catppuccin-mocha" "gruvbox-dark" -}}
 {{- $colorscheme := promptChoiceOnce . "colorscheme" "colorscheme to use" $colorscheme_choices -}}
 
+{{- $provider_choices := list "litellm" "router-maestro" -}}
+{{- $codex_provider := promptChoiceOnce . "codex_provider" "LLM provider for Codex" $provider_choices -}}
+{{- $claude_code_provider := promptChoiceOnce . "claude_code_provider" "LLM provider for Claude Code" $provider_choices -}}
+
 {{- $password_manager_choices := list "1password" "bitwarden" -}}
 {{- $password_manager := promptChoiceOnce . "password_manager" "password manager in use" $password_manager_choices -}}
 
@@ -19,6 +23,8 @@
   password_manager = {{ $password_manager | quote }}
   git_username = {{ $git_username | quote }}
   git_useremail = {{ $git_useremail | quote }}
+  codex_provider = {{ $codex_provider | quote }}
+  claude_code_provider = {{ $claude_code_provider | quote }}
   git_signingkey = {{ $git_signingkey | quote }}
 
 [diff]
