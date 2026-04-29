@@ -1,0 +1,7 @@
+{{ if eq .chezmoi.os "windows" -}}
+{{- $secrets := include "secrets.yaml.age" | decrypt | fromYaml -}}
+# Set persistent user-level environment variables so GUI/desktop apps can access them.
+# hash: {{ $secrets.codex_api_key | sha256sum }}
+
+[Environment]::SetEnvironmentVariable("CODEX_API_KEY", "{{ $secrets.codex_api_key }}", "User")
+{{ end -}}
