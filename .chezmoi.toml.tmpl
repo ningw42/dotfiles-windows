@@ -12,12 +12,12 @@
 {{- $git_useremail := promptStringOnce . "git_useremail" "git email address" -}}
 {{- $git_signingkey := promptStringOnce . "git_signingkey" "git signing key" -}}
 
+encryption = "age"
 
-{{ if eq $password_manager "bitwarden" -}}
-[bitwarden]
-  unlock = "auto"
+[age]
+  identity = "~/.config/chezmoi/key.txt"
+  recipient = "age1chwluerpyq4p9e340eeqatgm70939x769h7teh3tmr09f564hpyqdz2urt"
 
-{{ end -}}
 [data]
   colorscheme = {{ $colorscheme | quote }}
   password_manager = {{ $password_manager | quote }}

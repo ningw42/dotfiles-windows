@@ -1,3 +1,5 @@
+{{- $secrets := include "secrets.yaml.age" | decrypt | fromYaml }}
+
 #region Environment Variables
 
 # yazi: file(1) executable
@@ -20,18 +22,11 @@ $Env:MOOR = "--no-linenumbers --statusbar=bold --tab-size=2 --style=catppuccin-m
 # lazygit config
 $Env:LG_CONFIG_FILE = "$Env:LOCALAPPDATA\lazygit\config.yml,$Env:LOCALAPPDATA\lazygit\{{ .colorscheme }}-blue.yml";
 
-# claude: prefer Router-Maestro over LiteLLM
-{{ if eq .password_manager "bitwarden" -}}
-$Env:ANTHROPIC_AUTH_TOKEN = "{{ (bitwarden "item" "RouterMaestroAPIKey").login.password }}"
-{{ else if eq .password_manager "1password" -}}
-$Env:ANTHROPIC_AUTH_TOKEN = "{{ onepasswordRead "op://Private/RouterMaestroAPIKey/credential" }}"
-{{ end }}
-# codex: prefer LiteLLM over Router-Maestro
-{{ if eq .password_manager "bitwarden" -}}
-$Env:CODEX_API_KEY = "{{ (bitwarden "item" "LiteLLMMasterKey").login.password }}"
-{{ else if eq .password_manager "1password" -}}
-$Env:CODEX_API_KEY = "{{ onepasswordRead "op://Private/LiteLLMMasterKey/credential" }}"
-{{ end -}}
+# claude: auth token for Router Maestro
+$Env:ANTHROPIC_AUTH_TOKEN = "{{ $secrets.anthropic_auth_token }}"
+
+# codex: API key for LiteLLM / Router Maestro providers
+$Env:CODEX_API_KEY = "{{ $secrets.codex_api_key }}"
 #endregion Environment Variables
 
 
