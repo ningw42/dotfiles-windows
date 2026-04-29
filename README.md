@@ -57,3 +57,19 @@ git config is a template to redact personal information from the public copy. Wh
 ### Template
 
 chezmoi's [template](https://www.chezmoi.io/user-guide/manage-machine-to-machine-differences/) enables machine specific config by realizing a template with machine specific parameters managed by chezmoi. You will be asked for those machine specific parameters upon `chezmoi init`. After that, they are stored in chezmoi's configuration (`~\.config\chezmoi\chezmoi.toml`). Interestingly, chezmoi's configuration is also generated from a special template `.chezmoi.toml.tmpl`.
+
+### Secrets
+
+Secrets are managed with [age](https://github.com/FiloSottile/age) encryption. The encrypted blob `secrets.yaml.age` is committed to the repo. On `chezmoi apply`, it is decrypted using the age private key at `~/.config/chezmoi/key.txt`.
+
+> **Note:** [SOPS](https://github.com/getsops/sops) would be preferable here (it encrypts only values, keeping YAML keys readable for meaningful diffs), but chezmoi does not have native SOPS support ([feature request](https://github.com/twpayne/chezmoi/issues/3823)).
+
+The plaintext `secrets.yaml` is gitignored and should never be committed.
+
+```bash
+# decrypt
+age -d -i ~/.config/chezmoi/key.txt -o secrets.yaml secrets.yaml.age
+
+# encrypt (after editing secrets.yaml)
+age -e -r age1chwluerpyq4p9e340eeqatgm70939x769h7teh3tmr09f564hpyqdz2urt -o secrets.yaml.age secrets.yaml
+```
