@@ -196,6 +196,26 @@ properties:
         GetScript: |
           @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\age\current") { 'Installed' } else { 'NotInstalled' } }
 
+    # rtk (Rust Token Killer) — CLI proxy that compresses dev-command
+    # output before it reaches an LLM. Native Windows uses CLAUDE.md /
+    # AGENTS.md injection (no auto-rewrite hook), so the agent must
+    # manually prefix commands with `rtk`. See dot_claude/RTK.md and
+    # dot_codex/RTK.md for the awareness instructions.
+    - resource: PSDscResources/Script
+      id: ScoopRtk
+      dependsOn:
+        - ScoopBootstrap
+      directives:
+        description: "Install rtk CLI proxy via Scoop"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          Test-Path "$env:USERPROFILE\scoop\apps\rtk\current"
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install rtk
+        GetScript: |
+          @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\rtk\current") { 'Installed' } else { 'NotInstalled' } }
+
     # ============================================================
     # WinGet GUI Apps
     # ============================================================

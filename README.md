@@ -59,3 +59,4 @@ Many components pull colorscheme themes via [chezmoi externals](https://www.chez
 | Script | Trigger | Purpose |
 | :--- | :--- | :--- |
 | `.chezmoiscripts/run_onchange_windows-env.ps1.tmpl` | Secret value changes | Sets `CODEX_API_KEY` as a persistent user-level env var for GUI apps |
+| `.chezmoiscripts/run_onchange_rtk-init.ps1.tmpl` | rtk version changes | Regenerates `~/.claude/{CLAUDE,RTK}.md` and `~/.codex/{AGENTS,RTK}.md` via `rtk init` (rtk owns these files) |

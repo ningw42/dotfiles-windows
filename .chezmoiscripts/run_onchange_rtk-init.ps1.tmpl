@@ -1,0 +1,15 @@
+{{ if eq .chezmoi.os "windows" -}}
+# Regenerate rtk's RTK.md / CLAUDE.md / AGENTS.md awareness files.
+# Re-runs only when the rtk binary version changes, since rtk owns the
+# canonical content of these files (rtk init writes them).
+#
+# rtk version: {{ output "rtk" "--version" | trim }}
+
+# Claude Code: writes ~/.claude/RTK.md and adds @RTK.md to ~/.claude/CLAUDE.md.
+# --no-patch skips settings.json patching so chezmoi keeps ownership of it
+# (the rtk PreToolUse hook is wired in dot_claude/settings.json.tmpl).
+& rtk init -g --no-patch | Out-Null
+
+# Codex: writes ~/.codex/RTK.md and adds @RTK.md to ~/.codex/AGENTS.md.
+& rtk init -g --codex | Out-Null
+{{ end -}}
