@@ -49,10 +49,9 @@
       },
       {
         "id": "1bff62c9-b9e3-405a-9702-dbb7d8b57434",
-        "type": "custom-command",
+        "type": "model",
         "color": "hex:F2CDCD",
-        "commandPath": "pwsh %USERPROFILE%/.config/ccstatusline/ccsl-model-alias.ps1",
-        "timeout": 5000
+        "rawValue": true
       },
       {
         "id": "e5019aaf-0073-4f35-82a8-8f8f291ad44f",
