@@ -2,6 +2,7 @@ model = "gpt-5.5"
 model_provider = "{{ .codex_provider }}"
 model_context_window = 353346
 model_reasoning_effort = "xhigh"
+suppress_unstable_features_warning = true
 
 [model_providers.agent-maestro]
 name = "Agent Maestro"
@@ -38,3 +39,5 @@ status_line = ["model-with-reasoning", "current-dir", "project-root", "git-branc
 [windows]
 sandbox = "elevated"
 
+[features]
+goals = true
