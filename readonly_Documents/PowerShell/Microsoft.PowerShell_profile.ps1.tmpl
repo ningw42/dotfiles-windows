@@ -117,6 +117,9 @@ if ($IsCodexSession) {
     return
 }
 
+# Make PowerShell's autocompletion bash-like
+Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
+
 # This is recommended to be the last expression in $PROFILE
 Invoke-Expression (&starship init powershell)
 
