@@ -3,6 +3,7 @@ model_provider = "{{ .codex_provider }}"
 model_context_window = 353346
 model_reasoning_effort = "xhigh"
 suppress_unstable_features_warning = true
+approvals_reviewer = "guardian_subagent"
 
 [model_providers.agent-maestro]
 name = "Agent Maestro"
@@ -33,6 +34,9 @@ trust_level = "trusted"
 [tui]
 status_line = ["model-with-reasoning", "current-dir", "project-root", "git-branch", "context-used"]
 
+[tui.model_availability_nux]
+"gpt-5.5" = 1
+
 [notice.model_migrations]
 "gpt-5.3-codex" = "gpt-5.4"
 
@@ -41,3 +45,15 @@ sandbox = "elevated"
 
 [features]
 goals = true
+
+[mcp_servers.brave-search]
+url = "https://brave-search-mcp.ningw.net/mcp"
+
+[marketplaces.openai-bundled]
+last_updated = "2026-05-09T00:53:03Z"
+source_type = "local"
+source = '\\?\C:\Users\ningw\.codex\.tmp\bundled-marketplaces\openai-bundled'
+
+[plugins."browser-use@openai-bundled"]
+enabled = true
+
