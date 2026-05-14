@@ -39,15 +39,16 @@ gui:
     rate: 80
 # Config relating to git
 git:
-  branchLogCmd: "git log --graph --color=always --abbrev-commit --decorate --date='format:%Y-%m-%d %H:%M:%S %z' --pretty=medium {{branchName}} --"
+  branchLogCmd: "git log --graph --color=always --abbrev-commit --decorate --date='format:%Y-%m-%d %H:%M:%S %z' --pretty=medium {{ `{{branchName}}` }} --"
   allBranchesLogCmds:
     - "git log --graph --all --color=always --abbrev-commit --decorate --date='format:%Y-%m-%d %H:%M:%S %z' --pretty=medium"
   # See https://github.com/jesseduffield/lazygit/blob/master/docs/Custom_Pagers.md
   pagers:
-    - pager: "delta --dark --paging=never"
+    - externalDiffCommand: "{{ .chezmoi.homeDir }}/AppData/Local/lazygit/diff.bat"
+    - externalDiffCommand: "difft --color=always --display=inline --syntax-highlight=off"
 # Config relating to things outside of Lazygit like how files are opened, copying to clipboard, etc
 os:
-  # Command for editing a file. Should contain "{{filename}}".
-  edit: "nvim {{filename}}"
+  # Command for editing a file. Should contain "{{ `{{filename}}` }}".
+  edit: "nvim {{ `{{filename}}` }}"
 # If true, display a confirmation when subprocess terminates. This allows you to view the output of the subprocess before returning to Lazygit.
 promptToReturnFromSubprocess: false

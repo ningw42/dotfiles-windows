@@ -133,17 +133,17 @@ properties:
       dependsOn:
         - ScoopBootstrap
       directives:
-        description: "Install shell and git tools via Scoop: starship, bat, delta, less, gitui, fastfetch"
+        description: "Install shell and git tools via Scoop: starship, bat, delta, difftastic, less, gitui, fastfetch"
         allowPrerelease: true
       settings:
         TestScript: |
-          $apps = @('starship', 'bat', 'delta', 'less', 'gitui', 'fastfetch')
+          $apps = @('starship', 'bat', 'delta', 'difftastic', 'less', 'gitui', 'fastfetch')
           $scoopApps = "$env:USERPROFILE\scoop\apps"
           @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
         SetScript: |
-          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install starship bat delta less gitui fastfetch
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install starship bat delta difftastic less gitui fastfetch
         GetScript: |
-          $apps = @('starship', 'bat', 'delta', 'less', 'gitui', 'fastfetch')
+          $apps = @('starship', 'bat', 'delta', 'difftastic', 'less', 'gitui', 'fastfetch')
           $scoopApps = "$env:USERPROFILE\scoop\apps"
           $allInstalled = @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
           @{ Result = if ($allInstalled) { 'Installed' } else { 'NotInstalled' } }
