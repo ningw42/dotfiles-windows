@@ -3,5 +3,9 @@
 # Set persistent user-level environment variables so GUI/desktop apps can access them.
 # hash: {{ $secrets.codex_api_key | sha256sum }}
 
+# codex
 [Environment]::SetEnvironmentVariable("CODEX_API_KEY", "{{ $secrets.codex_api_key }}", "User")
+
+# mcps
+[Environment]::SetEnvironmentVariable("CONTEXT7_API_KEY", "{{ $secrets.context7_api_key }}", "User")
 {{ end -}}
