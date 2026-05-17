@@ -28,6 +28,9 @@ $Env:ANTHROPIC_AUTH_TOKEN = "{{ $secrets.anthropic_auth_token }}"
 # codex: API key for LiteLLM / Router Maestro providers
 $Env:CODEX_API_KEY = "{{ $secrets.codex_api_key }}"
 
+# opencode: API key for Router Maestro / LiteLLM providers
+$Env:OPENCODE_API_KEY = "{{ $secrets.opencode_api_key }}"
+
 # mcp secrets
 $Env:CONTEXT7_API_KEY = "{{ $secrets.context7_api_key }}"
 $Env:GITHUB_PERSONAL_ACCESS_TOKEN = "{{ $secrets.github_personal_access_token }}"
@@ -83,6 +86,15 @@ Function lg
 Function cc
 {
   claude --model "opus[1m]" @args
+}
+
+# opencode wrapper — pins router-maestro/claude-opus-4-7[1m] as the default
+# model, mirroring the `oc` shell alias from nixfiles' llm-agents module.
+# Override per invocation with `oc --model <id>` (PowerShell's later -Args
+# win over the earlier ones for the same parameter).
+Function oc
+{
+  opencode --model "router-maestro/claude-opus-4-7[1m]" @args
 }
 
 # Wrap `claude` to auto-load the chezmoi-managed plugin at

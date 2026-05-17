@@ -1,0 +1,172 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "enabled_providers": [
+    "router-maestro",
+    "litellm",
+    "github-copilot"
+  ],
+  "provider": {
+    "router-maestro": {
+      "npm": "@ai-sdk/anthropic",
+      "name": "Router Maestro",
+      "options": {
+        "baseURL": "https://router-maestro.ningw.net/api/anthropic/v1",
+        "apiKey": "{env:OPENCODE_API_KEY}"
+      },
+      "models": {
+        "claude-opus-4-7[1m]": {
+          "name": "Claude Opus 4.7 (1M)",
+          "modalities": {
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 64000
+          },
+          "cost": {
+            "input": 5,
+            "output": 25,
+            "cache_read": 0.5,
+            "cache_write": 6.25
+          },
+          "options": {
+            "thinking": { "type": "enabled", "budgetTokens": 60000 }
+          },
+          "variants": {
+            "low":    { "thinking": { "type": "enabled", "budgetTokens": 4096 } },
+            "medium": { "thinking": { "type": "enabled", "budgetTokens": 16384 } },
+            "high":   { "thinking": { "type": "enabled", "budgetTokens": 32768 } },
+            "xhigh":  { "thinking": { "type": "enabled", "budgetTokens": 60000 } }
+          }
+        },
+        "claude-opus-4-6[1m]": {
+          "name": "Claude Opus 4.6 (1M)",
+          "modalities": {
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 64000
+          },
+          "cost": {
+            "input": 5,
+            "output": 25,
+            "cache_read": 0.5,
+            "cache_write": 6.25
+          },
+          "options": {
+            "thinking": { "type": "enabled", "budgetTokens": 32768 }
+          },
+          "variants": {
+            "low":    { "thinking": { "type": "enabled", "budgetTokens": 4096 } },
+            "medium": { "thinking": { "type": "enabled", "budgetTokens": 16384 } },
+            "high":   { "thinking": { "type": "enabled", "budgetTokens": 32768 } }
+          }
+        },
+        "claude-sonnet-4-6": {
+          "name": "Claude Sonnet 4.6",
+          "modalities": {
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
+          "limit": {
+            "context": 200000,
+            "output": 32000
+          },
+          "cost": {
+            "input": 3,
+            "output": 15,
+            "cache_read": 0.3,
+            "cache_write": 3.75
+          },
+          "options": {
+            "thinking": { "type": "enabled", "budgetTokens": 24576 }
+          },
+          "variants": {
+            "low":    { "thinking": { "type": "enabled", "budgetTokens": 4096 } },
+            "medium": { "thinking": { "type": "enabled", "budgetTokens": 16384 } },
+            "high":   { "thinking": { "type": "enabled", "budgetTokens": 24576 } }
+          }
+        },
+        "claude-haiku-4-5": {
+          "name": "Claude Haiku 4.5",
+          "modalities": {
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "cost": {
+            "input": 1,
+            "output": 5,
+            "cache_read": 0.1,
+            "cache_write": 1.25
+          }
+        }
+      }
+    },
+    "litellm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "LiteLLM",
+      "options": {
+        "baseURL": "https://litellm.ningw.net/v1",
+        "apiKey": "{env:OPENCODE_API_KEY}"
+      },
+      "models": {
+        "gpt-5.5": {
+          "name": "GPT-5.5",
+          "modalities": {
+            "input": ["text", "image"],
+            "output": ["text"]
+          },
+          "limit": {
+            "context": 400000,
+            "output": 128000
+          },
+          "cost": {
+            "input": 5,
+            "output": 30,
+            "cache_read": 0.5
+          },
+          "options": {
+            "reasoningEffort": "xhigh"
+          },
+          "variants": {
+            "none":   { "reasoningEffort": "none" },
+            "low":    { "reasoningEffort": "low" },
+            "medium": { "reasoningEffort": "medium" },
+            "high":   { "reasoningEffort": "high" },
+            "xhigh":  { "reasoningEffort": "xhigh" }
+          }
+        }
+      }
+    }
+  },
+  "mcp": {
+    "brave-search": {
+      "type": "remote",
+      "url": "https://brave-search-mcp.ningw.net/mcp",
+      "enabled": true
+    },
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "enabled": true,
+      "headers": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      }
+    },
+    "github": {
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer {env:GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    }
+  }
+}

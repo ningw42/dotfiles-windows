@@ -7,6 +7,9 @@
 # codex
 [Environment]::SetEnvironmentVariable("CODEX_API_KEY", "{{ $secrets.codex_api_key }}", "User")
 
+# opencode
+[Environment]::SetEnvironmentVariable("OPENCODE_API_KEY", "{{ $secrets.opencode_api_key }}", "User")
+
 # mcps
 [Environment]::SetEnvironmentVariable("CONTEXT7_API_KEY", "{{ $secrets.context7_api_key }}", "User")
 [Environment]::SetEnvironmentVariable("GITHUB_PERSONAL_ACCESS_TOKEN", "{{ $secrets.github_personal_access_token }}", "User")

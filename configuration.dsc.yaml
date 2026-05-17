@@ -222,6 +222,24 @@ properties:
         GetScript: |
           @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\rtk\current") { 'Installed' } else { 'NotInstalled' } }
 
+    # opencode (AI coding agent) — config lives at dot_config/opencode/opencode.json
+    # and registers router-maestro + litellm providers plus brave-search /
+    # context7 / github MCP servers, matching the nixfiles llm-agents module.
+    - resource: PSDscResources/Script
+      id: ScoopOpencode
+      dependsOn:
+        - ScoopBootstrap
+      directives:
+        description: "Install opencode AI coding agent via Scoop"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          Test-Path "$env:USERPROFILE\scoop\apps\opencode\current"
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install opencode
+        GetScript: |
+          @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\opencode\current") { 'Installed' } else { 'NotInstalled' } }
+
     # ============================================================
     # WinGet GUI Apps
     # ============================================================
