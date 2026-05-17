@@ -50,6 +50,7 @@ age -e -r age1chwluerpyq4p9e340eeqatgm70939x769h7teh3tmr09f564hpyqdz2urt -o secr
 | [fastfetch](https://github.com/fastfetch-cli/fastfetch) | N | `dot_config/fastfetch/` | `~/.config/fastfetch/` |
 | [Zed](https://github.com/zed-industries/zed) | N | `AppData/Roaming/Zed/` | `~/AppData/Roaming/Zed/` |
 | [Claude Code](https://github.com/anthropics/claude-code) | Y | `dot_claude/` | `~/.claude/` |
+| Claude Code MCP plugin (auto-loaded via `--plugin-dir`) | N | `dot_config/claude-code-chezmoi/` | `~/.config/claude-code-chezmoi/` |
 | [Codex](https://github.com/openai/codex) | Y | `dot_codex/` | `~/.codex/` |
 
 Many components pull colorscheme themes via [chezmoi externals](https://www.chezmoi.io/user-guide/include-files-from-elsewhere/) (see `.chezmoiexternal.toml` files).
@@ -58,5 +59,16 @@ Many components pull colorscheme themes via [chezmoi externals](https://www.chez
 
 | Script | Trigger | Purpose |
 | :--- | :--- | :--- |
-| `.chezmoiscripts/run_onchange_windows-env.ps1.tmpl` | Secret value changes | Sets `CODEX_API_KEY` as a persistent user-level env var for GUI apps |
+| `.chezmoiscripts/run_onchange_windows-env.ps1.tmpl` | Secret value changes | Sets `CODEX_API_KEY`, `CONTEXT7_API_KEY`, `GITHUB_PERSONAL_ACCESS_TOKEN` as persistent user-level env vars for GUI apps |
 | `.chezmoiscripts/run_onchange_rtk-init.ps1.tmpl` | rtk version changes | Regenerates `~/.claude/{CLAUDE,RTK}.md` and `~/.codex/{AGENTS,RTK}.md` via `rtk init` (rtk owns these files) |
+
+## Claude Code MCP plugin
+
+User-scope MCP servers for Claude Code are wired the same way the
+[nix-community home-manager `programs.claude-code` module](https://github.com/nix-community/home-manager/blob/master/modules/programs/claude-code.nix)
+does it: a tiny directory plugin at `~/.config/claude-code-chezmoi/`
+containing `.claude-plugin/plugin.json` and `.mcp.json`, auto-loaded on
+every invocation by passing `--plugin-dir` from a `claude` PowerShell
+function in the profile. Server names show up under
+`plugin:claude-code-chezmoi:<name>` (matching the
+`mcp__plugin_claude-code-chezmoi_*` tokens in `permissions.allow`).

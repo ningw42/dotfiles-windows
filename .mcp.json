@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "brave-search": {
-      "type": "http",
-      "url": "https://brave-search-mcp.ningw.net/mcp"
-    }
-  }
-}
