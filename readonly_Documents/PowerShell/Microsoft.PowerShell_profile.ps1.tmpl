@@ -148,6 +148,9 @@ if ($IsCodexSession) {
     return
 }
 
+# Emacs keybinding for PowerShell
+Set-PSReadLineOption -EditMode Emacs
+
 # Make PowerShell's autocompletion bash-like
 Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
 
