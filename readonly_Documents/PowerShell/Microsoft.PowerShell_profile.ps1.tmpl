@@ -168,6 +168,7 @@ Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
 if (Get-Module -ListAvailable -Name PSFzf) {
     Import-Module PSFzf
     Set-PsFzfOption -PSReadlineChordReverseHistory 'Ctrl+r'
+    Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t'
 } else {
     Write-Warning "PSFzf not installed; Ctrl+R fuzzy history disabled. Run the DSC config or: Install-Module PSFzf -Scope CurrentUser"
 }

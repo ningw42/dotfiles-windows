@@ -13,3 +13,12 @@
 {{- else if eq .colorscheme "gruvbox-dark" }}
 {{ includeTemplate (printf "fzf/%s.ps1" .colorscheme) . }}
 {{- end }}
+
+# Ctrl+T preview — render the highlighted file with bat. `--color=always`
+# is required because fzf strips ANSI by default; `--style=numbers` keeps
+# the gutter readable; `--line-range=:500` caps the preview cost on huge
+# files. The `BAT_THEME` is set per-colorscheme by dot_config/bat/config,
+# so this preview automatically matches the rest of the shell.
+if (Get-Command bat -ErrorAction SilentlyContinue) {
+    $env:FZF_CTRL_T_OPTS = "--preview='bat --color=always --style=numbers --line-range=:500 {}'"
+}
