@@ -1,0 +1,15 @@
+# fzf color theme — selected per the chezmoi `colorscheme` data value.
+#
+# Catppuccin variants dot-source `catppuccin-<variant>.ps1`, downloaded
+# from catppuccin/fzf via .chezmoiexternal (SHA-256 pinned). Each file
+# sets $env:FZF_DEFAULT_OPTS to the matching --color flags.
+#
+# Gruvbox Dark has no official fzf colorscheme file, so we vendor an
+# equivalent .ps1 under .chezmoitemplates/fzf/ (values from the fzf
+# wiki: https://github.com/junegunn/fzf/wiki/Color-schemes) and inline
+# it here via includeTemplate.
+{{- if hasPrefix "catppuccin-" .colorscheme }}
+. "$env:USERPROFILE\.config\fzf\{{ .colorscheme }}.ps1"
+{{- else if eq .colorscheme "gruvbox-dark" }}
+{{ includeTemplate (printf "fzf/%s.ps1" .colorscheme) . }}
+{{- end }}

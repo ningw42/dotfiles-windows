@@ -154,6 +154,18 @@ Set-PSReadLineOption -EditMode Emacs
 # Make PowerShell's autocompletion bash-like
 Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
 
+# fzf colorscheme — applies $env:FZF_DEFAULT_OPTS using the chezmoi
+# `colorscheme` value (catppuccin theme files come from catppuccin/fzf
+# via .chezmoiexternal, gruvbox-dark is inlined). Must run before PSFzf
+# imports so the module honors the colors.
+. "$env:USERPROFILE\.config\fzf\init.ps1"
+
+# PSFzf — fuzzy command-line history (Ctrl+R) backed by fzf. The module
+# replaces PSReadLine's ReverseSearchHistory handler. Installed by the
+# DSC config (ScriptResource: InstallPSFzfModule).
+Import-Module PSFzf -ErrorAction SilentlyContinue
+Set-PsFzfOption -PSReadlineChordReverseHistory 'Ctrl+r'
+
 # This is recommended to be the last expression in $PROFILE
 Invoke-Expression (&starship init powershell)
 

@@ -241,6 +241,30 @@ properties:
           @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\opencode\current") { 'Installed' } else { 'NotInstalled' } }
 
     # ============================================================
+    # PowerShell Modules
+    # ============================================================
+
+    # PSFzf — fuzzy command-line history and file completion bindings
+    # backed by fzf. The PowerShell profile imports this module and binds
+    # Ctrl+R to fuzzy reverse-history search; see
+    # readonly_Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl.
+    - resource: PSDscResources/Script
+      id: InstallPSFzfModule
+      directives:
+        description: "Install PSFzf PowerShell module from PSGallery"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          $null -ne (Get-Module -ListAvailable -Name PSFzf)
+        SetScript: |
+          if (-not (Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue)) {
+            Install-PackageProvider -Name NuGet -Force -Scope CurrentUser | Out-Null
+          }
+          Install-Module -Name PSFzf -Scope CurrentUser -Force -AcceptLicense
+        GetScript: |
+          @{ Result = if ($null -ne (Get-Module -ListAvailable -Name PSFzf)) { 'Installed' } else { 'NotInstalled' } }
+
+    # ============================================================
     # WinGet GUI Apps
     # ============================================================
 
