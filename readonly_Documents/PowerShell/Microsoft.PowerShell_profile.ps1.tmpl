@@ -162,9 +162,15 @@ Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
 
 # PSFzf — fuzzy command-line history (Ctrl+R) backed by fzf. The module
 # replaces PSReadLine's ReverseSearchHistory handler. Installed by the
-# DSC config (ScriptResource: InstallPSFzfModule).
-Import-Module PSFzf -ErrorAction SilentlyContinue
-Set-PsFzfOption -PSReadlineChordReverseHistory 'Ctrl+r'
+# DSC config (ScriptResource: InstallPSFzfModule); warn instead of
+# erroring out if the module is missing so the rest of the profile
+# still loads on a half-bootstrapped machine.
+if (Get-Module -ListAvailable -Name PSFzf) {
+    Import-Module PSFzf
+    Set-PsFzfOption -PSReadlineChordReverseHistory 'Ctrl+r'
+} else {
+    Write-Warning "PSFzf not installed; Ctrl+R fuzzy history disabled. Run the DSC config or: Install-Module PSFzf -Scope CurrentUser"
+}
 
 # This is recommended to be the last expression in $PROFILE
 Invoke-Expression (&starship init powershell)
