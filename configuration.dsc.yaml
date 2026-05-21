@@ -327,3 +327,114 @@ properties:
       settings:
         id: Microsoft.WindowsTerminal.Preview
         source: winget
+
+    # ============================================================
+    # Fonts (per-user, no admin required)
+    # ============================================================
+
+    # Installs three font packs to %LOCALAPPDATA%\Microsoft\Windows\Fonts
+    # and registers them under HKCU. Tracks the latest GitHub release for
+    # each pack via a .version marker file; re-downloads and replaces
+    # whenever upstream publishes a new tag.
+    #   - Iosevkata (vanilla)           -> ningw42/Iosevkata, .zip
+    #   - IosevkataSymbolsNerdFont      -> ningw42/Iosevkata, .zip
+    #   - SarasaFixedSC (TTF, hinted)   -> be5invis/Sarasa-Gothic, .7z
+    # Depends on ScoopYaziDeps because the Sarasa archive is .7z and we
+    # extract with scoop's 7z.exe.
+    - resource: PSDscResources/Script
+      id: InstallFonts
+      dependsOn:
+        - ScoopYaziDeps
+      directives:
+        description: "Install latest Iosevkata, IosevkataSymbolsNerdFont, and SarasaFixedSC fonts (per-user)"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          $fontPacks = @(
+            @{ Name = 'Iosevkata';                Owner = 'ningw42';  Repo = 'Iosevkata' }
+            @{ Name = 'IosevkataSymbolsNerdFont'; Owner = 'ningw42';  Repo = 'Iosevkata' }
+            @{ Name = 'SarasaFixedSC';            Owner = 'be5invis'; Repo = 'Sarasa-Gothic' }
+          )
+          $base = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts'
+          $allCurrent = $true
+          foreach ($fp in $fontPacks) {
+            $markerPath = Join-Path $base ("{0}\.version" -f $fp.Name)
+            if (-not (Test-Path $markerPath)) { $allCurrent = $false; break }
+            try {
+              $latest = (Invoke-RestMethod -Uri "https://api.github.com/repos/$($fp.Owner)/$($fp.Repo)/releases/latest" -UseBasicParsing).tag_name
+              $installed = (Get-Content $markerPath -Raw).Trim()
+              if ($installed -ne $latest) { $allCurrent = $false; break }
+            } catch {
+              # GitHub unreachable: leave existing install alone rather than churn.
+            }
+          }
+          $allCurrent
+        SetScript: |
+          $ErrorActionPreference = 'Stop'
+          $fontPacks = @(
+            @{ Name = 'Iosevkata';                Owner = 'ningw42';  Repo = 'Iosevkata';    AssetPattern = '^Iosevkata-v[0-9.]+\.zip$';                Type = 'zip' }
+            @{ Name = 'IosevkataSymbolsNerdFont'; Owner = 'ningw42';  Repo = 'Iosevkata';    AssetPattern = '^IosevkataSymbolsNerdFont-v[0-9.]+\.zip$'; Type = 'zip' }
+            @{ Name = 'SarasaFixedSC';            Owner = 'be5invis'; Repo = 'Sarasa-Gothic';AssetPattern = '^SarasaFixedSC-TTF-[0-9.]+\.7z$';          Type = '7z'  }
+          )
+          $base = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts'
+          $regKey = 'HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts'
+          $sevenZip = "$env:USERPROFILE\scoop\shims\7z.exe"
+          New-Item -ItemType Directory -Path $base -Force | Out-Null
+          if (-not (Test-Path $regKey)) { New-Item -Path $regKey -Force | Out-Null }
+
+          foreach ($fp in $fontPacks) {
+            $packDir = Join-Path $base $fp.Name
+            $marker  = Join-Path $packDir '.version'
+
+            $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$($fp.Owner)/$($fp.Repo)/releases/latest" -UseBasicParsing
+            $latest  = $release.tag_name
+            if ((Test-Path $marker) -and ((Get-Content $marker -Raw).Trim() -eq $latest)) { continue }
+
+            $asset = $release.assets | Where-Object { $_.name -match $fp.AssetPattern } | Select-Object -First 1
+            if (-not $asset) { throw "No asset matching $($fp.AssetPattern) in $($fp.Owner)/$($fp.Repo) $latest" }
+
+            # Unregister any previously-installed files in this pack, then wipe the dir.
+            if (Test-Path $packDir) {
+              $regVals = Get-ItemProperty -Path $regKey
+              foreach ($prop in $regVals.PSObject.Properties) {
+                if ($prop.Name -in 'PSPath','PSParentPath','PSChildName','PSDrive','PSProvider') { continue }
+                if ($prop.Value -like "$packDir\*") {
+                  Remove-ItemProperty -Path $regKey -Name $prop.Name -ErrorAction SilentlyContinue
+                }
+              }
+              Remove-Item -Path $packDir -Recurse -Force
+            }
+            New-Item -ItemType Directory -Path $packDir -Force | Out-Null
+
+            $tmp = Join-Path $env:TEMP "fontdl-$($fp.Name)"
+            if (Test-Path $tmp) { Remove-Item -Path $tmp -Recurse -Force }
+            New-Item -ItemType Directory -Path $tmp -Force | Out-Null
+            $archive = Join-Path $tmp $asset.name
+            Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $archive -UseBasicParsing
+
+            $extractDir = Join-Path $tmp 'extract'
+            New-Item -ItemType Directory -Path $extractDir -Force | Out-Null
+            if ($fp.Type -eq 'zip') {
+              Expand-Archive -Path $archive -DestinationPath $extractDir -Force
+            } else {
+              & $sevenZip x $archive "-o$extractDir" -y | Out-Null
+              if ($LASTEXITCODE -ne 0) { throw "7z extraction failed for $($fp.Name)" }
+            }
+
+            $fontFiles = Get-ChildItem -Path $extractDir -Recurse -Include *.ttf,*.otf,*.ttc
+            foreach ($f in $fontFiles) {
+              $dest = Join-Path $packDir $f.Name
+              Copy-Item -Path $f.FullName -Destination $dest -Force
+              $kind = if ($f.Extension.ToLower() -eq '.otf') { 'OpenType' } else { 'TrueType' }
+              $regName = "$([System.IO.Path]::GetFileNameWithoutExtension($f.Name)) ($kind)"
+              New-ItemProperty -Path $regKey -Name $regName -Value $dest -PropertyType String -Force | Out-Null
+            }
+
+            Set-Content -Path $marker -Value $latest -NoNewline
+            Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
+          }
+        GetScript: |
+          $names = @('Iosevkata', 'IosevkataSymbolsNerdFont', 'SarasaFixedSC')
+          $base = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts'
+          $missing = $names | Where-Object { -not (Test-Path (Join-Path $base "$_\.version")) }
+          @{ Result = if ($missing.Count -eq 0) { 'Installed' } else { 'NotInstalled' } }
