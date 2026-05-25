@@ -160,6 +160,11 @@
         "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
       }
     },
+    "exa": {
+      "type": "remote",
+      "url": "https://mcp.exa.ai/mcp",
+      "enabled": true
+    },
     "github": {
       "type": "remote",
       "url": "https://api.githubcopilot.com/mcp/",
