@@ -17,10 +17,10 @@
       "WebSearch"
     ],
     "allow": [
-      "mcp__plugin_claude-code-chezmoi_brave-search",
-      "mcp__plugin_claude-code-chezmoi_context7",
-      "mcp__plugin_claude-code-chezmoi_exa",
-      "mcp__plugin_claude-code-chezmoi_github",
+      "mcp__plugin_user-mcps_brave-search",
+      "mcp__plugin_user-mcps_context7",
+      "mcp__plugin_user-mcps_exa",
+      "mcp__plugin_user-mcps_github",
       "mcp__brave-search"
     ],
     "defaultMode": "auto"
@@ -67,6 +67,12 @@
     "padding": 0
   },
   "extraKnownMarketplaces": {
+    "chezmoi": {
+      "source": {
+        "source": "directory",
+        "path": "{{ .chezmoi.homeDir | replace "\\" "/" }}/.config/claude-code-chezmoi"
+      }
+    },
     "openai-codex": {
       "source": {
         "source": "github",
@@ -84,6 +90,7 @@
   "skipDangerousModePermissionPrompt": true,
   "skipAutoPermissionPrompt": true,
   "enabledPlugins": {
+    "user-mcps@chezmoi": true,
     "codex@openai-codex": true,
     "superpowers@superpowers-marketplace": true
   }

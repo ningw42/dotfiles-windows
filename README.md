@@ -50,7 +50,7 @@ age -e -r age1chwluerpyq4p9e340eeqatgm70939x769h7teh3tmr09f564hpyqdz2urt -o secr
 | [fastfetch](https://github.com/fastfetch-cli/fastfetch) | N | `dot_config/fastfetch/` | `~/.config/fastfetch/` |
 | [Zed](https://github.com/zed-industries/zed) | N | `AppData/Roaming/Zed/` | `~/AppData/Roaming/Zed/` |
 | [Claude Code](https://github.com/anthropics/claude-code) | Y | `dot_claude/` | `~/.claude/` |
-| Claude Code MCP plugin (auto-loaded via `--plugin-dir`) | N | `dot_config/claude-code-chezmoi/` | `~/.config/claude-code-chezmoi/` |
+| Claude Code MCP plugin (local marketplace, registered via `extraKnownMarketplaces`) | N | `dot_config/claude-code-chezmoi/` | `~/.config/claude-code-chezmoi/` |
 | [Codex](https://github.com/openai/codex) | Y | `dot_codex/` | `~/.codex/` |
 
 Many components pull colorscheme themes via [chezmoi externals](https://www.chezmoi.io/user-guide/include-files-from-elsewhere/) (see `.chezmoiexternal.toml` files).
@@ -64,11 +64,21 @@ Many components pull colorscheme themes via [chezmoi externals](https://www.chez
 
 ## Claude Code MCP plugin
 
-User-scope MCP servers for Claude Code are wired the same way the
-[nix-community home-manager `programs.claude-code` module](https://github.com/nix-community/home-manager/blob/master/modules/programs/claude-code.nix)
-does it: a tiny directory plugin at `~/.config/claude-code-chezmoi/`
-containing `.claude-plugin/plugin.json` and `.mcp.json`, auto-loaded on
-every invocation by passing `--plugin-dir` from a `claude` PowerShell
-function in the profile. Server names show up under
-`plugin:claude-code-chezmoi:<name>` (matching the
-`mcp__plugin_claude-code-chezmoi_*` tokens in `permissions.allow`).
+User-scope MCP servers for Claude Code are shipped as a chezmoi-managed
+local plugin marketplace at `~/.config/claude-code-chezmoi/`. The directory
+contains:
+
+- `.claude-plugin/marketplace.json` — marketplace manifest declaring one
+  plugin (`user-mcps`)
+- `plugins/user-mcps/.claude-plugin/plugin.json` — plugin manifest
+- `plugins/user-mcps/.mcp.json` — user-scope MCP server config
+  (brave-search, context7, exa, github)
+
+The marketplace is registered in `~/.claude/settings.json` via
+`extraKnownMarketplaces` (source type `directory`) and the plugin is
+turned on through `enabledPlugins["user-mcps@chezmoi"]`. Because
+both the Claude Code CLI and the Claude Desktop app read the same
+`settings.json`, the plugin auto-loads in both — no PowerShell wrapper or
+`--plugin-dir` flag required. Server names show up under
+`plugin:user-mcps:<name>` (matching the
+`mcp__plugin_user-mcps_*` tokens in `permissions.allow`).

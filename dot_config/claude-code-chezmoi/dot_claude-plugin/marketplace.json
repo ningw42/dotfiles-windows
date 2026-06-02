@@ -1,0 +1,14 @@
+{
+  "name": "chezmoi",
+  "description": "Local marketplace managed by chezmoi for the claude-code-chezmoi MCP plugin.",
+  "owner": {
+    "name": "ningw"
+  },
+  "plugins": [
+    {
+      "name": "user-mcps",
+      "description": "User-scope MCP servers (brave-search, context7, exa, github).",
+      "source": "./plugins/user-mcps"
+    }
+  ]
+}

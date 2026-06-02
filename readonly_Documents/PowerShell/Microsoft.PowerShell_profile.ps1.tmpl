@@ -97,21 +97,6 @@ Function oc
   opencode --model "router-maestro/claude-opus-4-7[1m]" @args
 }
 
-# Wrap `claude` to auto-load the chezmoi-managed plugin at
-# ~/.config/claude-code-chezmoi. That plugin's `.mcp.json` registers
-# user-scope MCP servers (brave-search, context7, github). This mirrors
-# the nix-community home-manager `programs.claude-code` module, which
-# wraps the claude binary with `--plugin-dir <pluginDir>` so the plugin
-# auto-loads on every invocation.
-#
-# We call `claude.exe` (not `claude`) inside the function so PowerShell
-# resolves to the application instead of recursing back into the function;
-# `function claude` does not shadow the distinctly-named `claude.exe`.
-Function claude
-{
-  & claude.exe --plugin-dir "$env:USERPROFILE\.config\claude-code-chezmoi" @args
-}
-
 #endregion Functions
 
 # Codex shells do not always populate CODEX_SANDBOX, but they do expose
