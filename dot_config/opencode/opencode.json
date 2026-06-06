@@ -1,9 +1,8 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "enabled_providers": [
-    "router-maestro",
-    "litellm",
-    "github-copilot"
+    "byokey",
+    "litellm"
   ],
   "mcp": {
     "brave-search": {
@@ -34,6 +33,288 @@
     }
   },
   "provider": {
+    "byokey": {
+      "models": {
+        "claude-haiku-4.5": {
+          "cost": {
+            "cache_read": 0.1,
+            "cache_write": 1.25,
+            "input": 1,
+            "output": 5
+          },
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Haiku 4.5"
+        },
+        "claude-opus-4.6": {
+          "cost": {
+            "cache_read": 0.5,
+            "cache_write": 6.25,
+            "input": 5,
+            "output": 25
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Opus 4.6",
+          "options": {
+            "effort": "high",
+            "thinking": {
+              "display": "summarized",
+              "type": "adaptive"
+            }
+          },
+          "variants": {
+            "high": {
+              "effort": "high",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            },
+            "low": {
+              "effort": "low",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            },
+            "max": {
+              "effort": "max",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            },
+            "medium": {
+              "effort": "medium",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            }
+          }
+        },
+        "claude-opus-4.7": {
+          "cost": {
+            "cache_read": 0.5,
+            "cache_write": 6.25,
+            "input": 5,
+            "output": 25
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Opus 4.7",
+          "options": {
+            "effort": "xhigh",
+            "thinking": {
+              "display": "summarized",
+              "type": "adaptive"
+            }
+          },
+          "variants": {
+            "high": {
+              "effort": "high",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            },
+            "low": {
+              "effort": "low",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            },
+            "max": {
+              "effort": "max",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            },
+            "medium": {
+              "effort": "medium",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            },
+            "xhigh": {
+              "effort": "xhigh",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            }
+          }
+        },
+        "claude-opus-4.8": {
+          "cost": {
+            "cache_read": 0.5,
+            "cache_write": 6.25,
+            "input": 5,
+            "output": 25
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Opus 4.8",
+          "options": {
+            "effort": "xhigh",
+            "thinking": {
+              "display": "summarized",
+              "type": "adaptive"
+            }
+          },
+          "variants": {
+            "high": {
+              "effort": "high",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            },
+            "low": {
+              "effort": "low",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            },
+            "max": {
+              "effort": "max",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            },
+            "medium": {
+              "effort": "medium",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            },
+            "xhigh": {
+              "effort": "xhigh",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            }
+          }
+        },
+        "claude-sonnet-4.6": {
+          "cost": {
+            "cache_read": 0.3,
+            "cache_write": 3.75,
+            "input": 3,
+            "output": 15
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Sonnet 4.6",
+          "options": {
+            "effort": "high",
+            "thinking": {
+              "display": "summarized",
+              "type": "adaptive"
+            }
+          },
+          "variants": {
+            "high": {
+              "effort": "high",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            },
+            "low": {
+              "effort": "low",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            },
+            "max": {
+              "effort": "max",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            },
+            "medium": {
+              "effort": "medium",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
+            }
+          }
+        }
+      },
+      "name": "BYOKEY",
+      "npm": "@ai-sdk/anthropic",
+      "options": {
+        "apiKey": "{env:OPENCODE_API_KEY}",
+        "baseURL": "https://byokey.ningw.net/v1"
+      }
+    },
     "litellm": {
       "models": {
         "gpt-5.5": {
@@ -84,289 +365,6 @@
         "apiKey": "{env:OPENCODE_API_KEY}",
         "baseURL": "https://litellm.ningw.net/v1"
       }
-    },
-    "router-maestro": {
-      "models": {
-        "claude-haiku-4-5": {
-          "cost": {
-            "cache_read": 0.1,
-            "cache_write": 1.25,
-            "input": 1,
-            "output": 5
-          },
-          "limit": {
-            "context": 200000,
-            "output": 64000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "name": "Claude Haiku 4.5"
-        },
-        "claude-opus-4-6[1m]": {
-          "cost": {
-            "cache_read": 0.5,
-            "cache_write": 6.25,
-            "input": 5,
-            "output": 25
-          },
-          "limit": {
-            "context": 1000000,
-            "output": 64000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "name": "Claude Opus 4.6 (1M)",
-          "options": {
-            "effort": "high",
-            "thinking": {
-              "display": "summarized",
-              "type": "adaptive"
-            }
-          },
-          "variants": {
-            "high": {
-              "effort": "high",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "low": {
-              "effort": "low",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "max": {
-              "effort": "max",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "medium": {
-              "effort": "medium",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            }
-          }
-        },
-        "claude-opus-4-7[1m]": {
-          "cost": {
-            "cache_read": 0.5,
-            "cache_write": 6.25,
-            "input": 5,
-            "output": 25
-          },
-          "limit": {
-            "context": 1000000,
-            "output": 64000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "name": "Claude Opus 4.7 (1M)",
-          "options": {
-            "effort": "xhigh",
-            "thinking": {
-              "display": "summarized",
-              "type": "adaptive"
-            }
-          },
-          "variants": {
-            "high": {
-              "effort": "high",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "low": {
-              "effort": "low",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "max": {
-              "effort": "max",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "medium": {
-              "effort": "medium",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "xhigh": {
-              "effort": "xhigh",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            }
-          }
-        },
-        "claude-opus-4-8[1m]": {
-          "cost": {
-            "cache_read": 0.5,
-            "cache_write": 6.25,
-            "input": 5,
-            "output": 25
-          },
-          "limit": {
-            "context": 1000000,
-            "output": 64000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "name": "Claude Opus 4.8 (1M)",
-          "options": {
-            "effort": "xhigh",
-            "thinking": {
-              "display": "summarized",
-              "type": "adaptive"
-            }
-          },
-          "variants": {
-            "high": {
-              "effort": "high",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "low": {
-              "effort": "low",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "max": {
-              "effort": "max",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "medium": {
-              "effort": "medium",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "xhigh": {
-              "effort": "xhigh",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            }
-          }
-        },
-        "claude-sonnet-4-6[1m]": {
-          "cost": {
-            "cache_read": 0.3,
-            "cache_write": 3.75,
-            "input": 3,
-            "output": 15
-          },
-          "limit": {
-            "context": 1000000,
-            "output": 64000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "name": "Claude Sonnet 4.6 (1M)",
-          "options": {
-            "effort": "high",
-            "thinking": {
-              "display": "summarized",
-              "type": "adaptive"
-            }
-          },
-          "variants": {
-            "high": {
-              "effort": "high",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "low": {
-              "effort": "low",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "max": {
-              "effort": "max",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "medium": {
-              "effort": "medium",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            }
-          }
-        }
-      },
-      "name": "Router Maestro",
-      "npm": "@ai-sdk/anthropic",
-      "options": {
-        "apiKey": "{env:OPENCODE_API_KEY}",
-        "baseURL": "https://router-maestro.ningw.net/api/anthropic/v1"
-      }
     }
   }
 }
-
