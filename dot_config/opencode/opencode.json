@@ -131,7 +131,7 @@
           },
           "name": "Claude Opus 4.6 (1M)",
           "options": {
-            "effort": "max",
+            "effort": "high",
             "thinking": {
               "display": "summarized",
               "type": "adaptive"
@@ -190,7 +190,7 @@
           },
           "name": "Claude Opus 4.7 (1M)",
           "options": {
-            "effort": "max",
+            "effort": "xhigh",
             "thinking": {
               "display": "summarized",
               "type": "adaptive"
@@ -256,7 +256,7 @@
           },
           "name": "Claude Opus 4.8 (1M)",
           "options": {
-            "effort": "max",
+            "effort": "xhigh",
             "thinking": {
               "display": "summarized",
               "type": "adaptive"
@@ -322,7 +322,7 @@
           },
           "name": "Claude Sonnet 4.6 (1M)",
           "options": {
-            "effort": "max",
+            "effort": "high",
             "thinking": {
               "display": "summarized",
               "type": "adaptive"
@@ -369,3 +369,4 @@
     }
   }
 }
+
