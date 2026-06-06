@@ -88,13 +88,13 @@ Function cc
   claude --model "opus[1m]" @args
 }
 
-# opencode wrapper — pins byokey/claude-opus-4-8 as the default
+# opencode wrapper — pins byokey/claude-opus-4.8 as the default
 # model, mirroring the `oc` shell alias from nixfiles' llm-agents module.
 # Override per invocation with `oc --model <id>` (PowerShell's later -Args
 # win over the earlier ones for the same parameter).
 Function oc
 {
-  opencode --model "byokey/claude-opus-4-8" @args
+  opencode --model "byokey/claude-opus-4.8" @args
 }
 
 #endregion Functions
