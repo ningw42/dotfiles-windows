@@ -39,6 +39,7 @@ gui:
     rate: 80
 # Config relating to git
 git:
+  overrideGpg: true
   branchLogCmd: "git log --graph --color=always --abbrev-commit --decorate --date='format:%Y-%m-%d %H:%M:%S %z' --pretty=medium {{ `{{branchName}}` }} --"
   allBranchesLogCmds:
     - "git log --graph --all --color=always --abbrev-commit --decorate --date='format:%Y-%m-%d %H:%M:%S %z' --pretty=medium"
