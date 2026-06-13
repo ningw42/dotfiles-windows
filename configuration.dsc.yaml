@@ -240,6 +240,24 @@ properties:
         GetScript: |
           @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\opencode\current") { 'Installed' } else { 'NotInstalled' } }
 
+    # everything-cli (es) — command-line interface to the voidtools Everything
+    # search engine (the GUI ships via WinGetEverything). Queries the running
+    # Everything service for instant file-name search from the shell.
+    - resource: PSDscResources/Script
+      id: ScoopEverythingCli
+      dependsOn:
+        - ScoopBootstrap
+      directives:
+        description: "Install everything-cli (es) via Scoop"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          Test-Path "$env:USERPROFILE\scoop\apps\everything-cli\current"
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install everything-cli
+        GetScript: |
+          @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\everything-cli\current") { 'Installed' } else { 'NotInstalled' } }
+
     # ============================================================
     # PowerShell Modules
     # ============================================================
@@ -326,6 +344,16 @@ properties:
         allowPrerelease: true
       settings:
         id: Microsoft.WindowsTerminal.Preview
+        source: winget
+
+    # Everything (voidtools) — instant file-name search
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: WinGetEverything
+      directives:
+        description: Install Everything file search via WinGet
+        allowPrerelease: true
+      settings:
+        id: voidtools.Everything
         source: winget
 
     # ============================================================
