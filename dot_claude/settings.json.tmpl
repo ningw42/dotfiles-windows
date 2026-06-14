@@ -64,7 +64,7 @@
   "includeCoAuthoredBy": false,
   "statusLine": {
     "type": "command",
-    "command": "npx -y ccstatusline@latest",
+    "command": "python {{ .chezmoi.homeDir | replace "\\" "/" }}/.config/claude-code-statusline.py",
     "padding": 0
   },
   "extraKnownMarketplaces": {
