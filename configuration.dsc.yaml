@@ -369,38 +369,52 @@ properties:
     #   - IosevkataSymbolsNerdFont      -> ningw42/Iosevkata, .zip
     #   - SarasaFixedSC (TTF, hinted)   -> be5invis/Sarasa-Gothic, .7z
     #
-    # In-use font handling: existing pack dirs are renamed to "<Name>.legacy-<ts>"
-    # before the new files are written. NTFS allows renaming a directory whose
-    # files are currently mapped by other processes (WezTerm, Windows Terminal,
-    # Zed, etc.), where a recursive delete would throw a sharing violation.
-    # Stale registry entries pointing into legacy dirs are then dropped, and
-    # leftover legacy dirs are best-effort removed at the end of each run so
-    # they get reaped once the holding application closes.
+    # In-use font handling: each existing font FILE is renamed to
+    # "<file>.legacy-<token>" before the new file is written under the canonical
+    # name. The font loader opens files with FILE_SHARE_DELETE (so an in-use file
+    # can be renamed/deleted) but not FILE_SHARE_WRITE (so it can't be overwritten
+    # in place), and a directory can't be renamed at all while files inside are
+    # open. Renaming each file aside frees its name for the new version and mirrors
+    # what the Windows "replace this font?" flow does. Registry values are repointed
+    # (-Force), entries whose target no longer exists are dropped, and legacy files
+    # (delete-pending while still mapped) are reaped best-effort — they disappear
+    # once the holding application (WezTerm, Windows Terminal, Zed, etc.) closes.
 
     # Iosevkata + IosevkataSymbolsNerdFont ship from the same repo under the
     # same release tag, so a single resource fetches the release once and
     # installs both packs into their own dirs / .version markers.
     - resource: PSDscResources/Script
       id: InstallFontIosevkata
+      dependsOn:
+        - ScoopShellAndGitTools
       directives:
         description: "Install latest Iosevkata and IosevkataSymbolsNerdFont (per-user)"
         allowPrerelease: true
       settings:
         TestScript: |
           $base = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts'
+          $gh = "$env:USERPROFILE\scoop\shims\gh.exe"
           $markers = @('Iosevkata', 'IosevkataSymbolsNerdFont') |
             ForEach-Object { Join-Path $base "$_\.version" }
           if ($markers | Where-Object { -not (Test-Path $_) }) { return $false }
           try {
-            $latest = (Invoke-RestMethod -Uri 'https://api.github.com/repos/ningw42/Iosevkata/releases/latest' -UseBasicParsing).tag_name
+            # Authenticated GitHub call via gh (5000/hr) instead of anonymous
+            # Invoke-RestMethod (60/hr/IP). The anonymous limit is easily exhausted
+            # by repeated test/apply runs; a 403 then falls into the catch below and
+            # silently reports "in state" even when the local marker is stale.
+            $latest = (& $gh api 'repos/ningw42/Iosevkata/releases/latest' --jq '.tag_name' 2>$null)
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($latest)) { throw 'gh api failed' }
+            $latest = $latest.Trim()
             -not ($markers | Where-Object { (Get-Content $_ -Raw).Trim() -ne $latest })
           } catch {
-            # GitHub unreachable: leave existing install alone rather than churn.
+            # gh not authenticated or GitHub unreachable: leave existing install
+            # alone rather than churn.
             $true
           }
         SetScript: |
           $ErrorActionPreference = 'Stop'
           $Owner = 'ningw42'; $Repo = 'Iosevkata'
+          $gh = "$env:USERPROFILE\scoop\shims\gh.exe"
           $packs = @(
             @{ Name = 'Iosevkata';                AssetPattern = '^Iosevkata-v[0-9.]+\.zip$' }
             @{ Name = 'IosevkataSymbolsNerdFont'; AssetPattern = '^IosevkataSymbolsNerdFont-v[0-9.]+\.zip$' }
@@ -411,8 +425,11 @@ properties:
           New-Item -ItemType Directory -Path $base -Force | Out-Null
           if (-not (Test-Path $regKey)) { New-Item -Path $regKey -Force | Out-Null }
 
-          # Single release fetch shared across both packs.
-          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Owner/$Repo/releases/latest" -UseBasicParsing
+          # Single release fetch shared across both packs, authenticated via gh
+          # (5000/hr) to avoid the 60/hr/IP anonymous API limit.
+          $json = & $gh api "repos/$Owner/$Repo/releases/latest" 2>$null | Out-String
+          if ($LASTEXITCODE -ne 0) { throw "gh api failed for $Owner/$Repo" }
+          $release = $json | ConvertFrom-Json
           $latest  = $release.tag_name
 
           foreach ($p in $packs) {
@@ -435,13 +452,18 @@ properties:
               New-Item -ItemType Directory -Path $extractDir -Force | Out-Null
               Expand-Archive -Path $archive -DestinationPath $extractDir -Force
 
-              # Rename existing pack out of the way (works even if font files are open
-              # via FILE_SHARE_READ; a recursive delete would throw a sharing violation).
-              if (Test-Path $packDir) {
-                $stamp = Get-Date -Format 'yyyyMMddHHmmss'
-                Rename-Item -Path $packDir -NewName "$Name.legacy-$stamp"
-              }
+              # Replace per-FILE, not per-directory. The font loader opens files with
+              # FILE_SHARE_DELETE (so an in-use file can be renamed/deleted) but not
+              # FILE_SHARE_WRITE (so it can't be overwritten in place), and a directory
+              # can't be renamed at all while files inside are open. So rename each
+              # existing font file aside, drop the new file in under the canonical name,
+              # and re-register it -- this is what the Windows "replace this font?" flow
+              # does, and it works while the font is loaded by a running app.
               New-Item -ItemType Directory -Path $packDir -Force | Out-Null
+              $tok = "$(Get-Date -Format 'yyyyMMddHHmmss')-$(Get-Random)"
+              Get-ChildItem -Path $packDir -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.Extension.ToLower() -in '.ttf','.otf','.ttc' } |
+                ForEach-Object { Rename-Item -LiteralPath $_.FullName -NewName "$($_.Name).legacy-$tok" }
 
               $fontFiles = Get-ChildItem -Path $extractDir -Recurse -Include *.ttf,*.otf,*.ttc
               foreach ($f in $fontFiles) {
@@ -449,26 +471,28 @@ properties:
                 Copy-Item -Path $f.FullName -Destination $dest -Force
                 $kind = if ($f.Extension.ToLower() -eq '.otf') { 'OpenType' } else { 'TrueType' }
                 $regName = "$([System.IO.Path]::GetFileNameWithoutExtension($f.Name)) ($kind)"
-                # -Force overwrites any same-named entry pointing into the legacy dir.
                 New-ItemProperty -Path $regKey -Name $regName -Value $dest -PropertyType String -Force | Out-Null
-              }
-
-              # Drop registry entries that still point into any leftover legacy dir for this pack.
-              $legacyPrefix = Join-Path $base "$Name.legacy-"
-              $regVals = Get-ItemProperty -Path $regKey
-              foreach ($prop in $regVals.PSObject.Properties) {
-                if ($prop.Name -in 'PSPath','PSParentPath','PSChildName','PSDrive','PSProvider') { continue }
-                if ($prop.Value -like "$legacyPrefix*") {
-                  Remove-ItemProperty -Path $regKey -Name $prop.Name -ErrorAction SilentlyContinue
-                }
               }
 
               Set-Content -Path $marker -Value $latest -NoNewline
 
-              # Best-effort sweep of legacy dirs from this and prior runs. Anything still
-              # locked by a running app stays behind and gets reaped on the next apply.
+              # Drop registry entries whose target file no longer exists (a style dropped
+              # upstream, or a renamed-aside legacy file we never registered).
+              $regVals = Get-ItemProperty -Path $regKey
+              foreach ($prop in $regVals.PSObject.Properties) {
+                if ($prop.Name -in 'PSPath','PSParentPath','PSChildName','PSDrive','PSProvider') { continue }
+                if ($prop.Value -like "$packDir\*" -and -not (Test-Path -LiteralPath $prop.Value)) {
+                  Remove-ItemProperty -Path $regKey -Name $prop.Name -ErrorAction SilentlyContinue
+                }
+              }
+
+              # Best-effort reap of legacy font files (this/prior runs) plus any leftover
+              # legacy dirs from the old per-directory scheme. Files still mapped by a
+              # running app are delete-pending (FILE_SHARE_DELETE) and vanish on close.
+              Get-ChildItem -Path $packDir -File -Filter '*.legacy-*' -ErrorAction SilentlyContinue |
+                ForEach-Object { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue }
               Get-ChildItem -Path $base -Directory -Filter "$Name.legacy-*" -ErrorAction SilentlyContinue |
-                ForEach-Object { Remove-Item -Path $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }
+                ForEach-Object { Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }
             } finally {
               Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
             }
@@ -484,16 +508,20 @@ properties:
       id: InstallFontSarasaFixedSC
       dependsOn:
         - ScoopYaziDeps
+        - ScoopShellAndGitTools
       directives:
         description: "Install latest SarasaFixedSC (per-user)"
         allowPrerelease: true
       settings:
         TestScript: |
           $markerPath = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts\SarasaFixedSC\.version'
+          $gh = "$env:USERPROFILE\scoop\shims\gh.exe"
           if (-not (Test-Path $markerPath)) { return $false }
           try {
-            $latest = (Invoke-RestMethod -Uri 'https://api.github.com/repos/be5invis/Sarasa-Gothic/releases/latest' -UseBasicParsing).tag_name
-            (Get-Content $markerPath -Raw).Trim() -eq $latest
+            # Authenticated via gh (5000/hr) instead of anonymous (60/hr/IP).
+            $latest = (& $gh api 'repos/be5invis/Sarasa-Gothic/releases/latest' --jq '.tag_name' 2>$null)
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($latest)) { throw 'gh api failed' }
+            (Get-Content $markerPath -Raw).Trim() -eq $latest.Trim()
           } catch {
             $true
           }
@@ -505,13 +533,16 @@ properties:
           $base = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts'
           $regKey = 'HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts'
           $sevenZip = "$env:USERPROFILE\scoop\shims\7z.exe"
+          $gh = "$env:USERPROFILE\scoop\shims\gh.exe"
           New-Item -ItemType Directory -Path $base -Force | Out-Null
           if (-not (Test-Path $regKey)) { New-Item -Path $regKey -Force | Out-Null }
 
           $packDir = Join-Path $base $Name
           $marker  = Join-Path $packDir '.version'
 
-          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Owner/$Repo/releases/latest" -UseBasicParsing
+          $json = & $gh api "repos/$Owner/$Repo/releases/latest" 2>$null | Out-String
+          if ($LASTEXITCODE -ne 0) { throw "gh api failed for $Owner/$Repo" }
+          $release = $json | ConvertFrom-Json
           $latest  = $release.tag_name
           if ((Test-Path $marker) -and ((Get-Content $marker -Raw).Trim() -eq $latest)) { return }
 
@@ -533,11 +564,14 @@ properties:
               if ($LASTEXITCODE -ne 0) { throw "7z extraction failed for $Name" }
             }
 
-            if (Test-Path $packDir) {
-              $stamp = Get-Date -Format 'yyyyMMddHHmmss'
-              Rename-Item -Path $packDir -NewName "$Name.legacy-$stamp"
-            }
+            # Replace per-FILE, not per-directory (see Iosevkata above): rename each
+            # existing font file aside, write the new file under the canonical name,
+            # re-register. Works while the font is loaded by a running app.
             New-Item -ItemType Directory -Path $packDir -Force | Out-Null
+            $tok = "$(Get-Date -Format 'yyyyMMddHHmmss')-$(Get-Random)"
+            Get-ChildItem -Path $packDir -File -ErrorAction SilentlyContinue |
+              Where-Object { $_.Extension.ToLower() -in '.ttf','.otf','.ttc' } |
+              ForEach-Object { Rename-Item -LiteralPath $_.FullName -NewName "$($_.Name).legacy-$tok" }
 
             $fontFiles = Get-ChildItem -Path $extractDir -Recurse -Include *.ttf,*.otf,*.ttc
             foreach ($f in $fontFiles) {
@@ -548,19 +582,23 @@ properties:
               New-ItemProperty -Path $regKey -Name $regName -Value $dest -PropertyType String -Force | Out-Null
             }
 
-            $legacyPrefix = Join-Path $base "$Name.legacy-"
+            Set-Content -Path $marker -Value $latest -NoNewline
+
+            # Drop registry entries whose target file no longer exists.
             $regVals = Get-ItemProperty -Path $regKey
             foreach ($prop in $regVals.PSObject.Properties) {
               if ($prop.Name -in 'PSPath','PSParentPath','PSChildName','PSDrive','PSProvider') { continue }
-              if ($prop.Value -like "$legacyPrefix*") {
+              if ($prop.Value -like "$packDir\*" -and -not (Test-Path -LiteralPath $prop.Value)) {
                 Remove-ItemProperty -Path $regKey -Name $prop.Name -ErrorAction SilentlyContinue
               }
             }
 
-            Set-Content -Path $marker -Value $latest -NoNewline
-
+            # Best-effort reap of legacy files plus any leftover legacy dirs from the old
+            # scheme; files still mapped are delete-pending and vanish when the app closes.
+            Get-ChildItem -Path $packDir -File -Filter '*.legacy-*' -ErrorAction SilentlyContinue |
+              ForEach-Object { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue }
             Get-ChildItem -Path $base -Directory -Filter "$Name.legacy-*" -ErrorAction SilentlyContinue |
-              ForEach-Object { Remove-Item -Path $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }
+              ForEach-Object { Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }
           } finally {
             Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
           }
