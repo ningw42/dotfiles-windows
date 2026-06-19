@@ -1,0 +1,4 @@
+# Superseded by the unified dot_config/statusline/statusline.py (serves both
+# claude-code and copilot-cli). chezmoi does not auto-remove the target of a
+# deleted source, so list the orphaned old script here.
+.config/claude-code-statusline.py

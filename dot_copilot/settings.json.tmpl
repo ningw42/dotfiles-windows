@@ -1,0 +1,30 @@
+{
+  "model": "gpt-5.5",
+  "effortLevel": "xhigh",
+  "allowedUrls": [
+    "https://learn.microsoft.com",
+    "https://neo.vimhelp.org",
+    "https://raw.githubusercontent.com"
+  ],
+  "experimental": true,
+  "showReasoning": false,
+  "statusLine": {
+    "type": "command",
+    "command": "python {{ .chezmoi.homeDir | replace "\\" "/" }}/.config/statusline/statusline.py copilot",
+    "padding": 0
+  },
+  "footer": {
+    "showModelEffort": false,
+    "showDirectory": false,
+    "showBranch": false,
+    "showContextWindow": false,
+    "showQuota": false,
+    "showAgent": true,
+    "showSandbox": true,
+    "showYolo": true,
+    "showCustom": true,
+    "showAiUsed": false,
+    "showCodeChanges": false,
+    "showUsername": false
+  }
+}

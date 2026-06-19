@@ -12,4 +12,9 @@
 
 # Codex: writes ~/.codex/RTK.md and adds @RTK.md to ~/.codex/AGENTS.md.
 & rtk init -g --codex | Out-Null
+
+# Copilot CLI: writes ~/.copilot/copilot-instructions.md and the global hook
+# config ~/.copilot/hooks/rtk-rewrite.json (PreToolUse -> `rtk hook copilot`,
+# deny-with-suggestion). settings.json / mcp-config.json stay chezmoi-managed.
+& rtk init -g --copilot | Out-Null
 {{ end -}}
