@@ -1,4 +1,32 @@
-# Superseded by the unified dot_config/statusline/statusline.py (serves both
-# claude-code and copilot-cli). chezmoi does not auto-remove the target of a
-# deleted source, so list the orphaned old script here.
+# chezmoi does not auto-remove the target of a deleted source, nor a target left
+# behind when a colorscheme-conditional external stops providing it. List such
+# orphaned targets here so `chezmoi apply` cleans them up.
+# (This file is always processed as a template.)
+
+# Superseded by the unified .config/statusline/statusline.py, which serves both
+# claude-code and copilot-cli.
 .config/claude-code-statusline.py
+
+# ccstatusline was replaced wholesale by .config/statusline/statusline.py.
+.config/ccstatusline
+
+# eza config moved from XDG (~/.config/eza) to the Windows convention
+# (~/AppData/Roaming/eza); the old XDG copy is stale.
+.config/eza
+
+# Old lowercase/hyphenated bat theme files, superseded by the
+# colorscheme-conditional external that installs "Catppuccin <Variant>.tmTheme".
+.config/bat/themes/catppuccin-frappe.tmTheme
+.config/bat/themes/catppuccin-latte.tmTheme
+.config/bat/themes/catppuccin-macchiato.tmTheme
+.config/bat/themes/catppuccin-mocha.tmTheme
+.config/bat/themes/gruvbox-dark-n.tmTheme
+
+# Stale gruvbox-dark leftovers from when these were static sources. They are now
+# provided by colorscheme-conditional externals, so only remove them when
+# gruvbox-dark is NOT the active colorscheme (otherwise we would fight the
+# external that legitimately installs them).
+{{- if ne .colorscheme "gruvbox-dark" }}
+AppData/Roaming/alacritty/themes/gruvbox-dark.toml
+AppData/Roaming/yazi/config/flavors/gruvbox-dark.yazi
+{{- end }}
