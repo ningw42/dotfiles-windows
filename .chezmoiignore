@@ -1,4 +1,6 @@
 README.md
+AGENTS.md
+CLAUDE.md
 configuration.dsc.yaml
 update_externals.py
 secrets.yaml
