@@ -23,6 +23,12 @@ is also available, but configs, paths, and scripts are Windows-first.
    paths; raw Windows backslashes break JSON/template parsing.
 5. **Commits:** Conventional Commits with a scope (e.g. `feat(statusline): ...`, `chore(chezmoi): ...`).
    No `Co-authored-by` trailer (`includeCoAuthoredBy` is off).
+6. **Purge orphaned targets when you stop managing a file.** Deleting or renaming a source — or
+   switching a target to a different mechanism (inline tmpl → external, ccstatusline → custom script,
+   one tool's config replaced by another) — does **not** remove the already-deployed copy. chezmoi
+   simply stops tracking it and the stale file lingers in `$HOME`. Add the old target to
+   `.chezmoiremove` (always templated) so `chezmoi apply` deletes it on every machine. Orphaned
+   colorscheme theme files are the most common case; see [Colorscheme / theming](#colorscheme--theming-the-main-cross-cutting-concern).
 
 ## Core workflow
 
