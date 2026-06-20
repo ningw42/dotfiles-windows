@@ -1,0 +1,25 @@
+{{- /* Fetch the matching catppuccin btop theme into btop4win's themes/ dir
+       (referenced by color_theme in ../btop.conf). gruvbox-dark needs no entry
+       -- it uses btop4win's bundled "gruvbox_dark_v2.theme". Checksums refreshed
+       via update_externals.py, matching the repo's other catppuccin externals. */ -}}
+{{ if eq .colorscheme "catppuccin-latte" }}
+["catppuccin_latte.theme"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/btop/main/themes/catppuccin_latte.theme"
+    checksum.sha256 = "90e963ead5ee083a1359dcb694d9784c1bfe41ec2e0d486d3b04f0d9bdb9173b"
+{{ else if eq .colorscheme "catppuccin-frappe" }}
+["catppuccin_frappe.theme"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/btop/main/themes/catppuccin_frappe.theme"
+    checksum.sha256 = "1689b67c1c6ce2f4985a0047fad6535acecf7872c21963785fa749868a01a2c9"
+{{ else if eq .colorscheme "catppuccin-macchiato" }}
+["catppuccin_macchiato.theme"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/btop/main/themes/catppuccin_macchiato.theme"
+    checksum.sha256 = "f8b18ccb217bd4ebc184806a91d49a12cb312b9cf37d8ba23322653a78ac8850"
+{{ else if eq .colorscheme "catppuccin-mocha" }}
+["catppuccin_mocha.theme"]
+    type = "file"
+    url = "https://raw.githubusercontent.com/catppuccin/btop/main/themes/catppuccin_mocha.theme"
+    checksum.sha256 = "4c7469ab9bda282c1ff606aca37c9c0b84cd0cb66d041e4e7e1fed39791f4644"
+{{ end }}

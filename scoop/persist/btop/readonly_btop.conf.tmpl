@@ -1,0 +1,15 @@
+{{- /* btop config. This scoop package is btop4win, which reads btop.conf and
+       themes/ from the folder next to btop.exe; scoop persists both at
+       ~/scoop/persist/btop/, so that is the deploy target. Settings mirror
+       nixfiles modules/home-manager/btop. Deployed read-only so btop4win does
+       not rewrite the file on exit (which would otherwise drift from source).
+       color_theme: catppuccin flavors resolve to theme files fetched into
+       themes/ via the .chezmoiexternal there; gruvbox-dark uses btop's bundled
+       "gruvbox_dark_v2" theme. */ -}}
+#? Config file for btop4win v. 1.0.5
+
+color_theme = "{{ if eq .colorscheme "gruvbox-dark" }}gruvbox_dark_v2{{ else }}{{ .colorscheme | replace "catppuccin-" "catppuccin_" }}{{ end }}"
+theme_background = False
+update_ms = 2000
+proc_gradient = False
+temp_scale = "celsius"

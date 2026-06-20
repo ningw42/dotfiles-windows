@@ -1,0 +1,45 @@
+{{- /* bottom (btm) config. On Windows, btm reads %APPDATA%\bottom\bottom.toml.
+       Base layout/flags mirror nixfiles modules/home-manager/bottom; the theme
+       [styles] block is appended from a colorscheme partial under
+       .chezmoitemplates/bottom/ (catppuccin flavors use full palettes;
+       gruvbox-dark uses bottom's built-in "gruvbox" style). */ -}}
+[flags]
+default_widget_type = "process"
+enable_cache_memory = true
+network_use_bytes = true
+process_memory_as_value = true
+temperature_type = "celsius"
+tree = true
+
+[[row]]
+ratio = 2
+[[row.child]]
+ratio = 1
+type = "network"
+
+[[row.child]]
+ratio = 1
+type = "memory"
+
+[[row.child]]
+ratio = 2
+type = "cpu"
+
+[[row]]
+ratio = 3
+[[row.child]]
+ratio = 1
+[[row.child.child]]
+ratio = 1
+type = "temperature"
+
+[[row.child.child]]
+ratio = 2
+type = "disk"
+
+[[row.child]]
+ratio = 3
+type = "process"
+
+# theme
+{{ includeTemplate (printf "bottom/%s.toml" .colorscheme) . -}}
