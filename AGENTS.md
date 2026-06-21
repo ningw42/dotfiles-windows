@@ -62,8 +62,8 @@ Defined in `.chezmoi.toml.tmpl` (prompted once, cached in the **generated**
 - `colorscheme` ∈ `catppuccin-latte` · `catppuccin-frappe` · `catppuccin-macchiato` · `catppuccin-mocha` · `gruvbox-dark`
 - `password_manager` ∈ `1password` · `bitwarden`
 - `git_username`, `git_useremail`, `git_signingkey`
-- `codex_provider` ∈ `litellm` · `router-maestro`
-- `claude_code_provider` ∈ `byokey` · `litellm` · `router-maestro`
+- `codex_provider` ∈ `litellm` · `router-maestro` · `copilot-proxy`
+- `claude_code_provider` ∈ `byokey` · `litellm` · `router-maestro` · `copilot-proxy`
 
 Secrets are pulled in templates via `include "secrets.yaml.age" | decrypt | fromYaml`.
 Using a variable in a `.tmpl` that isn't declared in `.chezmoi.toml.tmpl` makes `apply` fail.
