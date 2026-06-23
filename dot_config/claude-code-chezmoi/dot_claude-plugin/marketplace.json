@@ -7,8 +7,13 @@
   "plugins": [
     {
       "name": "user-mcps",
-      "description": "User-scope MCP servers (brave-search, context7, exa, github).",
+      "description": "User-scope MCP servers.",
       "source": "./plugins/user-mcps"
+    },
+    {
+      "name": "user-skills",
+      "description": "User-scope Claude Code skills managed by chezmoi.",
+      "source": "./plugins/user-skills"
     }
   ]
 }

@@ -127,6 +127,11 @@ registered via `extraKnownMarketplaces` + `enabledPlugins` in `dot_claude/settin
 - **MCP server list is mirrored in several files** — `dot_codex/config.toml.tmpl`,
   `dot_copilot/mcp-config.json`, and `dot_config/claude-code-chezmoi/plugins/user-mcps/dot_mcp.json`.
   Add/remove a server in all of them to keep agents in sync.
+- **Claude Code skills** live in the `user-skills` plugin (already registered in `marketplace.json`
+  and enabled as `user-skills@chezmoi`). Add a skill by creating
+  `dot_config/claude-code-chezmoi/plugins/user-skills/skills/<name>/SKILL.md` — YAML frontmatter with
+  `name` + `description`, then the skill body. Plain markdown (no `.tmpl` unless you actually need a
+  data var). `chezmoi apply` deploys it; restart Claude Code to load the new skill.
 - **Unified statusline:** `dot_config/statusline/statusline.py` serves both Claude Code and Copilot
   (dispatch arg `claude` | `copilot`). It has an in-file test suite:
   `python dot_config/statusline/statusline.py test`.
