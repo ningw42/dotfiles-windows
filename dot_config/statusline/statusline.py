@@ -145,6 +145,14 @@ def parse_payload(raw):
     return parsed if isinstance(parsed, dict) else {}
 
 
+def read_stdin():
+    """Read the statusline JSON payload as UTF-8, independent of Windows ACP."""
+    buffer = getattr(sys.stdin, "buffer", None)
+    if buffer is None:
+        return sys.stdin.read()
+    return buffer.read().decode("utf-8", errors="replace")
+
+
 def padding_env(name, default):
     """Read a non-negative int env var, falling back to ``default``."""
     value = os.environ.get(name, str(default))
@@ -488,7 +496,7 @@ def main(argv=None):
         )
         return 2
 
-    raw = sys.stdin.read()
+    raw = read_stdin()
     data = parse_payload(raw)
     sl = cls(data, raw)
     if sl.capture_enabled():
@@ -503,6 +511,8 @@ def main(argv=None):
 def _run_tests(argv):
     """Run the in-file unittest suite. Kept lazy so a normal render never imports
     unittest or builds the fixtures."""
+    import io
+    import tempfile
     import unittest
 
     def fake_starship(mapping=None):
@@ -703,13 +713,19 @@ def _run_tests(argv):
     class CaptureTests(unittest.TestCase):
         def setUp(self):
             self._prev = os.environ.get("STATUSLINE_CAPTURE")
+            self._prev_dir = os.environ.get("STATUSLINE_CAPTURE_DIR")
             os.environ.pop("STATUSLINE_CAPTURE", None)
+            os.environ.pop("STATUSLINE_CAPTURE_DIR", None)
 
         def tearDown(self):
             if self._prev is None:
                 os.environ.pop("STATUSLINE_CAPTURE", None)
             else:
                 os.environ["STATUSLINE_CAPTURE"] = self._prev
+            if self._prev_dir is None:
+                os.environ.pop("STATUSLINE_CAPTURE_DIR", None)
+            else:
+                os.environ["STATUSLINE_CAPTURE_DIR"] = self._prev_dir
 
         def test_disabled_by_default(self):
             self.assertFalse(Statusline.capture_enabled())
@@ -723,6 +739,32 @@ def _run_tests(argv):
             for value in ("0", "false", "no", "off", ""):
                 os.environ["STATUSLINE_CAPTURE"] = value
                 self.assertFalse(Statusline.capture_enabled())
+
+        def test_main_reads_statusline_payload_as_utf8(self):
+            payload = (
+                b'{"model":{"display_name":"gpt-5.5 \xc2\xb7 xhigh '
+                b'\xc2\xb7 1.1M context","id":"gpt-5.5"}}'
+            )
+            prev_stdin, prev_stdout = sys.stdin, sys.stdout
+            with tempfile.TemporaryDirectory() as capture_dir:
+                os.environ["STATUSLINE_CAPTURE"] = "1"
+                os.environ["STATUSLINE_CAPTURE_DIR"] = capture_dir
+                try:
+                    sys.stdin = io.TextIOWrapper(io.BytesIO(payload), encoding="cp1252")
+                    sys.stdout = io.StringIO()
+                    self.assertEqual(main(["statusline.py", "copilot"]), 0)
+                finally:
+                    sys.stdin = prev_stdin
+                    sys.stdout = prev_stdout
+                captured = json.loads(
+                    (pathlib.Path(capture_dir) / "copilot-cli.json").read_text(
+                        encoding="utf-8"
+                    )
+                )
+            self.assertEqual(
+                captured["model"]["display_name"],
+                "gpt-5.5 · xhigh · 1.1M context",
+            )
 
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
@@ -741,3 +783,4 @@ def _run_tests(argv):
 
 if __name__ == "__main__":
     sys.exit(main())
+
