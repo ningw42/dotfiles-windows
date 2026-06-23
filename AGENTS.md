@@ -64,6 +64,8 @@ Defined in `.chezmoi.toml.tmpl` (prompted once, cached in the **generated**
 - `git_username`, `git_useremail`, `git_signingkey`
 - `codex_provider` ∈ `litellm` · `router-maestro` · `copilot-proxy`
 - `claude_code_provider` ∈ `byokey` · `litellm` · `router-maestro` · `copilot-proxy`
+- `claude_code_base_url` is derived from `claude_code_provider` in `.chezmoi.toml.tmpl`; update that
+  derivation when adding or renaming Claude Code providers.
 
 Secrets are pulled in templates via `include "secrets.yaml.age" | decrypt | fromYaml`.
 Using a variable in a `.tmpl` that isn't declared in `.chezmoi.toml.tmpl` makes `apply` fail.
@@ -74,9 +76,9 @@ Five valid schemes (above). `everforest-dark` exists as a few `.chezmoitemplates
 a prompt choice. Themes are wired three different ways depending on the tool:
 
 1. **Shared partials** — `{{ template "tool/scheme" . }}` / `includeTemplate` pulls from
-   `.chezmoitemplates/<tool>/` (eza, gitui, starship, fzf, windows-terminal).
+   `.chezmoitemplates/<tool>/` (bottom, eza, gitui, starship, fzf, windows-terminal).
 2. **Colorscheme-conditional externals** — a `.chezmoiexternal.toml.tmpl` downloads the matching
-   upstream theme file (bat, alacritty, yazi flavors, rio, glow, lazygit).
+   upstream theme file (bat, alacritty, yazi flavors/plugins, rio, glow, lazygit, btop).
 3. **Inline conditionals** — `{{ if eq .colorscheme ... }}` directly in a tmpl (wezterm, gitconfig delta features).
 
 ⚠️ **Sync gotcha:** colorscheme `if`-blocks are duplicated across `AppData/Local/nvim/init.lua.tmpl`,
@@ -125,8 +127,11 @@ data vars. A local MCP **plugin marketplace** lives in `dot_config/claude-code-c
 registered via `extraKnownMarketplaces` + `enabledPlugins` in `dot_claude/settings.json.tmpl`.
 
 - **MCP server list is mirrored in several files** — `dot_codex/config.toml.tmpl`,
-  `dot_copilot/mcp-config.json`, and `dot_config/claude-code-chezmoi/plugins/user-mcps/dot_mcp.json`.
-  Add/remove a server in all of them to keep agents in sync.
+  `dot_copilot/mcp-config.json`, `dot_config/opencode/opencode.json`, and
+  `dot_config/claude-code-chezmoi/plugins/user-mcps/dot_mcp.json`. Keep shared server details in
+  sync; Copilot's config currently omits `github`.
+- **Copilot repo instructions** live in `.github/copilot-instructions.md` as a short safety-net
+  pointer back to this file. If the golden rules change, keep that file's summarized bullets aligned.
 - **Claude Code skills** live in the `user-skills` plugin (already registered in `marketplace.json`
   and enabled as `user-skills@chezmoi`). Add a skill by creating
   `dot_config/claude-code-chezmoi/plugins/user-skills/skills/<name>/SKILL.md` — YAML frontmatter with
