@@ -43,6 +43,7 @@ age -e -r age1chwluerpyq4p9e340eeqatgm70939x769h7teh3tmr09f564hpyqdz2urt -o secr
 | [yazi](https://github.com/sxyazi/yazi) | Y | `AppData/Roaming/yazi/` | `~/AppData/Roaming/yazi/` |
 | [rio](https://github.com/raphamorim/rio) | Y | `AppData/Local/rio/` | `~/AppData/Local/rio/` |
 | [alacritty](https://github.com/alacritty/alacritty) | Y | `AppData/Roaming/alacritty/` | `~/AppData/Roaming/alacritty/` |
+| [zellij](https://github.com/zellij-org/zellij) | Y | `AppData/Roaming/Zellij/` | `~/AppData/Roaming/Zellij/` |
 | [gitui](https://github.com/extrawurst/gitui) | Y | `AppData/Roaming/gitui/` | `~/AppData/Roaming/gitui/` |
 | [neovide](https://github.com/neovide/neovide) | N | `AppData/Roaming/neovide/` | `~/AppData/Roaming/neovide/` |
 | [eza](https://github.com/eza-community/eza) | Y | `AppData/Roaming/eza/` | `~/AppData/Roaming/eza/` |

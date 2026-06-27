@@ -79,10 +79,11 @@ a prompt choice. Themes are wired three different ways depending on the tool:
    `.chezmoitemplates/<tool>/` (bottom, eza, gitui, starship, fzf, windows-terminal).
 2. **Colorscheme-conditional externals** — a `.chezmoiexternal.toml.tmpl` downloads the matching
    upstream theme file (bat, alacritty, yazi flavors/plugins, rio, glow, lazygit, btop).
-3. **Inline conditionals** — `{{ if eq .colorscheme ... }}` directly in a tmpl (wezterm, gitconfig delta features).
+3. **Inline conditionals** — `{{ if eq .colorscheme ... }}` directly in a tmpl (wezterm, zellij, gitconfig delta features).
 
 ⚠️ **Sync gotcha:** colorscheme `if`-blocks are duplicated across `AppData/Local/nvim/init.lua.tmpl`,
-`AppData/Roaming/yazi/config/init.lua.tmpl`, `dot_gitconfig.tmpl`, and the per-tool theme tmpls. Adding or
+`AppData/Roaming/yazi/config/init.lua.tmpl`, `AppData/Roaming/Zellij/config/config.kdl.tmpl`,
+`dot_gitconfig.tmpl`, and the per-tool theme tmpls. Adding or
 renaming a scheme means updating **all** of them *and* adding the matching `.chezmoitemplates/<tool>/<scheme>`
 files / external entries — otherwise apply silently mis-themes a tool or fails on a missing template name.
 Switching schemes can orphan the previous theme file; those are cleaned up in `.chezmoiremove`.

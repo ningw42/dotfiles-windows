@@ -298,6 +298,25 @@ properties:
         GetScript: |
           @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\everything-cli\current") { 'Installed' } else { 'NotInstalled' } }
 
+    # zellij — terminal multiplexer / workspace. Config is managed at
+    # AppData/Roaming/Zellij/config/config.kdl.tmpl (Windows reads config from
+    # %APPDATA%\Zellij\config, not ~/.config), mirroring the nixfiles
+    # home-manager zellij module. From the default `main` bucket.
+    - resource: PSDscResources/Script
+      id: ScoopZellij
+      dependsOn:
+        - ScoopBootstrap
+      directives:
+        description: "Install zellij terminal multiplexer via Scoop"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          Test-Path "$env:USERPROFILE\scoop\apps\zellij\current"
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install zellij
+        GetScript: |
+          @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\zellij\current") { 'Installed' } else { 'NotInstalled' } }
+
     # ============================================================
     # PowerShell Modules
     # ============================================================

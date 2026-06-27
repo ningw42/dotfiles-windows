@@ -97,6 +97,12 @@ Function oc
   opencode --model "byokey/claude-opus-4.8" @args
 }
 
+# alias for zellij, mirroring the `zj` shell alias from nixfiles' zellij module.
+Function zj
+{
+  zellij @args
+}
+
 #endregion Functions
 
 # Codex shells do not always populate CODEX_SANDBOX, but they do expose
