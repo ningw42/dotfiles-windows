@@ -490,6 +490,7 @@ properties:
           if ($LASTEXITCODE -ne 0) { throw "gh api failed for $Owner/$Repo" }
           $release = $json | ConvertFrom-Json
           $latest  = $release.tag_name
+          $cacheRefreshNeeded = $false
 
           foreach ($p in $packs) {
             $Name    = $p.Name
@@ -534,6 +535,7 @@ properties:
               }
 
               Set-Content -Path $marker -Value $latest -NoNewline
+              $cacheRefreshNeeded = $true
 
               # Drop registry entries whose target file no longer exists (a style dropped
               # upstream, or a renamed-aside legacy file we never registered).
@@ -554,6 +556,24 @@ properties:
                 ForEach-Object { Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }
             } finally {
               Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
+            }
+          }
+
+          # DirectWrite apps (Windows Terminal, WezTerm, VS Code, browsers) serve fonts from
+          # the Windows Font Cache Service's shared, cross-process system collection -- NOT the
+          # GDI font table -- and ignore AddFontResource/WM_FONTCHANGE. After a per-user font
+          # file is replaced in place, that cache keeps a dangling path+last-write-time
+          # reference (DirectWrite returns DWRITE_E_FILENOTFOUND) until the service is
+          # restarted, which is why an updated font otherwise needs a full reboot before
+          # Windows Terminal can use it. Restart the service so the new font is usable without
+          # rebooting. Best-effort: this needs elevation (winget configure runs elevated); if
+          # not elevated it throws, we warn, and the install still succeeds -- degrading to the
+          # old reboot-required behavior rather than failing the resource.
+          if ($cacheRefreshNeeded) {
+            try {
+              Restart-Service FontCache -Force -ErrorAction Stop
+            } catch {
+              Write-Warning "FontCache restart failed ($($_.Exception.Message)); reboot, or run 'Restart-Service FontCache' elevated, for DirectWrite apps (Windows Terminal) to see the updated fonts."
             }
           }
         GetScript: |
@@ -660,6 +680,20 @@ properties:
               ForEach-Object { Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }
           } finally {
             Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
+          }
+
+          # Reaching here means the font was actually updated (the version-match check returns
+          # early above). DirectWrite apps (Windows Terminal, WezTerm, VS Code) serve fonts
+          # from the Windows Font Cache Service's shared system collection and ignore
+          # AddFontResource/WM_FONTCHANGE, so a replaced per-user font file leaves a dangling
+          # path+last-write-time reference (DWRITE_E_FILENOTFOUND) until the service is
+          # restarted -- otherwise Windows Terminal needs a full reboot to see the new font.
+          # Best-effort restart (needs elevation; winget configure runs elevated). If it
+          # fails, warn and fall back to the old reboot-required behavior.
+          try {
+            Restart-Service FontCache -Force -ErrorAction Stop
+          } catch {
+            Write-Warning "FontCache restart failed ($($_.Exception.Message)); reboot, or run 'Restart-Service FontCache' elevated, for DirectWrite apps (Windows Terminal) to see the updated fonts."
           }
         GetScript: |
           $markerPath = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts\SarasaFixedSC\.version'
