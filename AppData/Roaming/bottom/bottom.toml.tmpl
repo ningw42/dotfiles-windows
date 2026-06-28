@@ -5,11 +5,17 @@
        gruvbox-dark uses bottom's built-in "gruvbox" style). */ -}}
 [flags]
 default_widget_type = "process"
-enable_cache_memory = true
-network_use_bytes = true
-process_memory_as_value = true
 temperature_type = "celsius"
-tree = true
+
+[processes]
+default_tree = true
+default_memory_value = true
+
+[network_graph]
+use_bytes = true
+
+[memory_graph]
+cache_memory = true
 
 [[row]]
 ratio = 2
