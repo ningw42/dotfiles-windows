@@ -163,6 +163,18 @@ and per-user fonts (Iosevkata / SarasaFixedSC, fetched via the authenticated `gh
 profile (`readonly_Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl`, templated) decrypts secrets,
 sets env vars/aliases, initializes starship/zoxide/PSFzf, and short-circuits inside Codex sessions.
 
+⚠️ **Per-user fonts need a FontCache restart, not `AddFontResource`.** The font resources install packs
+to `%LOCALAPPDATA%\Microsoft\Windows\Fonts` + HKCU (no admin) and replace files **in place** on a version
+bump. DirectWrite apps (Windows Terminal, WezTerm, VS Code, browsers) serve fonts from the **Windows
+`FontCache` service**'s shared system collection — keyed by *path + last-write-time* — and ignore GDI's
+`AddFontResource` / `WM_FONTCHANGE`. So an in-place replacement leaves a dangling reference (DirectWrite
+returns `DWRITE_E_FILENOTFOUND`) and the new font stays unusable until that cache is rebuilt — which
+otherwise needs a full reboot. Each font `SetScript` therefore runs a best-effort `Restart-Service
+FontCache` when a pack actually updates (uses the elevation `winget configure` provides; on a non-elevated
+run it warns and falls back to reboot-required). `AddFontResourceEx` + `WM_FONTCHANGE` was verified **not**
+to refresh DirectWrite, so the cache restart — not that GDI sequence — is the fix. The robust alternative,
+if the per-user path ever acts up, is an all-users install into `C:\Windows\Fonts` (+ HKLM, always admin).
+
 ## Files that must NOT deploy to `$HOME`
 
 These repo-only files are excluded in `.chezmoiignore`: `README.md`, `configuration.dsc.yaml`,
