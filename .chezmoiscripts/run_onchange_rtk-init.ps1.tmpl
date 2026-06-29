@@ -17,8 +17,17 @@
 # has no command-rewrite hook, so this instruction file is its only integration.
 & rtk init -g --codex | Out-Null
 
-# Copilot CLI: writes ~/.copilot/copilot-instructions.md and the global hook
-# config ~/.copilot/hooks/rtk-rewrite.json (PreToolUse -> `rtk hook copilot`,
-# deny-with-suggestion). settings.json / mcp-config.json stay chezmoi-managed.
-& rtk init -g --copilot | Out-Null
+# Copilot CLI: hook-only, same rationale as Claude. The Copilot path is
+# "deny-with-suggestion" (rtk's `rtk hook copilot` blocks the bare command and
+# suggests the rtk-prefixed form, which the agent retries) — deterministic and
+# hook-driven, so the bundled copilot-instructions.md prompt is redundant.
+# `rtk init --copilot` writes BOTH the hook (~/.copilot/hooks/rtk-rewrite.json)
+# and the instructions, and on Windows rtk ignores a redirected HOME/USERPROFILE
+# (writes straight to the real ~/.copilot), so we can't sandbox-and-copy like
+# nixfiles does. Instead let it write both, then delete the instructions — the
+# hook file's presence in ~/.copilot/hooks is the whole integration. --no-patch
+# keeps settings.json / mcp-config.json chezmoi-managed. .chezmoiremove also
+# lists the instructions file for idempotent cross-machine cleanup.
+& rtk init -g --copilot --no-patch | Out-Null
+Remove-Item -Force -ErrorAction SilentlyContinue "$env:USERPROFILE\.copilot\copilot-instructions.md"
 {{ end -}}

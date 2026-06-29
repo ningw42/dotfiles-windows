@@ -224,11 +224,11 @@ properties:
           @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\age\current") { 'Installed' } else { 'NotInstalled' } }
 
     # rtk (Rust Token Killer) — CLI proxy that compresses dev-command
-    # output before it reaches an LLM. Claude Code rewrites Bash calls via a
-    # transparent PreToolUse hook (`rtk hook claude`, dot_claude/settings.json.tmpl);
-    # Codex/Copilot fall back to instruction injection. The hook + awareness
-    # files are wired by run_onchange_rtk-init.ps1.tmpl — this resource only
-    # installs the binary.
+    # output before it reaches an LLM. Claude (transparent) and Copilot
+    # (deny-with-suggestion) rewrite Bash calls via PreToolUse hooks; only
+    # Codex falls back to instruction injection (no rtk hook codex yet). The
+    # hooks + Codex awareness files are wired by run_onchange_rtk-init.ps1.tmpl
+    # — this resource only installs the binary.
     - resource: PSDscResources/Script
       id: ScoopRtk
       dependsOn:

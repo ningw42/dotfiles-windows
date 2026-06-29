@@ -30,6 +30,12 @@
 .claude/RTK.md
 .claude/CLAUDE.md
 
+# Copilot CLI is likewise hook-only (deny-with-suggestion `rtk hook copilot`),
+# so its bundled instruction file is redundant. run_onchange_rtk-init deletes it
+# after `rtk init --copilot` regenerates it; this entry is the idempotent
+# cross-machine purge of any already-deployed copy.
+.copilot/copilot-instructions.md
+
 # Stale gruvbox-dark leftovers from when these were static sources. They are now
 # provided by colorscheme-conditional externals, so only remove them when
 # gruvbox-dark is NOT the active colorscheme (otherwise we would fight the
