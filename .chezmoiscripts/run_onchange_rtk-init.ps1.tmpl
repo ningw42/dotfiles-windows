@@ -1,16 +1,20 @@
 {{ if eq .chezmoi.os "windows" -}}
-# Regenerate rtk's RTK.md / CLAUDE.md / AGENTS.md awareness files.
-# Re-runs only when the rtk binary version changes, since rtk owns the
-# canonical content of these files (rtk init writes them).
+# Regenerate rtk's awareness files for Codex and Copilot. Re-runs only when the
+# rtk binary version changes, since rtk owns the canonical content (rtk init
+# writes them).
+#
+# Claude Code is intentionally NOT initialized here: its PreToolUse hook
+# (`rtk hook claude`, wired in dot_claude/settings.json.tmpl) transparently
+# rewrites every Bash call via `updatedInput`, so the RTK.md / CLAUDE.md prompt
+# injection is redundant. Mirrors nixfiles' hook-only claude-code module; the
+# orphaned ~/.claude/{RTK,CLAUDE}.md are purged via .chezmoiremove. The only
+# thing RTK.md would add is awareness of meta-commands (rtk gain/discover) — not
+# worth the per-session prompt tokens given the rewrite is deterministic.
 #
 # rtk version: {{ output "rtk" "--version" | trim }}
 
-# Claude Code: writes ~/.claude/RTK.md and adds @RTK.md to ~/.claude/CLAUDE.md.
-# --no-patch skips settings.json patching so chezmoi keeps ownership of it
-# (the rtk PreToolUse hook is wired in dot_claude/settings.json.tmpl).
-& rtk init -g --no-patch | Out-Null
-
-# Codex: writes ~/.codex/RTK.md and adds @RTK.md to ~/.codex/AGENTS.md.
+# Codex: writes ~/.codex/RTK.md and adds @RTK.md to ~/.codex/AGENTS.md. Codex
+# has no command-rewrite hook, so this instruction file is its only integration.
 & rtk init -g --codex | Out-Null
 
 # Copilot CLI: writes ~/.copilot/copilot-instructions.md and the global hook

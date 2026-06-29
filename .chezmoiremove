@@ -22,6 +22,14 @@
 .config/bat/themes/catppuccin-mocha.tmTheme
 .config/bat/themes/gruvbox-dark-n.tmTheme
 
+# Claude Code RTK awareness files: dropped in favor of the deterministic
+# `rtk hook claude` PreToolUse hook (dot_claude/settings.json.tmpl), which
+# rewrites every Bash call transparently — making the RTK.md prompt injection
+# redundant (mirrors nixfiles' hook-only claude-code setup). ~/.claude/CLAUDE.md
+# held nothing but the `@RTK.md` include, so it goes too.
+.claude/RTK.md
+.claude/CLAUDE.md
+
 # Stale gruvbox-dark leftovers from when these were static sources. They are now
 # provided by colorscheme-conditional externals, so only remove them when
 # gruvbox-dark is NOT the active colorscheme (otherwise we would fight the

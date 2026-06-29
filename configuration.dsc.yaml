@@ -224,10 +224,11 @@ properties:
           @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\age\current") { 'Installed' } else { 'NotInstalled' } }
 
     # rtk (Rust Token Killer) — CLI proxy that compresses dev-command
-    # output before it reaches an LLM. Native Windows uses CLAUDE.md /
-    # AGENTS.md injection (no auto-rewrite hook), so the agent must
-    # manually prefix commands with `rtk`. See dot_claude/RTK.md and
-    # dot_codex/RTK.md for the awareness instructions.
+    # output before it reaches an LLM. Claude Code rewrites Bash calls via a
+    # transparent PreToolUse hook (`rtk hook claude`, dot_claude/settings.json.tmpl);
+    # Codex/Copilot fall back to instruction injection. The hook + awareness
+    # files are wired by run_onchange_rtk-init.ps1.tmpl — this resource only
+    # installs the binary.
     - resource: PSDscResources/Script
       id: ScoopRtk
       dependsOn:
