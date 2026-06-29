@@ -559,22 +559,17 @@ properties:
             }
           }
 
-          # DirectWrite apps (Windows Terminal, WezTerm, VS Code, browsers) serve fonts from
-          # the Windows Font Cache Service's shared, cross-process system collection -- NOT the
-          # GDI font table -- and ignore AddFontResource/WM_FONTCHANGE. After a per-user font
-          # file is replaced in place, that cache keeps a dangling path+last-write-time
+          # A per-user font file was replaced in place. DirectWrite apps (Windows Terminal,
+          # WezTerm, VS Code, browsers) serve fonts from the Windows Font Cache Service's
+          # shared, cross-process system collection -- NOT the GDI font table -- and ignore
+          # AddFontResource/WM_FONTCHANGE, so the cache keeps a dangling path+last-write-time
           # reference (DirectWrite returns DWRITE_E_FILENOTFOUND) until the service is
-          # restarted, which is why an updated font otherwise needs a full reboot before
-          # Windows Terminal can use it. Restart the service so the new font is usable without
-          # rebooting. Best-effort: this needs elevation (winget configure runs elevated); if
-          # not elevated it throws, we warn, and the install still succeeds -- degrading to the
-          # old reboot-required behavior rather than failing the resource.
+          # restarted; otherwise an updated font needs a full reboot before Windows Terminal
+          # can use it. The restart needs admin, but this install is deliberately per-user (no
+          # elevation), so we don't restart here -- drop a sentinel that the elevated
+          # RestartFontCacheForFonts resource consumes after the installs finish.
           if ($cacheRefreshNeeded) {
-            try {
-              Restart-Service FontCache -Force -ErrorAction Stop
-            } catch {
-              Write-Warning "FontCache restart failed ($($_.Exception.Message)); reboot, or run 'Restart-Service FontCache' elevated, for DirectWrite apps (Windows Terminal) to see the updated fonts."
-            }
+            New-Item -ItemType File -Path (Join-Path $base '.cache-refresh-needed') -Force | Out-Null
           }
         GetScript: |
           $base = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts'
@@ -683,18 +678,50 @@ properties:
           }
 
           # Reaching here means the font was actually updated (the version-match check returns
-          # early above). DirectWrite apps (Windows Terminal, WezTerm, VS Code) serve fonts
-          # from the Windows Font Cache Service's shared system collection and ignore
-          # AddFontResource/WM_FONTCHANGE, so a replaced per-user font file leaves a dangling
-          # path+last-write-time reference (DWRITE_E_FILENOTFOUND) until the service is
-          # restarted -- otherwise Windows Terminal needs a full reboot to see the new font.
-          # Best-effort restart (needs elevation; winget configure runs elevated). If it
-          # fails, warn and fall back to the old reboot-required behavior.
-          try {
-            Restart-Service FontCache -Force -ErrorAction Stop
-          } catch {
-            Write-Warning "FontCache restart failed ($($_.Exception.Message)); reboot, or run 'Restart-Service FontCache' elevated, for DirectWrite apps (Windows Terminal) to see the updated fonts."
-          }
+          # early above). A replaced per-user font file leaves the DirectWrite font cache with
+          # a dangling reference until FontCache is restarted (see InstallFontIosevkata for the
+          # full why). That restart needs admin and this install is per-user, so signal the
+          # elevated RestartFontCacheForFonts resource via a sentinel instead of restarting here.
+          New-Item -ItemType File -Path (Join-Path $base '.cache-refresh-needed') -Force | Out-Null
         GetScript: |
           $markerPath = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts\SarasaFixedSC\.version'
           @{ Result = if (Test-Path $markerPath) { 'Installed' } else { 'NotInstalled' } }
+
+    # Restarting the Windows Font Cache service is the one piece of font setup that needs
+    # admin, so it lives in its own resource marked `securityContext: elevated`. Under WinGet's
+    # mixed-elevation model (winget >= 1.9) only THIS unit runs elevated -- behind the single
+    # UAC prompt winget raises up front -- while the two installs above stay in user context
+    # and keep writing the logged-in user's HKCU + %LOCALAPPDATA% (not an admin's profile).
+    # Handshake: an install drops a '.cache-refresh-needed' sentinel ONLY when it actually
+    # replaces a font; this resource restarts FontCache and clears the sentinel, so an updated
+    # per-user font becomes usable without a reboot. No sentinel -> Test passes -> no restart,
+    # so a routine apply where the fonts are already current does no work here. The restart is
+    # best-effort: if it fails (e.g. winget couldn't elevate, or run via the PS module, which
+    # ignores securityContext) it warns and leaves the sentinel in place to retry next apply,
+    # degrading to the prior reboot-required behavior instead of failing the resource.
+    - resource: PSDscResources/Script
+      id: RestartFontCacheForFonts
+      dependsOn:
+        - InstallFontIosevkata
+        - InstallFontSarasaFixedSC
+      directives:
+        description: "Restart FontCache so DirectWrite apps see updated per-user fonts"
+        securityContext: elevated
+      settings:
+        TestScript: |
+          # In desired state (no restart needed) unless an install left a sentinel behind.
+          -not (Test-Path (Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts\.cache-refresh-needed'))
+        SetScript: |
+          $sentinel = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts\.cache-refresh-needed'
+          # AddFontResourceEx + WM_FONTCHANGE was verified NOT to refresh DirectWrite; a
+          # FontCache service restart is what rebuilds the shared system font collection.
+          # Clear the sentinel only on success so a failed (unelevated) run retries next apply.
+          try {
+            Restart-Service FontCache -Force -ErrorAction Stop
+            Remove-Item -LiteralPath $sentinel -Force -ErrorAction SilentlyContinue
+          } catch {
+            Write-Warning "FontCache restart failed ($($_.Exception.Message)); reboot, or run 'Restart-Service FontCache' elevated, for DirectWrite apps (Windows Terminal) to see the updated fonts. Sentinel left in place to retry on next apply."
+          }
+        GetScript: |
+          $sentinel = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts\.cache-refresh-needed'
+          @{ Result = if (Test-Path $sentinel) { 'RestartPending' } else { 'UpToDate' } }

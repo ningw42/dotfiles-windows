@@ -169,9 +169,16 @@ bump. DirectWrite apps (Windows Terminal, WezTerm, VS Code, browsers) serve font
 `FontCache` service**'s shared system collection — keyed by *path + last-write-time* — and ignore GDI's
 `AddFontResource` / `WM_FONTCHANGE`. So an in-place replacement leaves a dangling reference (DirectWrite
 returns `DWRITE_E_FILENOTFOUND`) and the new font stays unusable until that cache is rebuilt — which
-otherwise needs a full reboot. Each font `SetScript` therefore runs a best-effort `Restart-Service
-FontCache` when a pack actually updates (uses the elevation `winget configure` provides; on a non-elevated
-run it warns and falls back to reboot-required). `AddFontResourceEx` + `WM_FONTCHANGE` was verified **not**
+otherwise needs a full reboot. The restart needs admin, but the installs are deliberately per-user, so
+the two `SetScript`s **don't** restart anything — when a pack actually updates they drop a
+`%LOCALAPPDATA%\Microsoft\Windows\Fonts\.cache-refresh-needed` sentinel. A dedicated
+`RestartFontCacheForFonts` resource marked `securityContext: elevated` (depends on both installs) then
+runs the `Restart-Service FontCache` behind WinGet's single up-front UAC prompt and clears the sentinel —
+so **only** that unit runs elevated while the installs stay in user context (writing the logged-in user's
+HKCU + `%LOCALAPPDATA%`). No sentinel → its `TestScript` passes → no restart. Best-effort: if it can't
+elevate (or is run via the WinGet PowerShell module, which ignores `securityContext`) it warns and leaves
+the sentinel to retry next apply, degrading to reboot-required. Needs WinGet ≥ 1.9 for mixed elevation.
+`AddFontResourceEx` + `WM_FONTCHANGE` was verified **not**
 to refresh DirectWrite, so the cache restart — not that GDI sequence — is the fix. The robust alternative,
 if the per-user path ever acts up, is an all-users install into `C:\Windows\Fonts` (+ HKLM, always admin).
 
