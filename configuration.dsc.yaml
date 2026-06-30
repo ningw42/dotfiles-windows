@@ -303,6 +303,9 @@ properties:
     # AppData/Roaming/Zellij/config/config.kdl.tmpl (Windows reads config from
     # %APPDATA%\Zellij\config, not ~/.config), mirroring the nixfiles
     # home-manager zellij module. From the default `main` bucket.
+    # Native Windows support + the WASM plugin runtime require zellij >= 0.44.0.
+    # The zjstatus status bar's .wasm is fetched as a checksummed chezmoi
+    # external (referenced via file:), so no extra Scoop install is needed.
     - resource: PSDscResources/Script
       id: ScoopZellij
       dependsOn:

@@ -1,0 +1,8 @@
+# zjstatus — zellij status-bar WASM plugin, referenced via file: in
+# layouts/default.kdl. Pinned to v0.23.0 and integrity-checked; refresh the
+# checksum with `python update_externals.py` if the version/URL ever changes.
+["zjstatus.wasm"]
+    type = "file"
+    url = "https://github.com/dj95/zjstatus/releases/download/v0.23.0/zjstatus.wasm"
+    checksum.sha256 = "e006901223524239db618021e4cc5d17f82dc4bfae5432895ba41f03f13861ff"
+    refreshPeriod = "168h"

@@ -79,10 +79,14 @@ a prompt choice. Themes are wired three different ways depending on the tool:
    `.chezmoitemplates/<tool>/` (bottom, eza, gitui, starship, fzf, windows-terminal).
 2. **Colorscheme-conditional externals** — a `.chezmoiexternal.toml.tmpl` downloads the matching
    upstream theme file (bat, alacritty, yazi flavors/plugins, rio, glow, lazygit, btop).
-3. **Inline conditionals** — `{{ if eq .colorscheme ... }}` directly in a tmpl (wezterm, zellij, gitconfig delta features).
+3. **Inline conditionals** — `{{ if eq .colorscheme ... }}` directly in a tmpl (wezterm, gitconfig delta features).
+   Zellij is a hybrid: its **pane theme** is now a plain built-in theme-*name* passthrough (`theme {{ .colorscheme | quote }}`,
+   no inline conditional), while the **status-bar palette** is the inline `$palettes` go-template dict in
+   `layouts/default.kdl.tmpl`; the zjstatus `.wasm` itself is a checksummed external
+   (`AppData/Roaming/Zellij/config/plugins/.chezmoiexternal.toml`) referenced via `file:`.
 
 ⚠️ **Sync gotcha:** colorscheme `if`-blocks are duplicated across `AppData/Local/nvim/init.lua.tmpl`,
-`AppData/Roaming/yazi/config/init.lua.tmpl`, `AppData/Roaming/Zellij/config/config.kdl.tmpl`,
+`AppData/Roaming/yazi/config/init.lua.tmpl`, `AppData/Roaming/Zellij/config/layouts/default.kdl.tmpl`,
 `dot_gitconfig.tmpl`, and the per-tool theme tmpls. Adding or
 renaming a scheme means updating **all** of them *and* adding the matching `.chezmoitemplates/<tool>/<scheme>`
 files / external entries — otherwise apply silently mis-themes a tool or fails on a missing template name.
