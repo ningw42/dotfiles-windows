@@ -6,7 +6,13 @@
   tab-bar/status-bar. zjstatus.wasm is a LOCAL copy fetched by chezmoi as a
   checksummed external (see ../plugins/.chezmoiexternal.toml) and referenced via
   file: below — no network at launch. On first launch and after any version bump,
-  zellij prompts to grant zjstatus permissions: focus the bar pane and press `y`.
+  zellij prompts to grant zjstatus permissions: click the top bar (or Alt+k to
+  focus it) and press `y`. ⚠️ The prompt renders INSIDE this 1-row borderless
+  pane, so it's a thin, easily-missed strip at the very top — NOT a modal dialog;
+  a blank/broken-looking bar usually just means the grant is still pending. This
+  is a known zellij limitation (issue zellij-org/zellij#4749), NOT documented in
+  zjstatus's own README/wiki. If the strip is too cramped to act on, temporarily
+  set borderless=false (or raise size) on the pane below, grant, then revert.
 
   Bar colours: per-scheme palette below, mirroring the nixfiles barColors mapping
   (catppuccin: bg0=mantle bg1=surface0 bg2=surface2 fg=text; orange=peach,
