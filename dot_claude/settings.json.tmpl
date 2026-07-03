@@ -79,12 +79,6 @@
         "path": "{{ .chezmoi.homeDir | replace "\\" "/" }}/.config/claude-code-chezmoi"
       }
     },
-    "openai-codex": {
-      "source": {
-        "source": "github",
-        "repo": "openai/codex-plugin-cc"
-      }
-    },
     "superpowers-marketplace": {
       "source": {
         "source": "github",
@@ -98,7 +92,6 @@
   "enabledPlugins": {
     "user-mcps@chezmoi": true,
     "user-skills@chezmoi": true,
-    "codex@openai-codex": true,
     "superpowers@superpowers-marketplace": true
   },
   "enableWorkflows": true,
