@@ -1,7 +1,7 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "enabled_providers": [
-    "byokey",
+    "copilot-proxy",
     "litellm"
   ],
   "mcp": {
@@ -33,7 +33,7 @@
     }
   },
   "provider": {
-    "byokey": {
+    "copilot-proxy": {
       "models": {
         "claude-haiku-4.5": {
           "cost": {
@@ -56,131 +56,6 @@
             ]
           },
           "name": "Haiku 4.5"
-        },
-        "claude-opus-4.6": {
-          "cost": {
-            "cache_read": 0.5,
-            "cache_write": 6.25,
-            "input": 5,
-            "output": 25
-          },
-          "limit": {
-            "context": 1000000,
-            "output": 64000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "name": "Opus 4.6",
-          "options": {
-            "effort": "high",
-            "thinking": {
-              "display": "summarized",
-              "type": "adaptive"
-            }
-          },
-          "variants": {
-            "high": {
-              "effort": "high",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "low": {
-              "effort": "low",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "max": {
-              "effort": "max",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "medium": {
-              "effort": "medium",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            }
-          }
-        },
-        "claude-opus-4.7": {
-          "cost": {
-            "cache_read": 0.5,
-            "cache_write": 6.25,
-            "input": 5,
-            "output": 25
-          },
-          "limit": {
-            "context": 1000000,
-            "output": 64000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "name": "Opus 4.7",
-          "options": {
-            "effort": "xhigh",
-            "thinking": {
-              "display": "summarized",
-              "type": "adaptive"
-            }
-          },
-          "variants": {
-            "high": {
-              "effort": "high",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "low": {
-              "effort": "low",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "max": {
-              "effort": "max",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "medium": {
-              "effort": "medium",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            },
-            "xhigh": {
-              "effort": "xhigh",
-              "thinking": {
-                "display": "summarized",
-                "type": "adaptive"
-              }
-            }
-          }
         },
         "claude-opus-4.8": {
           "cost": {
@@ -248,7 +123,7 @@
             }
           }
         },
-        "claude-sonnet-4.6": {
+        "claude-sonnet-5": {
           "cost": {
             "cache_read": 0.3,
             "cache_write": 3.75,
@@ -268,9 +143,9 @@
               "text"
             ]
           },
-          "name": "Sonnet 4.6",
+          "name": "Sonnet 5",
           "options": {
-            "effort": "high",
+            "effort": "xhigh",
             "thinking": {
               "display": "summarized",
               "type": "adaptive"
@@ -304,19 +179,67 @@
                 "display": "summarized",
                 "type": "adaptive"
               }
+            },
+            "xhigh": {
+              "effort": "xhigh",
+              "thinking": {
+                "display": "summarized",
+                "type": "adaptive"
+              }
             }
           }
         }
       },
-      "name": "BYOKEY",
+      "name": "Copilot Proxy",
       "npm": "@ai-sdk/anthropic",
       "options": {
         "apiKey": "{env:OPENCODE_API_KEY}",
-        "baseURL": "https://byokey.ningw.net/v1"
+        "baseURL": "https://copilot.ningw.net/v1"
       }
     },
     "litellm": {
       "models": {
+        "gpt-5.4": {
+          "cost": {
+            "cache_read": 0.25,
+            "input": 2.5,
+            "output": 15
+          },
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "GPT-5.4",
+          "options": {
+            "reasoningEffort": "xhigh"
+          },
+          "variants": {
+            "high": {
+              "reasoningEffort": "high"
+            },
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "medium": {
+              "reasoningEffort": "medium"
+            },
+            "none": {
+              "reasoningEffort": "none"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh"
+            }
+          }
+        },
         "gpt-5.5": {
           "cost": {
             "cache_read": 0.5,
