@@ -2,7 +2,8 @@ model = "gpt-5.5"
 model_provider = "{{ .codex_provider }}"
 model_reasoning_effort = "xhigh"
 suppress_unstable_features_warning = true
-approvals_reviewer = "guardian_subagent"
+approval_policy = "on-request"
+approvals_reviewer = "auto_review"
 
 [model_providers.agent-maestro]
 name = "Agent Maestro"
