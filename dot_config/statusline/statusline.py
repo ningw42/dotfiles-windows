@@ -442,8 +442,8 @@ class CopilotStatusline(Statusline):
         Copilot reports the dotted id form (e.g. `claude-opus-4.8`, `gpt-5.5`).
         Split on -/_; drop a leading `claude` vendor prefix; keep version tokens
         (anything with a digit) verbatim, upcase `gpt`, and title-case the rest.
-        GPT labels keep their hyphens (`GPT-5.5`); others are space-joined
-        (`Opus 4.8`).
+        GPT labels keep the prefix/version hyphen (`GPT-5.5`) but space-join
+        qualifiers (`GPT-5.6 Sol`); others are fully space-joined (`Opus 4.8`).
         """
         tokens = [tok for tok in re.split(r"[-_]+", value.strip()) if tok]
         if tokens and tokens[0].lower() == "claude":
@@ -457,7 +457,12 @@ class CopilotStatusline(Statusline):
                 words.append(tok)
             else:
                 words.append(tok[:1].upper() + tok[1:])
-        return ("-" if is_gpt else " ").join(words) if words else value.strip()
+        if not words:
+            return value.strip()
+        if not is_gpt:
+            return " ".join(words)
+        label = "-".join(words[:2])
+        return " ".join([label, *words[2:]])
 
     def margins(self):
         return (
@@ -583,6 +588,7 @@ def _run_tests(argv):
             f = CopilotStatusline.format_model_label
             self.assertEqual(f("claude-opus-4.8"), "Opus 4.8")
             self.assertEqual(f("gpt-5.5"), "GPT-5.5")
+            self.assertEqual(f("gpt-5.6-sol"), "GPT-5.6 Sol")
 
     class ClaudeAccessorTests(unittest.TestCase):
         def setUp(self):
