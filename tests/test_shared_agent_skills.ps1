@@ -63,6 +63,75 @@ function Write-ValidManifests {
     '{"name":"superpowers"}' | Set-Content -NoNewline (Join-Path $Central '.claude-plugin/plugin.json')
 }
 
+function Write-MattManifest {
+    param(
+        [string]$Root,
+        [object[]]$SkillPaths = @('skills/engineering/matt-only'),
+        [string]$Name = 'mattpocock-skills',
+        [switch]$CreateSkills
+    )
+
+    New-Item -ItemType Directory -Force (Join-Path $Root '.claude-plugin') | Out-Null
+    if ($CreateSkills) {
+        foreach ($skillPath in $SkillPaths) {
+            if ($skillPath -isnot [string]) { continue }
+            $relativePath = $skillPath
+            if ($relativePath.StartsWith('./', [StringComparison]::Ordinal)) {
+                $relativePath = $relativePath.Substring(2)
+            }
+            if ($relativePath -notmatch '(^|/)\.\.?(?:/|$)' -and -not [IO.Path]::IsPathFullyQualified($relativePath)) {
+                $skillRoot = Join-Path $Root $relativePath
+                New-Item -ItemType Directory -Force $skillRoot | Out-Null
+                '# matt fixture' | Set-Content -NoNewline (Join-Path $skillRoot 'SKILL.md')
+            }
+        }
+    }
+
+    [ordered]@{
+        name = $Name
+        skills = @($SkillPaths)
+    } | ConvertTo-Json -Depth 4 | Set-Content -NoNewline (
+        Join-Path $Root '.claude-plugin/plugin.json'
+    )
+}
+
+function New-MattFixture {
+    param(
+        [string]$Root,
+        [object[]]$SkillPaths = @('./skills/engineering/matt-only')
+    )
+
+    New-Item -ItemType Directory -Force $Root | Out-Null
+    Write-MattManifest -Root $Root -SkillPaths $SkillPaths -CreateSkills
+    return $Root
+}
+
+function Add-MutationSentinels {
+    param(
+        [string]$Central,
+        [string]$Shared
+    )
+
+    $staleTarget = Join-Path $Central 'skills/stale-owned'
+    New-Item -ItemType Directory -Force $staleTarget | Out-Null
+    New-DirectoryLink -Path (Join-Path $Shared 'stale-owned') -Target $staleTarget
+    Remove-Item -LiteralPath $staleTarget -Recurse -Force
+}
+
+function Assert-MutationSentinelsUntouched {
+    param(
+        [string]$Shared,
+        [string]$DesiredName = 'superpower-only'
+    )
+
+    Assert-True (
+        $null -ne (Get-LinkItem (Join-Path $Shared 'stale-owned'))
+    ) 'preflight failure preserves an owned stale link'
+    Assert-Null (
+        (Get-LinkItem (Join-Path $Shared $DesiredName))
+    ) 'preflight failure creates no desired link'
+}
+
 function New-Skill {
     param(
         [string]$Central,
@@ -110,10 +179,17 @@ function Get-LinkItem {
 function Invoke-Reconciler {
     param(
         [string]$Central,
-        [string]$Shared
+        [string]$Shared,
+        [string]$Matt = (Join-Path (Split-Path $Central -Parent) 'matt')
     )
 
-    & $RenderedScript -SuperpowersRoot $Central -SharedSkillsRoot $Shared | Out-Null
+    if (-not (Test-Path -LiteralPath $Matt)) {
+        New-MattFixture -Root $Matt | Out-Null
+    }
+    & $RenderedScript `
+        -SuperpowersRoot $Central `
+        -MattpocockSkillsRoot $Matt `
+        -SharedSkillsRoot $Shared | Out-Null
 }
 
 $testRoot = Join-Path ([IO.Path]::GetTempPath()) ("superpowers-links-" + [guid]::NewGuid())
@@ -160,7 +236,23 @@ try {
     $unrelatedPath = Join-Path $shared 'unrelated'
     New-DirectoryLink -Path $unrelatedPath -Target $legacyTarget
 
+    $unrelatedFilePath = Join-Path $shared 'unrelated-file'
+    $unrelatedDirectoryPath = Join-Path $shared 'unrelated-directory'
+    'unrelated' | Set-Content -NoNewline $unrelatedFilePath
+    New-Item -ItemType Directory -Force $unrelatedDirectoryPath | Out-Null
+
     Invoke-Reconciler -Central $central -Shared $shared
+
+    $defaultMattTarget = Join-Path $testRoot 'matt/skills/engineering/matt-only'
+    $defaultMattLink = Get-LinkItem (Join-Path $shared 'matt-only')
+    Assert-True ($null -ne $defaultMattLink) 'a manifest-selected nested Matt skill is linked'
+    Assert-True ($defaultMattLink.LinkType -eq 'SymbolicLink') 'the Matt skill link is symbolic'
+    Assert-True (
+        [IO.Path]::GetFullPath([string]$defaultMattLink.LinkTarget) -eq
+            [IO.Path]::GetFullPath($defaultMattTarget)
+    ) 'the Matt skill link targets the declared nested directory'
+    Assert-True (Test-Path -LiteralPath $unrelatedFilePath -PathType Leaf) 'an unrelated plain file remains untouched'
+    Assert-True (Test-Path -LiteralPath $unrelatedDirectoryPath -PathType Container) 'an unrelated directory remains untouched'
 
     $brainstormingLink = Get-LinkItem "$shared/brainstorming"
     Assert-True ($null -ne $brainstormingLink) 'a direct child skill is linked'
@@ -294,6 +386,134 @@ try {
                 (Get-LinkItem (Join-Path $manifestFixture.Shared 'desired'))
             ) "$case $manifestRelativePath creates no desired link"
         }
+    }
+
+    $mattHappy = New-Fixture -TestRoot $testRoot -Name 'matt-happy'
+    New-Skill -Central $mattHappy.Central -Name 'superpower-only' | Out-Null
+    $mattHappyRoot = Join-Path $testRoot 'matt-happy/matt-custom'
+    New-MattFixture -Root $mattHappyRoot -SkillPaths @(
+        './skills/engineering/tdd',
+        './skills/productivity/teach',
+        './skills/engineering/deprecated'
+    ) | Out-Null
+    Invoke-Reconciler -Central $mattHappy.Central -Matt $mattHappyRoot -Shared $mattHappy.Shared
+    Assert-True (Test-Path -LiteralPath (Join-Path $mattHappy.Shared 'tdd/SKILL.md')) 'Matt engineering skill is reachable'
+    Assert-True (Test-Path -LiteralPath (Join-Path $mattHappy.Shared 'teach/SKILL.md')) 'Matt productivity skill is reachable'
+    Assert-True ($null -ne (Get-LinkItem (Join-Path $mattHappy.Shared 'deprecated'))) 'current Matt skill is linked before deprecation'
+
+    Remove-Item -LiteralPath (Join-Path $mattHappyRoot 'skills/engineering/deprecated') -Recurse -Force
+    Write-MattManifest -Root $mattHappyRoot -SkillPaths @(
+        './skills/engineering/tdd',
+        './skills/productivity/teach'
+    )
+    Invoke-Reconciler -Central $mattHappy.Central -Matt $mattHappyRoot -Shared $mattHappy.Shared
+    Assert-Null (Get-LinkItem (Join-Path $mattHappy.Shared 'deprecated')) 'deprecated Matt link is removed from its stored target'
+
+    foreach ($unsafePath in @(
+        '../outside',
+        './skills/../outside',
+        './skills//empty',
+        './skills/./dot',
+        'skills\foo\..\bar',
+        'skills\foo\.\bar',
+        'skills\foo\\bar',
+        'docs/not-a-skill',
+        ([IO.Path]::GetFullPath((Join-Path $testRoot 'absolute-skill')))
+    )) {
+        $safeName = [Convert]::ToHexString(
+            [Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($unsafePath))
+        ).Substring(0, 16)
+        $unsafeFixture = New-Fixture -TestRoot $testRoot -Name "matt-unsafe-$safeName"
+        New-Skill -Central $unsafeFixture.Central -Name 'superpower-only' | Out-Null
+        $unsafeMatt = Join-Path $testRoot "matt-unsafe-$safeName/matt"
+        New-Item -ItemType Directory -Force $unsafeMatt | Out-Null
+        Write-MattManifest -Root $unsafeMatt -SkillPaths @($unsafePath)
+        Add-MutationSentinels -Central $unsafeFixture.Central -Shared $unsafeFixture.Shared
+
+        Assert-Throws {
+            Invoke-Reconciler -Central $unsafeFixture.Central -Matt $unsafeMatt -Shared $unsafeFixture.Shared
+        } '*Matt*skill path*' "unsafe Matt path '$unsafePath' fails preflight"
+        Assert-MutationSentinelsUntouched -Shared $unsafeFixture.Shared
+    }
+
+    $missingSkillFixture = New-Fixture -TestRoot $testRoot -Name 'matt-missing-skill'
+    New-Skill -Central $missingSkillFixture.Central -Name 'superpower-only' | Out-Null
+    $missingSkillMatt = Join-Path $testRoot 'matt-missing-skill/matt'
+    New-Item -ItemType Directory -Force $missingSkillMatt | Out-Null
+    Write-MattManifest -Root $missingSkillMatt -SkillPaths @('./skills/engineering/missing')
+    Add-MutationSentinels -Central $missingSkillFixture.Central -Shared $missingSkillFixture.Shared
+    Assert-Throws {
+        Invoke-Reconciler -Central $missingSkillFixture.Central -Matt $missingSkillMatt -Shared $missingSkillFixture.Shared
+    } '*SKILL.md*' 'a declared Matt path without SKILL.md fails preflight'
+    Assert-MutationSentinelsUntouched -Shared $missingSkillFixture.Shared
+
+    $reparseFixture = New-Fixture -TestRoot $testRoot -Name 'matt-reparse-component'
+    New-Skill -Central $reparseFixture.Central -Name 'superpower-only' | Out-Null
+    $reparseMatt = Join-Path $testRoot 'matt-reparse-component/matt'
+    $outsideSkill = Join-Path $testRoot 'matt-reparse-component/outside/escaped'
+    New-Item -ItemType Directory -Force `
+        (Join-Path $reparseMatt 'skills'), `
+        $outsideSkill | Out-Null
+    '# escaped fixture' | Set-Content -NoNewline (Join-Path $outsideSkill 'SKILL.md')
+    New-DirectoryLink `
+        -Path (Join-Path $reparseMatt 'skills/linked-outside') `
+        -Target (Split-Path $outsideSkill -Parent)
+    Write-MattManifest `
+        -Root $reparseMatt `
+        -SkillPaths @('./skills/linked-outside/escaped')
+    Add-MutationSentinels -Central $reparseFixture.Central -Shared $reparseFixture.Shared
+
+    Assert-Throws {
+        Invoke-Reconciler -Central $reparseFixture.Central -Matt $reparseMatt -Shared $reparseFixture.Shared
+    } '*Matt*skill path*reparse point*' 'an intermediate reparse point in a Matt path fails preflight'
+    Assert-MutationSentinelsUntouched -Shared $reparseFixture.Shared
+
+    $duplicateFixture = New-Fixture -TestRoot $testRoot -Name 'matt-duplicate-basename'
+    New-Skill -Central $duplicateFixture.Central -Name 'superpower-only' | Out-Null
+    $duplicateMatt = Join-Path $testRoot 'matt-duplicate-basename/matt'
+    New-MattFixture -Root $duplicateMatt -SkillPaths @(
+        './skills/engineering/tdd',
+        './skills/productivity/tdd'
+    ) | Out-Null
+    Add-MutationSentinels -Central $duplicateFixture.Central -Shared $duplicateFixture.Shared
+    Assert-Throws {
+        Invoke-Reconciler -Central $duplicateFixture.Central -Matt $duplicateMatt -Shared $duplicateFixture.Shared
+    } '*duplicate*name*tdd*' 'duplicate Matt basenames fail preflight'
+    Assert-MutationSentinelsUntouched -Shared $duplicateFixture.Shared
+
+    $crossFixture = New-Fixture -TestRoot $testRoot -Name 'cross-collection-collision'
+    New-Skill -Central $crossFixture.Central -Name 'tdd' | Out-Null
+    $crossMatt = Join-Path $testRoot 'cross-collection-collision/matt'
+    New-MattFixture -Root $crossMatt -SkillPaths @('./skills/engineering/TDD') | Out-Null
+    $crossStaleTarget = Join-Path $crossFixture.Central 'skills/stale-owned'
+    New-Item -ItemType Directory -Force $crossStaleTarget | Out-Null
+    New-DirectoryLink -Path (Join-Path $crossFixture.Shared 'stale-owned') -Target $crossStaleTarget
+    Remove-Item -LiteralPath $crossStaleTarget -Recurse -Force
+    Assert-Throws {
+        Invoke-Reconciler -Central $crossFixture.Central -Matt $crossMatt -Shared $crossFixture.Shared
+    } '*duplicate*name*tdd*' 'cross-collection basename collision fails preflight'
+    Assert-True ($null -ne (Get-LinkItem (Join-Path $crossFixture.Shared 'stale-owned'))) 'cross-collection collision causes no mutation'
+    Assert-Null (Get-LinkItem (Join-Path $crossFixture.Shared 'tdd')) 'cross-collection collision creates no desired link'
+
+    foreach ($manifestCase in @('missing', 'malformed', 'wrong-name', 'not-array', 'empty-array', 'non-string')) {
+        $manifestFixture = New-Fixture -TestRoot $testRoot -Name "matt-manifest-$manifestCase"
+        New-Skill -Central $manifestFixture.Central -Name 'superpower-only' | Out-Null
+        $manifestMatt = Join-Path $testRoot "matt-manifest-$manifestCase/matt"
+        New-MattFixture -Root $manifestMatt | Out-Null
+        Add-MutationSentinels -Central $manifestFixture.Central -Shared $manifestFixture.Shared
+        $manifestPath = Join-Path $manifestMatt '.claude-plugin/plugin.json'
+        switch ($manifestCase) {
+            'missing' { Remove-Item -LiteralPath $manifestPath -Force }
+            'malformed' { '{not-json' | Set-Content -NoNewline $manifestPath }
+            'wrong-name' { '{"name":"wrong","skills":["./skills/engineering/matt-only"]}' | Set-Content -NoNewline $manifestPath }
+            'not-array' { '{"name":"mattpocock-skills","skills":"./skills/engineering/matt-only"}' | Set-Content -NoNewline $manifestPath }
+            'empty-array' { '{"name":"mattpocock-skills","skills":[]}' | Set-Content -NoNewline $manifestPath }
+            'non-string' { '{"name":"mattpocock-skills","skills":[42]}' | Set-Content -NoNewline $manifestPath }
+        }
+        Assert-Throws {
+            Invoke-Reconciler -Central $manifestFixture.Central -Matt $manifestMatt -Shared $manifestFixture.Shared
+        } '*Matt*manifest*' "$manifestCase Matt manifest fails preflight"
+        Assert-MutationSentinelsUntouched -Shared $manifestFixture.Shared
     }
 
     Write-Host "PASS: $script:AssertionCount assertions"

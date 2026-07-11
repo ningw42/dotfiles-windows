@@ -19,6 +19,11 @@
       "name": "superpowers",
       "description": "Pinned Superpowers skills and native Claude bootstrap.",
       "source": "./plugins/superpowers"
+    },
+    {
+      "name": "mattpocock-skills",
+      "description": "Pinned Matt Pocock skills.",
+      "source": "./plugins/mattpocock-skills"
     }
   ]
 }

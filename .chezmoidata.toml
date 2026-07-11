@@ -2,3 +2,8 @@
 repository = "obra/superpowers"
 tag = "v6.1.1"
 sha256 = "625911fa9bed8938eeb109d3aeeaefdf7466f6870290ac9138e123f2f85dac08"
+
+[external_resources.github_releases.mattpocock_skills]
+repository = "mattpocock/skills"
+tag = "v1.1.0"
+sha256 = "33ce6b6dc542a00688485cae30e5921a9872183cfebebf08191fc74c4e3361d0"

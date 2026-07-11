@@ -10,6 +10,9 @@ from unittest.mock import MagicMock, patch
 import update_externals
 
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
 DATA = """
 [external_resources.github_releases.superpowers]
 repository = "obra/superpowers"
@@ -38,6 +41,20 @@ type = "file"
 url = "https://example.test/resource.txt"
 checksum.sha256 = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
 """.lstrip()
+
+
+class RepositoryGithubReleaseConfigurationTests(unittest.TestCase):
+    def test_repository_declares_mattpocock_skills_release_pin(self):
+        content = (REPO_ROOT / ".chezmoidata.toml").read_text(encoding="utf-8")
+        pins = {
+            pin.name: pin
+            for pin in update_externals.extract_github_release_pins(content)
+        }
+
+        pin = pins["mattpocock_skills"]
+        self.assertEqual(pin.repository, "mattpocock/skills")
+        self.assertTrue(pin.tag)
+        self.assertRegex(pin.sha256, r"^[0-9a-f]{64}$")
 
 
 class GithubReleasePinParsingTests(unittest.TestCase):
