@@ -1,0 +1,7 @@
+{{ $release := .external_resources.github_releases.superpowers -}}
+["superpowers"]
+    type = "archive"
+    url = "https://github.com/{{ $release.repository }}/archive/refs/tags/{{ $release.tag | urlquery }}.tar.gz"
+    stripComponents = 1
+    exact = true
+    checksum.sha256 = "{{ $release.sha256 }}"

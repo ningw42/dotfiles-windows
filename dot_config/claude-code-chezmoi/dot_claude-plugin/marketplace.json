@@ -14,6 +14,11 @@
       "name": "user-skills",
       "description": "User-scope Claude Code skills managed by chezmoi.",
       "source": "./plugins/user-skills"
+    },
+    {
+      "name": "superpowers",
+      "description": "Pinned Superpowers skills and native Claude bootstrap.",
+      "source": "./plugins/superpowers"
     }
   ]
 }

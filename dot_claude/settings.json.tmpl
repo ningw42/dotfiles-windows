@@ -78,12 +78,6 @@
         "source": "directory",
         "path": "{{ .chezmoi.homeDir | replace "\\" "/" }}/.config/claude-code-chezmoi"
       }
-    },
-    "superpowers-marketplace": {
-      "source": {
-        "source": "github",
-        "repo": "obra/superpowers-marketplace"
-      }
     }
   },
   "effortLevel": "xhigh",
@@ -92,7 +86,7 @@
   "enabledPlugins": {
     "user-mcps@chezmoi": true,
     "user-skills@chezmoi": true,
-    "superpowers@superpowers-marketplace": true
+    "superpowers@chezmoi": true
   },
   "enableWorkflows": true,
   "skipWorkflowUsageWarning": true

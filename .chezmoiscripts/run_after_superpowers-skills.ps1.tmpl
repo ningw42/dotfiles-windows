@@ -1,0 +1,143 @@
+param(
+    [string]$SuperpowersRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.local/share/llm-agents/plugins/superpowers',
+    [string]$SharedSkillsRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.agents/skills'
+)
+
+$ErrorActionPreference = 'Stop'
+
+function Normalize-AbsolutePath([string]$Path, [string]$BasePath) {
+    if (-not [IO.Path]::IsPathFullyQualified($Path)) { $Path = Join-Path $BasePath $Path }
+    return [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($Path))
+}
+
+function Test-PathWithin([string]$Candidate, [string]$Root) {
+    $prefix = $Root.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+    return $Candidate.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)
+}
+
+function Assert-SuperpowersManifest([string]$Root, [string]$RelativePath) {
+    $manifestPath = Join-Path $Root $RelativePath
+    $manifestItem = Get-Item -LiteralPath $manifestPath -Force -ErrorAction SilentlyContinue
+    if ($null -eq $manifestItem -or $manifestItem.PSIsContainer) {
+        throw "Required manifest '$manifestPath' must exist and identify superpowers."
+    }
+
+    try {
+        $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
+    }
+    catch {
+        throw "Manifest '$manifestPath' must be valid JSON for superpowers: $($_.Exception.Message)"
+    }
+
+    $nameProperty = $manifest.PSObject.Properties['name']
+    if ($null -eq $nameProperty -or [string]$nameProperty.Value -cne 'superpowers') {
+        throw "Manifest '$manifestPath' must name superpowers."
+    }
+}
+
+$basePath = (Get-Location).Path
+$superpowersRootAbsolute = Normalize-AbsolutePath $SuperpowersRoot $basePath
+$sharedSkillsRootAbsolute = Normalize-AbsolutePath $SharedSkillsRoot $basePath
+$centralSkillsRoot = Normalize-AbsolutePath (Join-Path $superpowersRootAbsolute 'skills') $basePath
+
+Assert-SuperpowersManifest $superpowersRootAbsolute '.codex-plugin/plugin.json'
+Assert-SuperpowersManifest $superpowersRootAbsolute '.claude-plugin/plugin.json'
+
+$centralSkillsItem = Get-Item -LiteralPath $centralSkillsRoot -Force -ErrorAction SilentlyContinue
+if ($null -eq $centralSkillsItem -or -not $centralSkillsItem.PSIsContainer) {
+    throw "Central Superpowers skills directory '$centralSkillsRoot' does not exist."
+}
+
+$desiredSkills = @(
+    Get-ChildItem -LiteralPath $centralSkillsRoot -Directory -Force |
+        Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'SKILL.md') -PathType Leaf } |
+        ForEach-Object {
+            [pscustomobject]@{
+                Name = $_.Name
+                Target = Normalize-AbsolutePath $_.FullName $centralSkillsRoot
+            }
+        } |
+        Sort-Object -Property Name
+)
+if ($desiredSkills.Count -eq 0) {
+    throw "Central Superpowers skills directory '$centralSkillsRoot' contains no direct child skill with SKILL.md."
+}
+
+$desiredNames = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+foreach ($desiredSkill in $desiredSkills) {
+    if (-not $desiredNames.Add($desiredSkill.Name)) {
+        throw "Central Superpowers skills contain a duplicate name '$($desiredSkill.Name)'."
+    }
+}
+
+$sharedSkillsItem = Get-Item -LiteralPath $sharedSkillsRootAbsolute -Force -ErrorAction SilentlyContinue
+if ($null -ne $sharedSkillsItem -and -not $sharedSkillsItem.PSIsContainer) {
+    throw "Shared skills root '$sharedSkillsRootAbsolute' is not a directory."
+}
+
+$existingEntries = @()
+if ($null -ne $sharedSkillsItem) {
+    $existingEntries = @(Get-ChildItem -LiteralPath $sharedSkillsRootAbsolute -Force)
+}
+
+$classifiedEntries = @()
+foreach ($entry in $existingEntries) {
+    $normalizedTargets = @()
+    $storedTargets = @()
+    if ($null -ne $entry.LinkType) {
+        $storedTargets = @($entry.LinkTarget)
+        if ($storedTargets.Count -eq 0) {
+            throw "Invalid stored LinkTarget for '$($entry.FullName)': the link has no target."
+        }
+
+        foreach ($storedTarget in $storedTargets) {
+            if ($storedTarget -isnot [string] -or [string]::IsNullOrWhiteSpace($storedTarget)) {
+                throw "Invalid stored LinkTarget for '$($entry.FullName)'."
+            }
+
+            try {
+                $normalizedTargets += Normalize-AbsolutePath $storedTarget $sharedSkillsRootAbsolute
+            }
+            catch {
+                throw "Invalid stored LinkTarget for '$($entry.FullName)': $($_.Exception.Message)"
+            }
+        }
+    }
+
+    $isOwned = (
+        $entry.LinkType -eq 'SymbolicLink' -and
+        $entry.PSIsContainer -and
+        $storedTargets.Count -eq 1 -and
+        [IO.Path]::IsPathFullyQualified([string]$storedTargets[0]) -and
+        $normalizedTargets.Count -eq 1 -and
+        (Test-PathWithin $normalizedTargets[0] $centralSkillsRoot)
+    )
+    $classifiedEntries += [pscustomobject]@{
+        Item = $entry
+        IsOwned = $isOwned
+    }
+}
+
+foreach ($classifiedEntry in $classifiedEntries) {
+    if (
+        $desiredNames.Contains($classifiedEntry.Item.Name) -and
+        -not $classifiedEntry.IsOwned
+    ) {
+        throw "Refusing non-owned collision at '$($classifiedEntry.Item.FullName)'."
+    }
+}
+
+if ($null -eq $sharedSkillsItem) {
+    New-Item -ItemType Directory -Force -Path $sharedSkillsRootAbsolute | Out-Null
+}
+
+foreach ($classifiedEntry in $classifiedEntries) {
+    if ($classifiedEntry.IsOwned) {
+        Remove-Item -LiteralPath $classifiedEntry.Item.FullName -Force
+    }
+}
+
+foreach ($desiredSkill in $desiredSkills) {
+    $linkPath = Join-Path $sharedSkillsRootAbsolute $desiredSkill.Name
+    New-Item -ItemType SymbolicLink -Path $linkPath -Target $desiredSkill.Target | Out-Null
+}

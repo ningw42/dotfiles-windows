@@ -1,0 +1,12 @@
+import { pathToFileURL } from "node:url";
+
+const upstreamUrl = pathToFileURL(
+  "{{ .chezmoi.homeDir | replace "\\" "/" }}/.local/share/llm-agents/plugins/superpowers/.opencode/plugins/superpowers.js",
+).href;
+const { SuperpowersPlugin } = await import(upstreamUrl);
+
+export const Superpowers = async (context) => {
+  const { config: _duplicateSkillRegistration, ...bootstrapOnly } =
+    await SuperpowersPlugin(context);
+  return bootstrapOnly;
+};

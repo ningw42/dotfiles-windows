@@ -1,0 +1,4 @@
+[external_resources.github_releases.superpowers]
+repository = "obra/superpowers"
+tag = "v6.1.1"
+sha256 = "625911fa9bed8938eeb109d3aeeaefdf7466f6870290ac9138e123f2f85dac08"

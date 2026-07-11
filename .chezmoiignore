@@ -6,3 +6,4 @@ update_externals.py
 secrets.yaml
 secrets.yaml.age
 docs/
+tests/
