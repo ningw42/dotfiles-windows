@@ -10,6 +10,10 @@
 # ccstatusline was replaced wholesale by .config/statusline/statusline.py.
 .config/ccstatusline
 
+# user-skills was removed from the chezmoi Claude Code marketplace. Purge its
+# former marketplace source; Claude's installed registry/cache remain manual.
+.config/claude-code-chezmoi/plugins/user-skills
+
 # eza config moved from XDG (~/.config/eza) to the Windows convention
 # (~/AppData/Roaming/eza); the old XDG copy is stale.
 .config/eza

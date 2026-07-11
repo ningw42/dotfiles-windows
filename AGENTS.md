@@ -137,11 +137,6 @@ registered via `extraKnownMarketplaces` + `enabledPlugins` in `dot_claude/settin
   sync; Copilot's config currently omits `github`.
 - **Copilot repo instructions** live in `.github/copilot-instructions.md` as a short safety-net
   pointer back to this file. If the golden rules change, keep that file's summarized bullets aligned.
-- **Claude Code skills** live in the `user-skills` plugin (already registered in `marketplace.json`
-  and enabled as `user-skills@chezmoi`). Add a skill by creating
-  `dot_config/claude-code-chezmoi/plugins/user-skills/skills/<name>/SKILL.md` — YAML frontmatter with
-  `name` + `description`, then the skill body. Plain markdown (no `.tmpl` unless you actually need a
-  data var). `chezmoi apply` deploys it; restart Claude Code to load the new skill.
 - **Unified statusline:** `dot_config/statusline/statusline.py` serves both Claude Code and Copilot
   (dispatch arg `claude` | `copilot`). It has an in-file test suite:
   `python dot_config/statusline/statusline.py test`.
