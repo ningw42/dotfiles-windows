@@ -1,19 +1,19 @@
 {{- $colorscheme_choices := list "catppuccin-latte" "catppuccin-frappe" "catppuccin-macchiato" "catppuccin-mocha" "gruvbox-dark" -}}
 {{- $colorscheme := promptChoiceOnce . "colorscheme" "colorscheme to use" $colorscheme_choices -}}
 
-{{- $codex_provider_choices := list "litellm" "router-maestro" "copilot-proxy" -}}
-{{- $claude_code_provider_choices := list "byokey" "litellm" "router-maestro" "copilot-proxy" -}}
+{{- $codex_provider_choices := list "litellm" "router-maestro" "copilot-proxy" "copilotd" -}}
+{{- $claude_code_provider_choices := list "litellm" "router-maestro" "copilot-proxy" "copilotd" -}}
 {{- $codex_provider := promptChoiceOnce . "codex_provider" "LLM provider for Codex" $codex_provider_choices -}}
 {{- $claude_code_provider := promptChoiceOnce . "claude_code_provider" "LLM provider for Claude Code" $claude_code_provider_choices -}}
 
 {{/* Derive the Anthropic base URL once here so settings.json.tmpl can stay a plain `{{ .claude_code_base_url }}` reference. */}}
 {{- $claude_code_base_url := "" -}}
-{{- if eq $claude_code_provider "byokey" -}}
-{{-   $claude_code_base_url = "https://byokey.ningw.net" -}}
-{{- else if eq $claude_code_provider "litellm" -}}
+{{- if eq $claude_code_provider "litellm" -}}
 {{-   $claude_code_base_url = "https://litellm.ningw.net" -}}
 {{- else if eq $claude_code_provider "copilot-proxy" -}}
 {{-   $claude_code_base_url = "https://copilot.ningw.net" -}}
+{{- else if eq $claude_code_provider "copilotd" -}}
+{{-   $claude_code_base_url = "https://copilotd.ningw.net" -}}
 {{- else -}}
 {{-   $claude_code_base_url = "https://router-maestro.ningw.net/api/anthropic" -}}
 {{- end -}}
