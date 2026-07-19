@@ -13,7 +13,7 @@
 {{- else if eq $claude_code_provider "copilot-proxy" -}}
 {{-   $claude_code_base_url = "https://copilot.ningw.net" -}}
 {{- else if eq $claude_code_provider "copilotd" -}}
-{{-   $claude_code_base_url = "https://copilotd.ningw.net" -}}
+{{-   $claude_code_base_url = "https://copilotd.ningw.net/anthropic" -}}
 {{- else -}}
 {{-   $claude_code_base_url = "https://router-maestro.ningw.net/api/anthropic" -}}
 {{- end -}}
