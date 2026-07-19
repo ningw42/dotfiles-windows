@@ -1,5 +1,4 @@
 param(
-    [string]$SuperpowersRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.local/share/llm-agents/plugins/superpowers',
     [string]$MattpocockSkillsRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.local/share/llm-agents/plugins/mattpocock-skills',
     [string]$SharedSkillsRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.agents/skills'
 )
@@ -38,32 +37,6 @@ function Read-PluginManifest(
         throw "$Label manifest '$manifestPath' must name $ExpectedName."
     }
     return $manifest
-}
-
-function Get-SuperpowersSkillInventory([string]$Root) {
-    $null = Read-PluginManifest $Root '.codex-plugin/plugin.json' 'superpowers' 'Superpowers'
-    $null = Read-PluginManifest $Root '.claude-plugin/plugin.json' 'superpowers' 'Superpowers'
-    $skillsRoot = Normalize-AbsolutePath (Join-Path $Root 'skills') $Root
-    $skillsItem = Get-Item -LiteralPath $skillsRoot -Force -ErrorAction SilentlyContinue
-    if ($null -eq $skillsItem -or -not $skillsItem.PSIsContainer) {
-        throw "Superpowers skills directory '$skillsRoot' does not exist."
-    }
-    $inventory = @(
-        Get-ChildItem -LiteralPath $skillsRoot -Directory -Force |
-            Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'SKILL.md') -PathType Leaf } |
-            ForEach-Object {
-                [pscustomobject]@{
-                    Collection = 'superpowers'
-                    Name = $_.Name
-                    Target = Normalize-AbsolutePath $_.FullName $skillsRoot
-                }
-            } |
-            Sort-Object Name
-    )
-    if ($inventory.Count -eq 0) {
-        throw "Superpowers skills directory '$skillsRoot' contains no direct child skill with SKILL.md."
-    }
-    return $inventory
 }
 
 function Get-MattSkillInventory([string]$Root) {
@@ -132,16 +105,13 @@ function Get-MattSkillInventory([string]$Root) {
 }
 
 $basePath = (Get-Location).Path
-$superpowersRootAbsolute = Normalize-AbsolutePath $SuperpowersRoot $basePath
 $mattRootAbsolute = Normalize-AbsolutePath $MattpocockSkillsRoot $basePath
 $sharedSkillsRootAbsolute = Normalize-AbsolutePath $SharedSkillsRoot $basePath
 $ownedTargetRoots = @(
-    Normalize-AbsolutePath (Join-Path $superpowersRootAbsolute 'skills') $basePath
     Normalize-AbsolutePath (Join-Path $mattRootAbsolute 'skills') $basePath
 )
 
 $desiredSkills = @(
-    Get-SuperpowersSkillInventory $superpowersRootAbsolute
     Get-MattSkillInventory $mattRootAbsolute
 )
 $desiredByName = [Collections.Generic.Dictionary[string, object]]::new(
