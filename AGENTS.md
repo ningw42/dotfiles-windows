@@ -109,6 +109,15 @@ python update_externals.py --dry-run  # preview only
 It rglobs every `.chezmoiexternal.toml*`, downloads each URL, and updates mismatched checksums
 (exit `0` none / `1` updated / `2` errors).
 
+⚠️ **`AppData/Local/rio/` patches its external after download — don't "clean up" the filter.**
+Its `filter.command`/`filter.args` rewrite the theme's `tabs` value, because rio ≥ 0.4 repurposed that
+key from the tab-bar background to the *inactive tab title text* and upstream catppuccin still ships
+the ≤ 0.3 meaning (so inactive tab labels render in the background color). chezmoi runs the filter
+**after** checksum verification, so the sha256 keeps pinning upstream's bytes and any upstream edit
+fails the apply instead of silently voiding the patch. If that trips, check whether upstream has
+adopted the new semantics *before* running `update_externals.py` — if it has, delete the filter rather
+than refresh the sum. The file's own header comment carries the details.
+
 ## Secrets (age)
 
 - `secrets.yaml.age` is committed (encrypted); plaintext `secrets.yaml` is **gitignored — never commit it**.

@@ -1,21 +1,62 @@
+# Catppuccin themes for rio. One value is patched on the way in, via chezmoi's
+# `filter` hook: rio >= 0.4 replaced the old tab bar with the "island" strip and
+# repurposed `tabs` from the tab-bar BACKGROUND to the INACTIVE TAB TITLE TEXT
+# (renderer/mod.rs hands `tabs`/`tabs-active` to Island::new as the inactive and
+# active text colors; the island fills themselves are derived from the window
+# background's luminance and are not themeable). 0.4 also deleted
+# `tabs-foreground`, `tabs-active-foreground` and `tabs-active-highlight` from
+# the Colors struct -- nothing sets deny_unknown_fields, so those three keys are
+# still present in every upstream file, still parsed, and still ignored.
+#
+# catppuccin/rio last touched these values in April 2025, against <= 0.3
+# semantics, so every flavor sets `tabs` to its own `base` -- which now paints
+# inactive tab titles in the background color, i.e. invisible. The filter
+# rewrites that one line to the flavor's `overlay2`. Patching rather than
+# vendoring keeps us on upstream's palette for everything else: the deployed
+# file differs from what the URL serves by exactly those six bytes.
+#
+# The filter runs AFTER checksum verification (chezmoi's getExternalData does
+# download -> checksum -> decrypt -> decompress -> filter), so the sha256 below
+# still pins upstream's bytes: any upstream edit fails the apply outright rather
+# than silently voiding this patch. When that fires, check whether upstream has
+# adopted 0.5 semantics before reaching for `python update_externals.py` -- if
+# it has, drop the filter instead of refreshing the checksum.
+#
+# On the one-liner. The regex is anchored at line start and `-` is neither `\s`
+# nor `=`, so the `tabs-*` keys cannot match; `(\s*)` replays upstream's padding
+# to keep the column alignment. `[string]::Join([char]10, ...)` and
+# `[Console]::Out.Write` are what preserve the LF line endings -- PowerShell's
+# own pipeline output would rewrite all 45 of them to CRLF and turn a six-byte
+# patch into a whole-file rewrite. Quoting, innermost first: `''` are
+# PowerShell's escaped single quotes, `\\s` is TOML's escape for `\s`, and the
+# script deliberately contains no double quotes, so nothing has to survive Go's
+# argv-to-command-line requoting on the way into pwsh.
 {{ if eq .colorscheme "catppuccin-latte" }}
 ["themes/catppuccin-latte.toml"]
     type = "file"
     url = "https://raw.githubusercontent.com/catppuccin/rio/main/themes/catppuccin-latte.toml"
     checksum.sha256 = "e509466cf4cc9239b3250f2d3615b6d4b37a2b6cd60dc433f1f8647f168f0fb1"
+    filter.command = "pwsh"
+    filter.args = ["-NoProfile", "-Command", "[Console]::Out.Write([string]::Join([char]10, ($input -replace '^tabs(\\s*)=.*', 'tabs$1= ''#7c7f93''')) + [char]10)"]
 {{ else if eq .colorscheme "catppuccin-frappe" }}
 ["themes/catppuccin-frappe.toml"]
     type = "file"
     url = "https://raw.githubusercontent.com/catppuccin/rio/main/themes/catppuccin-frappe.toml"
     checksum.sha256 = "a0a5cc25a7955e846df36a1a586b1b9239086ef886593a45b35008f76e7b695c"
+    filter.command = "pwsh"
+    filter.args = ["-NoProfile", "-Command", "[Console]::Out.Write([string]::Join([char]10, ($input -replace '^tabs(\\s*)=.*', 'tabs$1= ''#949cbb''')) + [char]10)"]
 {{ else if eq .colorscheme "catppuccin-macchiato" }}
 ["themes/catppuccin-macchiato.toml"]
     type = "file"
     url = "https://raw.githubusercontent.com/catppuccin/rio/main/themes/catppuccin-macchiato.toml"
     checksum.sha256 = "4df49e978c779aa6fc78483b2a767a7616212d83d9db38124c554d039f162086"
+    filter.command = "pwsh"
+    filter.args = ["-NoProfile", "-Command", "[Console]::Out.Write([string]::Join([char]10, ($input -replace '^tabs(\\s*)=.*', 'tabs$1= ''#939ab7''')) + [char]10)"]
 {{ else if eq .colorscheme "catppuccin-mocha" }}
 ["themes/catppuccin-mocha.toml"]
     type = "file"
     url = "https://raw.githubusercontent.com/catppuccin/rio/main/themes/catppuccin-mocha.toml"
     checksum.sha256 = "0016e2bc607f89740f8cd6369984639d52652824c28b45d64de1a7ed430d759f"
+    filter.command = "pwsh"
+    filter.args = ["-NoProfile", "-Command", "[Console]::Out.Write([string]::Join([char]10, ($input -replace '^tabs(\\s*)=.*', 'tabs$1= ''#9399b2''')) + [char]10)"]
 {{ end }}
