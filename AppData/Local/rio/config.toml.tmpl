@@ -157,3 +157,24 @@ decorations = "Disabled"
 [platform]
 windows.shell.program = "pwsh"
 windows.shell.args = ["-l"]
+# Rio is the odd one out among Windows terminals in leaving TERM unset: its
+# setup_environment_variables sets it only under #[cfg(unix)] (rioterm/src/main.rs),
+# while alacritty and wezterm both set it on Windows too. That omission breaks
+# zellij, which picks its Windows stdin reader with
+# `env::var("TERM").is_ok() && enable_vt_input()`. Unset TERM drops it onto the
+# native console path (INPUT_RECORDs via ReadConsoleInput), which never constructs
+# KittyKeyboardParser -- that lives only on the VT-byte path. Meanwhile zellij's
+# client unconditionally asks the host for the kitty keyboard protocol (ESC[>1u),
+# rio honours it, and every key comes back as CSI u the reader cannot decode:
+# Esc -> `[27u`, Ctrl+C -> `[99;5u`, and neovim's insert mode becomes inescapable.
+# Upstream is zellij#5017; zellij#5335 fixes only Windows Terminal, keying off
+# WT_SESSION, which rio never sets. Setting TERM here flips zellij onto the VT
+# path so its kitty parser actually runs -- the alternative,
+# `support_kitty_keyboard_protocol false` in zellij, works too but gives up
+# enhanced keys entirely. Two bits of plumbing make this land: the platform merge
+# (main.rs:174) runs before setup_environment_variables (main.rs:235), so these
+# are appended to the global env-vars in time, and the ConPTY spawn passes
+# lpEnvironment = NULL (teletypewriter/src/windows/conpty.rs), so pwsh inherits
+# rio's process environment. Scoped to `windows.` deliberately: a global
+# `env-vars` would also clobber the xterm-rio terminfo rio picks on Unix.
+windows.env-vars = ["TERM=xterm-256color"]
