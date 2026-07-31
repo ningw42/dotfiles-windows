@@ -10,12 +10,33 @@ padding = { x = 2, y = 2 }
 decorations_theme_variant = "Dark"
 
 [font]
-normal = { family = "PragmataPro", style = "Regular" }
-bold = { family = "PragmataPro", style = "Bold" }
-italic = { family = "PragmataPro", style = "Italic" }
-bold_italic = { family = "PragmataPro", style = "Bold Italic" }
-size = 13
-builtin_box_drawing = false
+# Only the ExtraCondensed width of Berkeley Mono is installed. Alacritty matches
+# through DirectWrite, whose family/face split does NOT follow the font's name
+# table -- verify empirically, don't reason from name IDs:
+#   Add-Type -AssemblyName PresentationCore
+#   [System.Windows.Media.Fonts]::SystemFontFamilies | ? { $_.Source -match 'Berkeley' }
+# The width lives in the *face* name, not the family. Two traps:
+#   - "Berkeley Mono ExtraCondensed" is the legacy name ID 1 and is what
+#     wezterm.lua.tmpl matches (different matcher); it does NOT resolve here.
+#   - Retina is weight 375, so DirectWrite splits it into its own family
+#     "Berkeley Mono Retina" even though the font's name ID 16 says
+#     "Berkeley Mono". Its faces are spelled "375", not "Retina".
+# Retina is the optical weight Berkeley draws for screens, so it takes the
+# roman/italic slots. Bold stays in the "Berkeley Mono" family on purpose: no
+# Retina Bold file exists, so "ExtraCondensed 375 Bold" is a DirectWrite
+# *simulation* (algorithmic emboldening) rather than a drawn face. Mixing is
+# safe -- every face here advances 0.4880 em, so the cell grid is unaffected.
+normal = { family = "Berkeley Mono Retina", style = "ExtraCondensed 375" }
+bold = { family = "Berkeley Mono", style = "ExtraCondensed Bold" }
+italic = { family = "Berkeley Mono Retina", style = "ExtraCondensed 375 Oblique" }
+bold_italic = { family = "Berkeley Mono", style = "ExtraCondensed Bold Oblique" }
+# Berkeley's cap height is ~9% shorter per em than PragmataPro's, so 14 here
+# reads at the same apparent size 13 did.
+size = 14
+# Berkeley Mono ships only 25 of the 128 U+2500 box-drawing glyphs (PragmataPro
+# had all 128), so let alacritty draw them itself -- otherwise TUI borders in
+# gitui/yazi/lazygit/zellij come out broken.
+builtin_box_drawing = true
 
 [selection]
 save_to_clipboard = true
