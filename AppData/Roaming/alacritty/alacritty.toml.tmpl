@@ -1,16 +1,20 @@
 [general]
 import = [ "themes/{{.colorscheme}}.toml" ]
+# Match Windows Terminal, which defaults to %USERPROFILE%; alacritty otherwise
+# inherits the cwd of whatever launched it and does not expand "~" itself.
+working_directory = "{{ .chezmoi.homeDir | replace "\\" "/" }}"
 
 [window]
 dimensions = { columns = 160, lines = 40 }
 padding = { x = 2, y = 2 }
+decorations_theme_variant = "Dark"
 
 [font]
 normal = { family = "PragmataPro", style = "Regular" }
 bold = { family = "PragmataPro", style = "Bold" }
 italic = { family = "PragmataPro", style = "Italic" }
 bold_italic = { family = "PragmataPro", style = "Bold Italic" }
-size = 10
+size = 13
 builtin_box_drawing = false
 
 [selection]
