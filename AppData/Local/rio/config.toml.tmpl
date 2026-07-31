@@ -1,362 +1,156 @@
+# Rio terminal, targeting 0.5.x. Only what differs from upstream defaults lives
+# here; the annotated reference is at https://rioterm.com/docs/config
+#
+# Two traps make this file confusing to debug (both verified against the 0.5.2
+# source, rio-backend/src/config/mod.rs):
+#   - An invalid *value* is catastrophic, not local. Config::load() catches any
+#     deserialization error and returns Config::default(), so a single bad enum
+#     variant silently discards every setting below -- font, theme, shell, all
+#     of it -- behind a warning that goes nowhere at the default log level.
+#   - An unknown *key* is ignored. Nothing here sets deny_unknown_fields, so
+#     options deleted upstream (`padding-x`, `renderer.performance`,
+#     `fonts.extras`) sit in the file looking authoritative while doing nothing.
+# Fastest end-to-end check that rio actually accepted this file: it should spawn
+# `pwsh -l`, not the default bare `powershell`.
+#   $p = Start-Process rio -PassThru; Start-Sleep 5
+#   Get-CimInstance Win32_Process -Filter "ParentProcessId = $($p.Id)"
 
-# Hide the cursor while typing
-#
-# Default is `false`
-#
-# hide-cursor-when-typing = false
-
-# Ignore theme selection foreground color
-#
-# Default is false
-#
-# Example:
-# ignore-selection-foreground-color = false
-
-# Theme
-#
-# It makes Rio look for the specified theme in the themes folder
-# (macos and linux: ~/.config/rio/themes/dracula.toml)
-# (windows: C:\Users\USER\AppData\Local\rio\themes\dracula.toml)
-#
-# Example:
 theme = "{{.colorscheme}}"
-
-# Padding-x
-#
-# define x axis padding (default is 0)
-#
-# Example:
-# padding-x = 10
-
-# Padding-y
-#
-# define y axis padding based on a format [top, left]
-# (default is [0, 0])
-#
-# Example:
-# padding-y = [30, 10]
-
-# Option as Alt
-#
-# This config only works on MacOS.
-# Possible choices: 'both', 'left' and 'right'.
-#
-# Example:
-# option-as-alt = 'left'
-
-# Line height
-#
-# This option will apply an modifier to line-height
-# Default is `1.0`
-#
-# Example:
-# line-height = 1.2
-
-# Startup directory
-#
-# Directory the shell is started in. If this is unset the working
-# directory of the parent process will be used.
-#
-# This configuration only has effect if use-fork is disabled.
-#
-# Example:
-# working-dir = "/Users/raphael/Documents/"
-
-# Environment variables
-#
-# Example:
-# env-vars = []
-
-# Use fork
-#
-# Defaults for POSIX-based systems (Windows is not configurable):
-# MacOS: spawn processes
-# Linux/BSD: fork processes
-#
-# Example:
-# use-fork = false
-
-# Confirm before exiting Rio
-# Default is `true`
-#
 confirm-before-quit = false
+# Match Windows Terminal, which defaults to %USERPROFILE%; rio otherwise
+# inherits the cwd of whatever launched it. Must be absolute -- the value is
+# handed straight to create_pty with no tilde expansion, so "~" would be taken
+# literally. Forward slashes are not cosmetic: a raw Windows path would put an
+# invalid \U escape in this TOML string and fail the parse, which per the note
+# above would discard the entire file.
+working-dir = "{{ .chezmoi.homeDir | replace "\\" "/" }}"
 
-# Cursor
-#
-# shape - Default cursor shape is 'block'
-# Other available options are: 'underline', 'beam' or 'hidden'
-#
-# blinking - Whether the cursor blinks. The default is false
-#
-# blinking-interval - Cursor update on milliseconds interval
-#
 [cursor]
-shape = 'block'
+shape = "block"
 blinking = false
-# blinking-interval = 800
 
-# Editor
-#
-# Default editor on Linux and MacOS is "vi",
-# on Windows it is "notepad".
-#
-# Whenever the key binding `OpenConfigEditor` is triggered it will
-# use the value of the editor along with the rio configuration path.
-# [editor]
-# program = "vi"
-# args = []
-
-# Window configuration
-#
-# • width - define the initial window width.
-#   Default: 600
-#
-# • height - define the initial window height.
-#   Default: 400
-#
-# • mode - define how the window will be created
-#     - "Windowed" (default) is based on width and height
-#     - "Maximized" window is created with maximized
-#     - "Fullscreen" window is created with fullscreen
-#
-# • opacity - Set window opacity
-#
-# • blur - Set blur on the window background. Changing this config requires restarting Rio to take effect.
-#
-# • decorations - Set window decorations, options: "Enabled", "Disabled", "Transparent", "Buttonless"
-#
-# Example:
-# [window]
-# width = 600
-# height = 400
-# mode = "windowed"
-# opacity = 1.0
-# blur = false
-# decorations = "enabled"
-
-# Renderer
-#
-# • Performance: Set WGPU rendering performance
-#   - High: Adapter that has the highest performance. This is often a discrete GPU.
-#   - Low: Adapter that uses the least possible power. This is often an integrated GPU.
-#
-# • Backend: Set WGPU rendering backend
-#   - Automatic: Leave Sugarloaf/WGPU to decide
-#   - GL: Supported on Linux/Android, and Windows and macOS/iOS via ANGLE
-#   - Vulkan: Supported on Windows, Linux/Android
-#   - DX12: Supported on Windows 10
-#   - Metal: Supported on macOS/iOS
-#
-# • disable-unfocused-render: This property disable renderer processes while Rio is unfocused.
-#
-# • level: Configure renderer level
-#   - Available options: 0 and 1.
-#       Higher the level more rendering features and computations
-#       will be done like enable font ligatures or emoji support.
-#       For more information please check the docs.
-#
-# • filters: A list of paths to RetroArch slang shaders. Might not work with OpenGL.
-#
-# Example:
 [renderer]
-performance = "high"
-backend = "DX12"
-# disable-unfocused-render = false
-# level = 1
-# filters = []
+# 0.5 collapsed the old backend list ("Automatic"/"GL"/"DX12"/"Vulkan"/"Metal")
+# down to Metal | Vulkan | Webgpu, and dropped `performance` and `level`
+# outright. Webgpu is the umbrella that lets wgpu pick the best native API,
+# which is DX12 on Windows -- so this is the previous `backend = "DX12"` intent
+# spelled the way 0.5 understands. Literal "DX12" is now a hard parse failure.
+backend = "Webgpu"
 
-# Keyboard
-#
-# use-kitty-keyboard-protocol - Enable Kitty Keyboard protocol
-#
-# disable-ctlseqs-alt - Disable ctlseqs with ALT keys
-#   - For example: Terminal.app does not deal with ctlseqs with ALT keys
-#
-# Example:
-# [keyboard]
-# use-kitty-keyboard-protocol = false
-# disable-ctlseqs-alt = false
-
-# Fonts
-#
-# Configure fonts used by the terminal
-#
-# Note: You can set different font families but Rio terminal
-# will always look for regular font bounds whene
-#
-# You can also set family on root to overwrite all fonts.
 [fonts]
-family = "Berkeley Mono"
-# family = "PragmataPro Mono"
-# family = "Iosevkata Nerd Font" # rio uses swash which seems to have bug, see https://github.com/dfrg/swash/issues/62
-#
-# You can also specify extra fonts to load
-extras = [{ family = "Symbols Nerd Font Berkeley Mono" }, { family = "Sarasa Fixed SC" }]
-#
-# In case you want to specify any font feature:
-# [fonts]
+# 18.667 is 14pt, NOT a typo for 14. rio is the odd one out among the terminals
+# here: alacritty, wezterm and Windows Terminal all take a size in *points*,
+# while rio's is in logical pixels. sugarloaf/src/layout/mod.rs computes
+# `cell_width = round(advance_em * size * scale_factor)` with no 96/72 anywhere,
+# so matching a point size means converting by hand -- size = pt * 96/72.
+# Setting 14 here renders at 75% of the other three, which looks like rio simply
+# ignoring the config rather than a unit mismatch. Verified on this 192 DPI
+# display: 0.4880 * 18.667 * 2 = 18.22 -> an 18px cell, the same cell Windows
+# Terminal produces at 14pt.
+size = 18.667
 features = ["ss02"]
+# The Retina cut ships only 25 of the 128 U+2500 box-drawing glyphs, so let rio
+# draw them itself -- otherwise TUI borders in gitui/yazi/lazygit/zellij come out
+# broken. Same reasoning as alacritty's builtin_box_drawing. Already the default,
+# pinned because it is strictly required here: it is the only reason the other
+# 103 box glyphs are not left to the arbitrary Windows cascade below.
+use-drawable-chars = true
+# 0.5 removed `fonts.extras`, which appended fallback families consulted only
+# for glyphs the primary font lacked. `symbol-map` is the replacement, but it is
+# a *forced* mapping rather than a fallback: a covered codepoint always renders
+# from the mapped family even when the primary face has its own glyph. So map
+# only what the regular face genuinely cannot serve and leave the rest to it.
 #
-# Note: Font features do not have support to live reload on configuration,
-# so to reflect your changes, you will need to close and reopen Rio.
+# Every range below is load-bearing, and specifically because the regular slot is
+# Retina (see the slot tables further down). Berkeley Mono ships two very
+# different cuts here: the 400-weight "ExtraCondensed" file is the Nerd-patched
+# one (10,960 glyphs), while Retina and Bold are plain 455-glyph cuts. So Retina
+# has no icons at all -- what looks like belt-and-braces on an unpatched build is
+# the only thing supplying them.
 #
-# You can also disable font hinting. Font hinting is enabled by default.
-# [fonts]
-# hinting = false
+# Letting rio fall back automatically is not a real option here. Windows has no
+# fontconfig equivalent in rio's dep tree, so sugarloaf/src/font/windows.rs walks
+# every installed font and takes the *first* whose cmap has the codepoint --
+# enumeration order, effectively arbitrary, and a wrong-width match visibly
+# breaks prompt alignment.
 #
-# Example:
-# [fonts]
-size = 14
-#
-# [fonts.regular]
-# family = "PragmataPro"
-# style = "Normal"
-# weight = 400
-#
-# [fonts.bold]
-# family = "cascadiamono"
-# style = "normal"
-# weight = 800
-#
-# [fonts.italic]
-# family = "cascadiamono"
-# style = "italic"
-# weight = 400
-#
-# [fonts.bold-italic]
-# family = "cascadiamono"
-# style = "italic"
-# weight = 800
+# `end` is EXCLUSIVE: the loader builds a Rust `start..end` and tests it with
+# Range::contains, so every end below is one past the last glyph covered.
+symbol-map = [
+    # Private Use Areas -- Nerd Fonts icons (Powerline, Devicons, Codicons, Font
+    # Awesome, Octicons in the BMP; Material Design in plane 15). The standalone
+    # symbols font is metrics-matched to the ExtraCondensed width, 0.4878 against
+    # Berkeley's 0.4880 em advance, so the cell grid is unaffected.
+    { start = "E000", end = "F900", font-family = "Symbols Nerd Font Berkeley Mono" },
+    { start = "F0000", end = "FFFFE", font-family = "Symbols Nerd Font Berkeley Mono" },
+    # The Nerd Fonts glyphs that sit outside the PUA. Retina lacks all 14, and
+    # U+276C-2771 in particular are the powerline-extra separators a starship
+    # prompt draws, so omitting these is immediately visible.
+    { start = "23FB", end = "23FF", font-family = "Symbols Nerd Font Berkeley Mono" }, # IEC power
+    { start = "2630", end = "2631", font-family = "Symbols Nerd Font Berkeley Mono" }, # trigram
+    { start = "2665", end = "2666", font-family = "Symbols Nerd Font Berkeley Mono" }, # heart
+    { start = "26A1", end = "26A2", font-family = "Symbols Nerd Font Berkeley Mono" }, # high voltage
+    { start = "276C", end = "2772", font-family = "Symbols Nerd Font Berkeley Mono" }, # powerline-extra
+    { start = "2B58", end = "2B59", font-family = "Symbols Nerd Font Berkeley Mono" }, # heavy circle
+    # CJK -- Berkeley Mono has zero glyphs in any of these ranges, in either cut.
+    # The first span runs radicals through Unified Ideographs; kana, bopomofo,
+    # Hangul jamo, strokes, enclosed forms and Ext A sit inside it. Sarasa
+    # advances a full em on ideographs, so they occupy two cells.
+    { start = "2E80", end = "A000", font-family = "Sarasa Fixed SC" },
+    { start = "AC00", end = "D7A4", font-family = "Sarasa Fixed SC" },   # Hangul syllables
+    { start = "F900", end = "FB00", font-family = "Sarasa Fixed SC" },   # compatibility ideographs
+    { start = "FE30", end = "FE50", font-family = "Sarasa Fixed SC" },   # compatibility forms
+    { start = "FF00", end = "FFF0", font-family = "Sarasa Fixed SC" },   # half/fullwidth forms
+    { start = "20000", end = "2FA20", font-family = "Sarasa Fixed SC" }, # Ext B-F + supplement
+]
 
-# Scroll
+# Retina (weight 375) is the optical weight Berkeley draws for screens, matching
+# Windows Terminal and alacritty. It cannot be spelled as a weight on the plain
+# family, because rio resolves through font-kit's select_family_by_name -- i.e.
+# DirectWrite -- and NOT the font's name table. The two disagree: the name table
+# calls every face "Berkeley Mono", but DirectWrite promotes weight 375 into its
+# own family, "Berkeley Mono Retina", whose faces are spelled "375". Asking
+# "Berkeley Mono" for weight 375 therefore lands on its 400 "ExtraCondensed"
+# face, since that family has no 375 in it at all.
 #
-# You can change how many lines are scrolled each time by setting this option.
+# Root `fonts.family` is deliberately absent: it overwrites all four slot
+# families (sugarloaf/src/font/mod.rs), which would drag bold along with it.
+# Bold is pinned back to "Berkeley Mono" on purpose -- "Berkeley Mono Retina"
+# does advertise an "ExtraCondensed 375 Bold" at weight 700, but no Retina Bold
+# file exists, so that face is DirectWrite's algorithmic emboldening rather than
+# a drawn one. Mixing the families is safe: every face involved advances
+# 0.4880 em, so the cell grid is unchanged.
 #
-# Scroll calculation for canonical mode will be based on `lines = (accumulated scroll * multiplier / divider)`,
-# If you want a quicker scroll, keep increasing the multiplier.
-# If you want to reduce scroll speed you will need to increase the divider.
-# You can use both properties also to find the best scroll for you.
-#
-# Multiplier default is 3.0.
-# Divider default is 1.0.
-# Example:
-# [scroll]
-# multiplier = 3.0
-# divider = 1.0
+# The italic slots resolve to the Oblique faces on their own -- rio queries
+# Style::Italic and the matcher's preference order is [Italic, Oblique, Normal].
+[fonts.regular]
+family = "Berkeley Mono Retina"
+weight = 375
 
-# Navigation
-#
-# "mode" - Define navigation mode
-#   • NativeTab (MacOS only)
-#   • Bookmark
-#   • BottomTab
-#   • TopTab
-#   • Plain
-#
-# "hide-if-single" - Hide navigation UI if is single.
-# "clickable" - Enable click on tabs to switch.
-# "use-current-path" - Use same path whenever a new tab is created (Note: requires `use-fork` to be set to false).
-# "color-automation" - Set a specific color for the tab whenever a specific program is running, or in a specific directory.
-#
-# Example:
+[fonts.italic]
+family = "Berkeley Mono Retina"
+weight = 375
+
+[fonts.bold]
+family = "Berkeley Mono"
+weight = 700
+
+[fonts.bold-italic]
+family = "Berkeley Mono"
+weight = 700
+
 [navigation]
-mode = "BottomTab"
+# 0.5 reduced the mode list to Plain | Tab | NativeTab (macOS only). The old
+# "BottomTab"/"TopTab"/"Bookmark" are gone and parse-fail the entire file.
+mode = "Tab"
 clickable = false
 hide-if-single = true
-use-current-path = false
-color-automation = []
+# `current-working-directory` (0.5's rename of `use-current-path`) is left at
+# its default of true. It is inert on Windows regardless: the branch that would
+# inherit the active tab's cwd is commented out in rioterm's context module and
+# just assigns None, which the `is_some()` guard below it then drops -- so new
+# tabs and splits fall back to `working-dir` above either way.
 
-# Shell
-#
-# You can set `shell.program` to the path of your favorite shell, e.g. `/bin/fish`.
-# Entries in `shell.args` are passed unmodified as arguments to the shell.
-#
-# Default:
-#   - (macOS) user login shell
-#   - (Linux/BSD) user login shell
-#   - (Windows) powershell
-#
-# Example 1 using fish shell from bin path:
-#
-# [shell]
-# program = "/bin/fish"
-# args = ["--login"]
-#
-# Example 2 for Windows using powershell
-#
-# [shell]
-# program = "pwsh"
-# args = []
-#
-# Example 3 for Windows using powershell with login
-#
-# [shell]
-# program = "pwsh"
-# args = ["-l"]
-#
-# Example 4 for MacOS with tmux installed by homebrew
-#
-# [shell]
-# program = "/opt/homebrew/bin/tmux"
-# args = ["new-session", "-c", "/var/www"]
-
-# Colors
-#
-# Colors definition will overwrite any property in theme
-# (considering if theme folder does exists and is being used)
-#
-# Example:
-# [colors]
-# background = '#0F0D0E'
-# foreground = '#F9F4DA'
-# cursor = '#F38BA3'
-# tabs = '#443d40'
-# tabs-active = '#F38BA3'
-# green = '#0BA95B'
-# red = '#ED203D'
-# blue = '#12B5E5'
-# yellow = '#FCBA28'
-
-# Bindings
-#
-# Create custom Key bindings for Rio terminal
-# More information in: https://raphamorim.io/rio/docs/config/bindings
-#
-# Example:
-# [bindings]
-# keys = [
-#   { key = "q", with = "super", action = "Quit" },
-#   # Bytes[27, 91, 53, 126] is equivalent to "\x1b[5~"
-#   { key = "home", with = "super | shift", bytes = [27, 91, 53, 126] }
-# ]
-
-# Platform
-#
-# Rio now allows you to have different configurations per OS
-# You can write ovewrite properties like `Shell`, `Navigation`
-# and `Window`.
-#
-# Example:
-# [shell]
-# # default (in this case will be used only on MacOS)
-# program = "/bin/fish"
-# args = ["--login"]
-#
 [platform]
-# Microsoft Windows overwrite
 windows.shell.program = "pwsh"
 windows.shell.args = ["-l"]
-#
-# # Linux overwrite
-# linux.shell.program = "tmux"
-# linux.shell.args = ["new-session", "-c", "/var/www"]
-
-# Log level
-#
-# This property enables log level filter and file. The default level is "OFF" and the logs are not logged to a file as default.
-#
-# Example:
-# [developer]
-# log-level = "OFF"
-# enable-log-file = false
-
