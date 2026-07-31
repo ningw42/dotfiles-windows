@@ -153,6 +153,17 @@ hide-if-single = true
 
 [window]
 decorations = "Disabled"
+# DWMWA_WINDOW_CORNER_PREFERENCE. Not redundant with the Windows 11 default:
+# the field is an Option that defaults to None, so leaving it out means rio
+# never calls DwmSetWindowAttribute at all rather than asking for "round".
+# This does still apply with decorations off -- configure_window() sets it
+# unconditionally on Windows, and rio-window's to_window_styles always keeps
+# WS_CAPTION | WS_BORDER (undecorated is implemented by stripping the
+# non-client area in WM_NCCALCSIZE, not by dropping the styles), so DWM still
+# sees a framed window to round. Spelling is load-bearing per the header note:
+# the variants are Default | DoNotRound | Round | RoundSmall with lowercase
+# aliases only, so "round-small" would fail the enum and discard this file.
+windows-corner-preference = "Round"
 
 [platform]
 windows.shell.program = "pwsh"
