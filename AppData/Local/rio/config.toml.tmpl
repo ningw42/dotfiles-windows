@@ -151,6 +151,34 @@ hide-if-single = true
 # just assigns None, which the `is_some()` guard below it then drops -- so new
 # tabs and splits fall back to `working-dir` above either way.
 
+[bindings]
+# Ctrl+Shift+W is a dead end on the last tab, silently. Screen::close_tab defers
+# to ContextManager::close_current_context, which opens with
+# `if self.contexts.len() == 1 { #[cfg(target_os = "macos")] { ..CloseWindow }
+# return; }` (rioterm/src/context/mod.rs) -- the arm that actually closes the
+# window is macOS-only, so on Windows that whole branch reduces to a bare
+# `return`. close_tab then takes its own `len() <= 1` path and only relayouts the
+# tab strip, which is why the key visibly repaints while doing nothing.
+# Ctrl+Shift+D bottoms out in the same place: close_split_or_tab falls through to
+# close_tab once a single split is left. With decorations disabled that leaves no
+# in-window way out at all -- only `exit` in the shell or Alt+F4 -- hence binding
+# quit by hand. Rio ships no default quit binding off macOS (only Cmd+Q there).
+#
+# This is a hard process kill, not a window close: Act::Quit -> ContextManager
+# ::quit -> RioEvent::Quit -> application.rs, which looks the route up by
+# window_id -- so it reads window-scoped -- but then calls Route::quit, and that
+# is `std::process::exit(0)` (rioterm/src/router/mod.rs). EVERY rio window dies,
+# no unwinding, and `confirm-before-quit = false` above means no prompt either. Q
+# is deliberately far from W for that reason; do not fold this onto Ctrl+Shift+W.
+#
+# Unlike everything else here, a typo on this table is survivable. KeyBinding is
+# all-String fields (rio-backend/src/config/bindings.rs), so it always
+# deserializes, and rioterm's converter returns Err per entry -- logged as
+# "unknown action" and skipped -- rather than failing the parse and triggering
+# the whole-file discard described at the top. `key` and `with` are both
+# lowercased before matching and `|` separates modifiers.
+keys = [{ key = "q", with = "control|shift", action = "quit" }]
+
 [window]
 decorations = "Disabled"
 # DWMWA_WINDOW_CORNER_PREFERENCE. Not redundant with the Windows 11 default:
