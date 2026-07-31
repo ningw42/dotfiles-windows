@@ -1,7 +1,7 @@
 [external_resources.github_releases.superpowers]
 repository = "obra/superpowers"
-tag = "v6.1.1"
-sha256 = "625911fa9bed8938eeb109d3aeeaefdf7466f6870290ac9138e123f2f85dac08"
+tag = "v6.2.0"
+sha256 = "468246a7b4981d4c014c2b58d9ee538700ffded075279d5810059cdc1abeb5f3"
 
 [external_resources.github_releases.mattpocock_skills]
 repository = "mattpocock/skills"
