@@ -196,6 +196,27 @@ decorations = "Disabled"
 # the variants are Default | DoNotRound | Round | RoundSmall with lowercase
 # aliases only, so "round-small" would fail the enum and discard this file.
 windows-corner-preference = "Round"
+# `srgb`, the default, does NOT mean "leave sRGB values alone" -- it means
+# "interpret these bytes as sRGB and convert them to Display P3 primaries before
+# rendering" (rioterm.com/docs/features/wide-color-gamut). That pairing is right
+# on macOS, where rio draws onto a DisplayP3-tagged CAMetalLayer, but the wgpu
+# path has no wide-gamut surface: the converted values land in a plain sRGB
+# swapchain that DWM and screen-capture tools then read straight back as sRGB.
+# Measured on this display, that turns catppuccin's #f9e2af into #f5e3b5 -- a
+# bit-exact sRGB -> Display P3 transform -- while Windows Terminal and Edge both
+# put the same theme value on screen as #f9e2af. `display-p3` declares the input
+# already-P3, skipping the matrix so the config's literal hex survives to the
+# framebuffer and rio agrees with every other app here. The `[renderer]` backend
+# above has no bearing on this: the transform lives in sugarloaf's fragment
+# shader, so Vulkan and Webgpu/DX12 measure identically.
+#
+# Contingent on Advanced Color being active -- dxdiag here reports
+# AdvancedColorEnabled with the panel in DISPLAYCONFIG_ADVANCED_COLOR_MODE_HDR,
+# so DWM composites in FP16 and treats every 8-bit app surface as sRGB, making
+# sRGB what all of them should emit. Turn HDR off and nothing converts at
+# scan-out, the wide-gamut panel takes the raw bytes, and `srgb` becomes correct
+# again -- so this value tracks the display mode, not the theme.
+colorspace = "display-p3"
 
 [platform]
 windows.shell.program = "pwsh"
