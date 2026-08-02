@@ -210,12 +210,15 @@ windows-corner-preference = "Round"
 # above has no bearing on this: the transform lives in sugarloaf's fragment
 # shader, so Vulkan and Webgpu/DX12 measure identically.
 #
-# Contingent on Advanced Color being active -- dxdiag here reports
-# AdvancedColorEnabled with the panel in DISPLAYCONFIG_ADVANCED_COLOR_MODE_HDR,
-# so DWM composites in FP16 and treats every 8-bit app surface as sRGB, making
-# sRGB what all of them should emit. Turn HDR off and nothing converts at
-# scan-out, the wide-gamut panel takes the raw bytes, and `srgb` becomes correct
-# again -- so this value tracks the display mode, not the theme.
+# Contingent on Advanced Color being active, which it is on every monitor here
+# by one route or the other: dxdiag reports AdvancedColorEnabled with the 5K in
+# DISPLAYCONFIG_ADVANCED_COLOR_MODE_HDR, and "Automatically manage color for
+# apps" is on for the SDR panels too. Either route makes DWM composite in FP16
+# and treat every 8-bit app surface as sRGB, so sRGB is what all of them should
+# emit -- and a window can move between displays without changing the answer.
+# Turn HDR and ACM off and nothing converts at scan-out, the wide-gamut panels
+# take the raw bytes, and `srgb` becomes correct again -- so this value tracks
+# the display pipeline, not the theme.
 colorspace = "display-p3"
 
 [platform]
