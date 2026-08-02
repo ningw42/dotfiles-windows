@@ -110,7 +110,7 @@
             }
         ]
     },
-    "rendering.graphicsAPI": "direct2d",
+    "rendering.graphicsAPI": "direct3d11",
     "schemes": 
     [
         {
