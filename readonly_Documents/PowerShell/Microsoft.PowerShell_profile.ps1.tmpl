@@ -142,20 +142,6 @@ if ($IsCodexSession) {
 # Emacs keybinding for PowerShell
 Set-PSReadLineOption -EditMode Emacs
 
-# History hint (inline prediction) color. PSReadLine defaults to
-# "`e[97;2;3m" — bright white + FAINT + italic — and `faint` (SGR 2) has no
-# agreed semantics: Windows Terminal darkens the resolved RGB, while
-# rio/alacritty do a palette lookup instead (bright slot -> normal slot).
-# That lookup only dims if the palette ramps dim < normal < bright, and
-# catppuccin's ANSI mapping puts brightWhite (subtext0) *darker* than white
-# (subtext1) — so in rio the hint comes out brighter than the text it's
-# hinting. Name the dim slot directly and drop the attribute, same as
-# zsh-autosuggestions' `fg=8` / fish's $fish_color_autosuggestion. Slot 8
-# resolves from whatever theme each terminal loaded, so this needs no
-# per-colorscheme templating. Italic is kept: it selects a font face, not a
-# color, so no palette can invert it.
-Set-PSReadLineOption -Colors @{ InlinePrediction = "`e[90;3m" }
-
 # Make PowerShell's autocompletion bash-like
 Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
 
