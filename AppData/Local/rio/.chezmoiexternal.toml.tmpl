@@ -1,62 +1,74 @@
-# Catppuccin themes for rio. One value is patched on the way in, via chezmoi's
-# `filter` hook: rio >= 0.4 replaced the old tab bar with the "island" strip and
-# repurposed `tabs` from the tab-bar BACKGROUND to the INACTIVE TAB TITLE TEXT
-# (renderer/mod.rs hands `tabs`/`tabs-active` to Island::new as the inactive and
-# active text colors; the island fills themselves are derived from the window
-# background's luminance and are not themeable). 0.4 also deleted
-# `tabs-foreground`, `tabs-active-foreground` and `tabs-active-highlight` from
-# the Colors struct -- nothing sets deny_unknown_fields, so those three keys are
-# still present in every upstream file, still parsed, and still ignored.
+# Catppuccin themes for rio, tracked from our own fork
+# (ningw42/rio @ feat/update-color-schema) rather than catppuccin/rio, pending
+# the upstream PR. Files are taken verbatim -- there is no `filter` hook here
+# any more; the fork fixes at the source what we used to patch on the way in.
 #
-# catppuccin/rio last touched these values in April 2025, against <= 0.3
-# semantics, so every flavor sets `tabs` to its own `base` -- which now paints
-# inactive tab titles in the background color, i.e. invisible. The filter
-# rewrites that one line to the flavor's `overlay2`. Patching rather than
-# vendoring keeps us on upstream's palette for everything else: the deployed
-# file differs from what the URL serves by exactly those six bytes.
+# What upstream gets wrong, and the fork corrects:
 #
-# The filter runs AFTER checksum verification (chezmoi's getExternalData does
-# download -> checksum -> decrypt -> decompress -> filter), so the sha256 below
-# still pins upstream's bytes: any upstream edit fails the apply outright rather
-# than silently voiding this patch. When that fires, check whether upstream has
-# adopted 0.5 semantics before reaching for `python update_externals.py` -- if
-# it has, drop the filter instead of refreshing the checksum.
+# 1. ANSI black/white mapping. catppuccin's official style guide
+#    (catppuccin/catppuccin, docs/style-guide.md, "ANSI Color Generation")
+#    specifies for the dark flavors: Black 0 = Surface 1, Black 8 = Surface 2,
+#    White 7 = Subtext 0, White 15 = Subtext 1 -- and for latte: Subtext 1 /
+#    Subtext 0 / Surface 2 / Surface 1. catppuccin/rio has White 7 and White 15
+#    swapped on frappe, macchiato and mocha, so the "bright" white slot is
+#    darker than the normal one. That inversion is what made PSReadLine's
+#    default inline-prediction color (`e[97;2;3m`, bright white + faint) render
+#    *brighter* than surrounding text: rio resolves SGR 2 by palette
+#    substitution, LightWhite -> White (rio-vt/src/config/colors/mod.rs,
+#    to_dim()). The fork restores the guide's mapping, so the profile no longer
+#    needs its `e[90;3m` workaround.
 #
-# On the one-liner. The regex is anchored at line start and `-` is neither `\s`
-# nor `=`, so the `tabs-*` keys cannot match; `(\s*)` replays upstream's padding
-# to keep the column alignment. `[string]::Join([char]10, ...)` and
-# `[Console]::Out.Write` are what preserve the LF line endings -- PowerShell's
-# own pipeline output would rewrite all 45 of them to CRLF and turn a six-byte
-# patch into a whole-file rewrite. Quoting, innermost first: `''` are
-# PowerShell's escaped single quotes, `\\s` is TOML's escape for `\s`, and the
-# script deliberately contains no double quotes, so nothing has to survive Go's
-# argv-to-command-line requoting on the way into pwsh.
+# 2. `tabs`. rio >= 0.4 replaced the old tab bar with the "island" strip and
+#    repurposed `tabs` from the tab-bar BACKGROUND to the INACTIVE TAB TITLE
+#    TEXT (renderer/mod.rs hands `tabs`/`tabs-active` to Island::new as the
+#    inactive and active text colors; the island fills are derived from the
+#    window background's luminance and are not themeable). Upstream still
+#    carries <= 0.3 semantics and sets `tabs` to each flavor's `base`, painting
+#    inactive tab titles in the background color, i.e. invisible. The fork sets
+#    it to Subtext 0 and drops the three keys 0.4 deleted from the Colors struct
+#    (`tabs-foreground`, `tabs-active-foreground`, `tabs-active-highlight`),
+#    while adding the 0.4+ keys upstream never gained: `vi-cursor`, `split`,
+#    `split-active`, `search-match-*` and `hint-*`.
+#
+# 3. `dim-*`. rio derives its whole dim ramp when a `dim-*` key is ABSENT
+#    (rio-vt/src/config/colors/term.rs, `normal * DIM_FACTOR` at 0.66), but
+#    upstream sets all nine to verbatim copies of their normal counterparts --
+#    so `dim-foreground` equalled `foreground` and SGR 2 was a no-op. codex-cli
+#    draws its entire session header that way (box border, version string,
+#    `model:`, `directory:`, ` to change` are all faint over the default fg) and
+#    came out pure white. The fork differentiates `dim-foreground`, `dim-black`
+#    and `dim-white`. Note the style guide is silent on dim colors, so those
+#    values are a judgement call, not a conformance requirement -- and deleting
+#    the keys instead would be wrong for latte, where `* 0.66` darkens text
+#    against a light background and makes "faint" more prominent than normal.
+#
+# Known remaining gap: the six chromatic `light-*` slots are still copies of
+# their normal counterparts in both upstream and the fork. The guide generates
+# them (dark: lightness * 0.94, chroma + 8, hue + 2; latte: lightness * 1.09,
+# hue + 2) -- e.g. mocha `light-red` should be #f37799, not #f38ba8.
+#
+# The URLs track a BRANCH, so any push to feat/update-color-schema changes these
+# bytes and fails the checksum on the next apply. That is the intended tripwire.
+# Refresh with `python update_externals.py` after an intentional push; once the
+# PR merges, repoint these back at catppuccin/rio main and refresh once more.
 {{ if eq .colorscheme "catppuccin-latte" }}
 ["themes/catppuccin-latte.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/rio/main/themes/catppuccin-latte.toml"
-    checksum.sha256 = "e509466cf4cc9239b3250f2d3615b6d4b37a2b6cd60dc433f1f8647f168f0fb1"
-    filter.command = "pwsh"
-    filter.args = ["-NoProfile", "-Command", "[Console]::Out.Write([string]::Join([char]10, ($input -replace '^tabs(\\s*)=.*', 'tabs$1= ''#7c7f93''')) + [char]10)"]
+    url = "https://raw.githubusercontent.com/ningw42/rio/feat/update-color-schema/themes/catppuccin-latte.toml"
+    checksum.sha256 = "a678682d7ca5af69b767b6cc94a575c0aac17918e1072a4f13837aeb01e45911"
 {{ else if eq .colorscheme "catppuccin-frappe" }}
 ["themes/catppuccin-frappe.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/rio/main/themes/catppuccin-frappe.toml"
-    checksum.sha256 = "a0a5cc25a7955e846df36a1a586b1b9239086ef886593a45b35008f76e7b695c"
-    filter.command = "pwsh"
-    filter.args = ["-NoProfile", "-Command", "[Console]::Out.Write([string]::Join([char]10, ($input -replace '^tabs(\\s*)=.*', 'tabs$1= ''#949cbb''')) + [char]10)"]
+    url = "https://raw.githubusercontent.com/ningw42/rio/feat/update-color-schema/themes/catppuccin-frappe.toml"
+    checksum.sha256 = "5c0d52a4550c5a85ed59bcf536c9004a68227590ec2ba1919403645c09998c5c"
 {{ else if eq .colorscheme "catppuccin-macchiato" }}
 ["themes/catppuccin-macchiato.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/rio/main/themes/catppuccin-macchiato.toml"
-    checksum.sha256 = "4df49e978c779aa6fc78483b2a767a7616212d83d9db38124c554d039f162086"
-    filter.command = "pwsh"
-    filter.args = ["-NoProfile", "-Command", "[Console]::Out.Write([string]::Join([char]10, ($input -replace '^tabs(\\s*)=.*', 'tabs$1= ''#939ab7''')) + [char]10)"]
+    url = "https://raw.githubusercontent.com/ningw42/rio/feat/update-color-schema/themes/catppuccin-macchiato.toml"
+    checksum.sha256 = "3a7d7598563fee8692d3a27dee795331c7679ae10beeb31565db32a0ab41ab06"
 {{ else if eq .colorscheme "catppuccin-mocha" }}
 ["themes/catppuccin-mocha.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/rio/main/themes/catppuccin-mocha.toml"
-    checksum.sha256 = "0016e2bc607f89740f8cd6369984639d52652824c28b45d64de1a7ed430d759f"
-    filter.command = "pwsh"
-    filter.args = ["-NoProfile", "-Command", "[Console]::Out.Write([string]::Join([char]10, ($input -replace '^tabs(\\s*)=.*', 'tabs$1= ''#9399b2''')) + [char]10)"]
+    url = "https://raw.githubusercontent.com/ningw42/rio/feat/update-color-schema/themes/catppuccin-mocha.toml"
+    checksum.sha256 = "6969d0af6a1722081cd7f08086295bed5107300b81a4349430161dc5ef0aa753"
 {{ end }}
