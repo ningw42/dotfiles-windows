@@ -506,7 +506,16 @@ config.font_rules = {
 }
 config.font_size = 14.0
 config.line_height = 1.0
-config.freetype_load_target = "HorizontalLcd"
+-- Greyscale AA, not the "HorizontalLcd" subpixel target this used to carry: every
+-- display here is HiDPI, where the subpixel triads are far below the point of
+-- buying real horizontal resolution and mostly show up as colour fringing on the
+-- stems. `freetype_render_target` defaults to whatever `freetype_load_target` is,
+-- so this single line switches both the hinting algorithm and the rasterisation.
+-- Matches Windows Terminal's `antialiasingMode: "grayscale"`. rio and alacritty
+-- are the odd ones out and stay subpixel -- neither exposes the knob (rio's
+-- `fonts.antialias` PR #1718 is still unmerged as of 0.5.5, and crossfont
+-- hardcodes DWRITE_TEXTURE_CLEARTYPE_3x1).
+config.freetype_load_target = "Normal"
 
 -- Off so U+2500 box drawing, powerline separators and the U+EE00-EE02 progress bar all
 -- come from the font, matching WT and rio glyph-for-glyph. Note this is the opposite

@@ -52,7 +52,7 @@
     {
         "defaults":
         {
-            "antialiasingMode": "cleartype",
+            "antialiasingMode": "grayscale",
             "colorScheme": "Catppuccin Mocha",
             "cursorShape": "filledBox",
             "intenseTextStyle": "bold",
