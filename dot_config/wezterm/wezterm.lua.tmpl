@@ -521,6 +521,17 @@ config.freetype_load_target = "HorizontalLcd"
 -- mixed box-drawing design bites.
 config.custom_block_glyphs = false
 
+-- The symbols font draws icon ink far wider than its own advance -- U+F015 is 0.9750 em
+-- of ink on a 0.4878 em advance, a clean 2.00x, and half the icons measured are between
+-- 1.5x and 2.0x. That is how WT and rio render them too: the ink spills into the
+-- neighbouring cell. wezterm instead scales such a glyph down to fit unless it is
+-- allowed to overflow, and the default "WhenFollowedBySpace" only permits that when the
+-- next cell happens to be blank -- so the same icon renders at two different sizes
+-- depending on what follows it, and adjacent runs like the U+EE00-EE02 progress bar are
+-- always shrunk. "Always" drops the condition. Applies only to glyphs with an ink aspect
+-- ratio above 0.9, which is 7 of the 10 icons sampled here.
+config.allow_square_glyphs_to_overflow_width = 'Always'
+
 -- Key Binding
 config.keys = {
   -- Ctrl+Shift+T = New tab
