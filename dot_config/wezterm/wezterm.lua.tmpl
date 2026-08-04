@@ -5,17 +5,50 @@ local wezterm = require 'wezterm'
 local config = wezterm.config_builder()
 
 -- Global constants
-local font_fallback_list = wezterm.font_with_fallback {
-	-- 'Iosevkata',
-	-- 'Symbols Nerd Font Iosevkata',
-	-- 'PragmataPro',
-  { family = 'Berkeley Mono ExtraCondensed', harfbuzz_features = { 'ss02=1' }, weight = 'Regular', style = 'Normal' },
-  { family = 'Berkeley Mono ExtraCondensed', harfbuzz_features = { 'ss02=1' }, weight = 'Bold', style = 'Normal' },
-  { family = 'Berkeley Mono ExtraCondensed', harfbuzz_features = { 'ss02=1' }, weight = 'Regular', style = 'Oblique' },
-  { family = 'Berkeley Mono ExtraCondensed', harfbuzz_features = { 'ss02=1' }, weight = 'Bold', style = 'Oblique' },
-  -- 'Symbols Nerd Font Berkeley Mono',
-	'Sarasa Fixed SC',
-}
+--
+-- Font stack, mirroring the cascade Windows Terminal and rio use:
+-- Berkeley for Latin -> Symbols Nerd Font Berkeley Mono for icons -> Sarasa for CJK.
+--
+-- Spelling Retina is the trap. It is weight 375, which has no CSS-style name, and
+-- Berkeley's name table disagrees with itself about where it lives: name ID 1 calls
+-- it its own family ("Berkeley Mono Retina ExtraCondensed") while ID 16 files it
+-- under "Berkeley Mono". WezTerm enumerates through DirectWrite and reports the ID 16
+-- typographic family, so here it is family "Berkeley Mono" plus a NUMERIC weight and
+-- an explicit stretch. Do NOT copy rio's spelling: rio resolves through font-kit's
+-- select_family_by_name, which sees the ID 1 side and needs family
+-- "Berkeley Mono Retina". Same file, two incompatible descriptors. Ground truth for
+-- this side is `wezterm ls-fonts --list-system`, which prints copy-pasteable
+-- wezterm.font(...) calls next to the file each one resolves to.
+--
+-- "SemiBold" is likewise not a wezterm weight name -- 600 is spelled "DemiBold".
+local function berkeley(weight, style)
+  return {
+    family = 'Berkeley Mono',
+    weight = weight,
+    stretch = 'ExtraCondensed',
+    style = style,
+    harfbuzz_features = { 'ss02=1' },
+  }
+end
+
+-- Icons before CJK: the ExtraCondensed OTFs are the plain 645-glyph cut with no Nerd
+-- coverage at all, so without the symbols font in this chain every icon falls through
+-- to the "Symbols Nerd Font Mono" wezterm bundles -- a different design at a different
+-- advance than the metrics-matched Berkeley one WT and rio both use (0.4878 em against
+-- Berkeley's 0.4880). Sarasa is last and CJK-only in practice; it advances a full em on
+-- ideographs, so they take two cells.
+local function font_stack(weight, style)
+  return wezterm.font_with_fallback {
+    berkeley(weight, style),
+    'Symbols Nerd Font Berkeley Mono',
+    'Sarasa Fixed SC',
+  }
+end
+
+local font_regular = font_stack(375, 'Normal')
+local font_italic = font_stack(375, 'Oblique')
+local font_bold = font_stack('DemiBold', 'Normal')
+local font_bold_italic = font_stack('DemiBold', 'Oblique')
 
 -- Helper functions
 -- Helper to merge two tables, like nix's // operator
@@ -353,7 +386,7 @@ local theme_colors = theme.colors()
 -- Window
 config.window_decorations = 'RESIZE'
 local window_frame = {
-	font = font_fallback_list,
+	font = font_regular,
 	font_size = 12.0,
 }
 window_frame = window_frame_colors ~= nil and merge(window_frame, window_frame_colors) or window_frame
@@ -438,10 +471,55 @@ config.window_padding = {
 }
 
 -- Fonts
-config.font = font_fallback_list
+--
+-- Load Berkeley by parsing the files directly instead of going through the system
+-- font locator. On Windows that locator is GDI, and GDI only exposes the RIBBI four
+-- -- Regular, Bold, and their obliques -- under family "Berkeley Mono ExtraCondensed".
+-- The other ten weights are registered as sibling families named the other way round
+-- ("Berkeley Mono ExtraCondensed SemiBold", ID 1) and wezterm's matcher reaches them
+-- by neither route: asking family "Berkeley Mono" + weight="DemiBold" + the right
+-- stretch falls all the way through to JetBrains Mono, and asking the sibling family
+-- by name silently snaps to Regular instead. Retina survives on the ID 16 path by
+-- luck -- 375, 425 and 900 resolve, every named weight in between does not -- so a
+-- config that looks like it works can still be quietly rendering the wrong face.
+-- `wezterm ls-fonts` (no args) names the face per slot and warns when a font_rule
+-- missed; that warning is the only signal, since the fallback is silent at runtime.
+--
+-- This is the same per-user directory configuration.dsc.yaml installs into, so it
+-- also covers Sarasa and the symbols font. Recursive, which matters: Sarasa lands in
+-- a SarasaFixedSC/ subdirectory.
+config.font_dirs = { '{{ .chezmoi.homeDir | replace "\\" "/" }}/AppData/Local/Microsoft/Windows/Fonts' }
+config.font = font_regular
+-- Pin every intensity/italic slot by hand rather than piling the four Berkeley faces
+-- into one font_with_fallback and letting wezterm sort them out. Left to itself it
+-- derives each slot by rewriting the attributes of the WHOLE chain, not just the first
+-- entry, so dim text was resolving CJK to "Sarasa Fixed SC XLight" and dim italic to
+-- SARASAFIXEDSC-EXTRALIGHTITALIC.TTF -- a weight nothing asked for. `wezterm ls-fonts`
+-- (no args) prints the resolved chain per slot and is how that turned up.
+config.font_rules = {
+  { intensity = 'Normal', italic = true, font = font_italic },
+  { intensity = 'Bold', italic = false, font = font_bold },
+  { intensity = 'Bold', italic = true, font = font_bold_italic },
+  -- Half maps onto the same faces as Normal; wezterm synthesizes the dimming.
+  { intensity = 'Half', italic = false, font = font_regular },
+  { intensity = 'Half', italic = true, font = font_italic },
+}
 config.font_size = 14.0
 config.line_height = 1.0
 config.freetype_load_target = "HorizontalLcd"
+
+-- Off so U+2500 box drawing, powerline separators and the U+EE00-EE02 progress bar all
+-- come from the font, matching WT and rio glyph-for-glyph. Note this is the opposite
+-- setting from theirs -- WT sets `builtinGlyphs: true` and rio `use-drawable-chars =
+-- true`, i.e. both self-draw -- but wezterm nightly ALSO self-draws the Nerd Fonts
+-- progress and git-branch ranges, which those two do not, and the toggle is all-or-
+-- nothing (no per-range control exists). Safe only because of the chain above: the
+-- ExtraCondensed cut ships 25 of the 128 box glyphs and 4 of 8 powerline separators,
+-- and Symbols Nerd Font Berkeley Mono backfills both at 128/128 and 8/8. Braille
+-- (U+2800) is the one gap -- neither Berkeley face nor the symbols font has any, so it
+-- lands on Sarasa at 0.5 em against a 0.4880 em cell. Flip back to true if that or the
+-- mixed box-drawing design bites.
+config.custom_block_glyphs = false
 
 -- Key Binding
 config.keys = {
