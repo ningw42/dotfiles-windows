@@ -1,0 +1,9 @@
+# Consumed by `gpg.ssh.allowedSignersFile` in ~/.gitconfig. Maps the signing identity
+# to its public key so `git log --show-signature` / `git verify-commit` can verify
+# locally -- without it git signs happily but every verification fails with
+# "gpg.ssh.allowedSignersFile needs to be configured and exist".
+#
+# This is purely local. GitHub verifies against the signing keys registered on the
+# account and never sees this file, which is why commits can show as Verified there
+# while failing verification here.
+{{ .git_useremail }} {{ .git_signingkey }}
