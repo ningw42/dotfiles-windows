@@ -44,9 +44,11 @@ git:
   allBranchesLogCmds:
     - "git log --graph --all --color=always --abbrev-commit --decorate --date='format:%Y-%m-%d %H:%M:%S %z' --pretty=medium"
   # See https://github.com/jesseduffield/lazygit/blob/master/docs/Custom_Pagers.md
-  pagers:
-    - externalDiffCommand: "{{ .chezmoi.homeDir }}/AppData/Local/lazygit/diff.bat"
-    - externalDiffCommand: "difft --color=always --display=inline --syntax-highlight=off"
+  diffRenderers:
+    - command: {{ .chezmoi.homeDir }}/AppData/Local/lazygit/diff.bat
+      type: extDiff
+    - command: difft --color=always --display=inline --syntax-highlight=off
+      type: extDiff
 # Config relating to things outside of Lazygit like how files are opened, copying to clipboard, etc
 os:
   # Command for editing a file. Should contain "{{ `{{filename}}` }}".
