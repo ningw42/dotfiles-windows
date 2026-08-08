@@ -15,5 +15,6 @@
   "packages": [
     "git:github.com/ningw42/pi-distribution@v26.08.2"
   ],
-  "quietStartup": true
+  "quietStartup": true,
+  "shellPath": "C:\\Users\\ningw\\scoop\\apps\\git\\current\\bin\\bash.exe"
 }
