@@ -1,0 +1,43 @@
+{{ if eq .chezmoi.os "windows" -}}
+{{- /*
+  Materialize the pi packages declared in dot_pi/agent/settings.json.
+
+  `pi install` does two things: it clones/npm-installs the package under
+  ~/.pi/agent/git/, AND records the source string in settings.json's `packages`
+  array (`pi list` reads that array, not the filesystem). Since chezmoi owns
+  settings.json, that array is the DECLARATION and this script is only the
+  materialization -- otherwise an apply would silently de-register whatever pi
+  had written.
+
+  The pins therefore live in ONE place (dot_pi/agent/settings.json) and are
+  interpolated below, so the rendered content -- and thus the `run_onchange_`
+  hash -- changes whenever the declared package set does. Bump a revision there
+  and the next `chezmoi apply` reinstalls; leave it alone and this is a no-op.
+
+  Note that pi also writes settings.json at runtime, so an apply after using pi
+  prompts about the external modification -- see AGENTS.md.
+*/ -}}
+{{- $packages := (include "dot_pi/agent/settings.json" | fromJson).packages -}}
+$ErrorActionPreference = 'Stop'
+
+# Resolve pi by absolute shim path rather than relying on PATH: on a freshly
+# provisioned machine this session's PATH predates the Scoop install
+# (ScoopPiCodingAgent in configuration.dsc.yaml), so `winget configure` must
+# have run at least once -- the same assumption run_onchange_rtk-init makes
+# about rtk.
+$pi = "$env:USERPROFILE\scoop\shims\pi.exe"
+
+# pi runs `npm install` for git packages. Scoop's nodejs publishes node/npm via
+# env_add_path rather than shims, so prepend its app dir for the same reason.
+$nodeDir = "$env:USERPROFILE\scoop\apps\nodejs\current"
+if (Test-Path $nodeDir) { $env:PATH = "$nodeDir;$env:PATH" }
+{{ range $packages }}
+& $pi install {{ . | quote }}
+# PowerShell does not fail on a non-zero native exit code, so check explicitly.
+# Failing means chezmoi does NOT record this script's hash and retries on the
+# next apply, rather than silently leaving a half-installed package behind.
+if ($LASTEXITCODE -ne 0) {
+  throw "pi install of {{ . }} failed (exit $LASTEXITCODE)"
+}
+{{ end -}}
+{{ end -}}

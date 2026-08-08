@@ -53,6 +53,7 @@ age -e -r age1chwluerpyq4p9e340eeqatgm70939x769h7teh3tmr09f564hpyqdz2urt -o secr
 | [Claude Code](https://github.com/anthropics/claude-code) | Y | `dot_claude/` | `~/.claude/` |
 | Claude Code MCP plugin (local marketplace, registered via `extraKnownMarketplaces`) | N | `dot_config/claude-code-chezmoi/` | `~/.config/claude-code-chezmoi/` |
 | [Codex](https://github.com/openai/codex) | Y | `dot_codex/` | `~/.codex/` |
+| [pi](https://github.com/earendil-works/pi) | N | `dot_pi/` | `~/.pi/` |
 
 Many components pull colorscheme themes via [chezmoi externals](https://www.chezmoi.io/user-guide/include-files-from-elsewhere/) (see `.chezmoiexternal.toml` files).
 
@@ -62,6 +63,7 @@ Many components pull colorscheme themes via [chezmoi externals](https://www.chez
 | :--- | :--- | :--- |
 | `.chezmoiscripts/run_onchange_windows-env.ps1.tmpl` | Secret value changes | Sets `CODEX_API_KEY`, `CONTEXT7_API_KEY`, `GITHUB_PERSONAL_ACCESS_TOKEN` as persistent user-level env vars for GUI apps |
 | `.chezmoiscripts/run_onchange_rtk-init.ps1.tmpl` | rtk version changes | Regenerates `~/.claude/{CLAUDE,RTK}.md` and `~/.codex/{AGENTS,RTK}.md` via `rtk init` (rtk owns these files) |
+| `.chezmoiscripts/run_onchange_pi-packages.ps1.tmpl` | `packages` array in `dot_pi/agent/settings.json` changes | Materializes the pi packages declared there (clone + `npm install` into `~/.pi/agent/git/`), e.g. the [ningw42/pi-distribution](https://github.com/ningw42/pi-distribution) aggregate |
 
 ## Claude Code MCP plugin
 

@@ -136,9 +136,10 @@ Editing secrets means re-encrypting the `.age` blob. When that blob's content ch
 ## AI coding tooling + the rtk ownership boundary
 
 Managed agent configs: `dot_claude/` (Claude Code), `dot_codex/`, `dot_copilot/`,
-`dot_config/opencode/`. Provider URLs switch off the `claude_code_provider` / `codex_provider`
-data vars. A local MCP **plugin marketplace** lives in `dot_config/claude-code-chezmoi/` and is
-registered via `extraKnownMarketplaces` + `enabledPlugins` in `dot_claude/settings.json.tmpl`.
+`dot_config/opencode/`, `dot_pi/` (pi). Provider URLs switch off the `claude_code_provider` /
+`codex_provider` data vars. A local MCP **plugin marketplace** lives in
+`dot_config/claude-code-chezmoi/` and is registered via `extraKnownMarketplaces` +
+`enabledPlugins` in `dot_claude/settings.json.tmpl`.
 
 - **MCP server list is mirrored in several files** — `dot_codex/config.toml.tmpl`,
   `dot_copilot/mcp-config.json`, `dot_config/opencode/opencode.json`, and
@@ -149,6 +150,47 @@ registered via `extraKnownMarketplaces` + `enabledPlugins` in `dot_claude/settin
 - **Unified statusline:** `dot_config/statusline/statusline.py` serves both Claude Code and Copilot
   (dispatch arg `claude` | `copilot`). It has an in-file test suite:
   `python dot_config/statusline/statusline.py test`.
+
+⚠️ **pi gets its customization from a package, not from this repo.** The binary is a Scoop install
+(`ScoopPiCodingAgent`, bucket-qualified `main/pi-coding-agent`); everything else — extensions,
+skills, themes — comes from the [ningw42/pi-distribution](https://github.com/ningw42/pi-distribution)
+aggregate package. Only `~/.pi/agent/{settings.json,models.json}` are chezmoi-managed (`dot_pi/`), as
+**plain static JSON** mirroring what nixfiles generates, exactly like `dot_config/opencode/opencode.json`
+— deliberately not templated off the provider data vars. pi shells out to `npm install` for git
+packages, so nodejs (`ScoopNeovimDeps`) is a hard runtime prerequisite, as are `rtk >= 0.23` and
+`starship` for the bundled pi-rtk / pi-statusline extensions.
+
+**The pins live in `dot_pi/agent/settings.json`, not in the script.** `pi install` records each
+source string in that file's `packages` array — `pi list` reads the array, not the filesystem — so
+the array *is* the declaration and `.chezmoiscripts/run_onchange_pi-packages.ps1.tmpl` is only the
+materialization (clone + `npm install`). That script interpolates the array via
+`include "dot_pi/agent/settings.json" | fromJson`, so its rendered content — and thus the
+`run_onchange_` hash — changes exactly when the declared package set does. Bump a revision in
+`settings.json` and the next `chezmoi apply` reinstalls; leave it alone and the script is a no-op.
+
+⚠️ **`chezmoi apply` will prompt about `.pi/agent/settings.json`, and that is expected — answer it.**
+pi writes this file at runtime: `packages` on every install, `theme` from the `/theme` picker, and
+`lastChangelogVersion` on every pi version bump. chezmoi therefore sees a managed target modified
+outside its control and asks
+`"has changed since chezmoi last wrote it? diff/overwrite/all-overwrite/skip/quit"` — `overwrite` to
+reassert the repo, `skip` to keep pi's runtime state for now. This is a deliberate trade-off: the
+repo stays authoritative for `defaultProvider` / `defaultModel` / `enabledModels` / `packages`, at
+the cost of an occasional prompt. Do **not** try to silence it by matching pi's exact byte output —
+that was tried and fails, because `lastChangelogVersion` changes on pi's schedule, not ours.
+
+⚠️ **That prompt hangs forever in a non-interactive apply** — no output, no CPU, no child process,
+so it looks like a freeze rather than a question. Any scripted, CI, or agent-driven `chezmoi apply`
+that might touch pi must pass `--force` (overwrite without asking). `models.json` has no such
+problem — pi never writes it.
+
+Two ownership boundaries follow from the package doing the customization:
+
+- **Do NOT add pi to `run_onchange_rtk-init.ps1.tmpl`.** pi-distribution vendors its own `pi-rtk`
+  extension (generated upstream by `rtk init -g --agent pi --no-patch`), so the package owns that
+  integration the way the PreToolUse hook owns Claude's.
+- **Do NOT add a `pi` dispatch arg to `dot_config/statusline/statusline.py`.** pi's status line is
+  the package's own starship-backed `pi-statusline` extension; it honors `PI_STATUSLINE_STARSHIP`
+  for an explicit binary path.
 
 ⚠️ **The `rtk` tool owns these generated files — do NOT add them to this repo or edit them as sources:**
 `~/.codex/{AGENTS,RTK}.md` and the copilot rtk hook (`~/.copilot/hooks/rtk-rewrite.json`). They are

@@ -281,6 +281,30 @@ properties:
         GetScript: |
           @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\copilot-cli\current") { 'Installed' } else { 'NotInstalled' } }
 
+    # pi (pi-coding-agent) — minimal terminal coding harness. Config lives at
+    # dot_pi/agent/{settings.json,models.json}; the extension / skill / theme set
+    # is the pinned ningw42/pi-distribution aggregate package, installed by
+    # .chezmoiscripts/run_onchange_pi-packages.ps1.tmpl. pi shells out to `npm
+    # install` for git packages, so nodejs (ScoopNeovimDeps) is a runtime
+    # prerequisite, as are rtk >= 0.23 (ScoopRtk) and starship
+    # (ScoopShellAndGitTools) for the package's pi-rtk / pi-statusline
+    # extensions. Bucket-qualified since `pi` is a common name. This resource
+    # only installs the binary.
+    - resource: PSDscResources/Script
+      id: ScoopPiCodingAgent
+      dependsOn:
+        - ScoopBootstrap
+      directives:
+        description: "Install pi coding agent via Scoop"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          Test-Path "$env:USERPROFILE\scoop\apps\pi-coding-agent\current"
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install main/pi-coding-agent
+        GetScript: |
+          @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\pi-coding-agent\current") { 'Installed' } else { 'NotInstalled' } }
+
     # everything-cli (es) — command-line interface to the voidtools Everything
     # search engine (the GUI ships via WinGetEverything). Queries the running
     # Everything service for instant file-name search from the shell.
