@@ -12,10 +12,22 @@
     "copilotd-openai/gpt-5.6-terra:xhigh"
   ],
   "hideThinkingBlock": true,
+  "httpIdleTimeoutMs": 600000,
+  "markdown": {
+    "mermaid": "final"
+  },
   "packages": [
     "git:github.com/ningw42/pi-distribution@v26.08.2"
   ],
   "quietStartup": true,
+  "retry": {
+    "provider": {
+      "timeoutMs": 1200000
+    }
+  },
+  "showCacheMissNotices": true,
+  "showHardwareCursor": true,
+  "theme": "catppuccin-mocha",
   "tuiMode": "fullscreen",
   "shellPath": "C:\\Users\\ningw\\scoop\\apps\\git\\current\\bin\\bash.exe"
 }
