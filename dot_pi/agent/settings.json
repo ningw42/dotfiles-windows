@@ -27,7 +27,7 @@
   },
   "showCacheMissNotices": true,
   "showHardwareCursor": true,
-  "theme": "catppuccin-mocha",
+  "theme": "dark",
   "tuiMode": "fullscreen",
   "shellPath": "C:\\Users\\ningw\\scoop\\apps\\git\\current\\bin\\bash.exe"
 }
