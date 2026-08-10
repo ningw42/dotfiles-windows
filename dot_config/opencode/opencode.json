@@ -1,8 +1,8 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "enabled_providers": [
-    "copilot-proxy",
-    "copilot-proxy-openai"
+    "copilotd-anthropic",
+    "copilotd-openai"
   ],
   "mcp": {
     "brave-search": {
@@ -32,8 +32,14 @@
       "url": "https://api.githubcopilot.com/mcp/"
     }
   },
+  "permission": {
+    "skill": {
+      "develop-and-squash": "deny",
+      "traceability": "deny"
+    }
+  },
   "provider": {
-    "copilot-proxy": {
+    "copilotd-anthropic": {
       "models": {
         "claude-haiku-4.5": {
           "cost": {
@@ -57,7 +63,7 @@
           },
           "name": "Haiku 4.5"
         },
-        "claude-opus-4.8": {
+        "claude-opus-5": {
           "cost": {
             "cache_read": 0.5,
             "cache_write": 6.25,
@@ -77,7 +83,7 @@
               "text"
             ]
           },
-          "name": "Opus 4.8",
+          "name": "Opus 5",
           "options": {
             "effort": "xhigh",
             "thinking": {
@@ -190,14 +196,14 @@
           }
         }
       },
-      "name": "Copilot Proxy",
+      "name": "copilotd (Anthropic)",
       "npm": "@ai-sdk/anthropic",
       "options": {
         "apiKey": "{env:OPENCODE_API_KEY}",
-        "baseURL": "https://copilot.ningw.net/v1"
+        "baseURL": "https://copilotd.ningw.net/anthropic/v1"
       }
     },
-    "copilot-proxy-openai": {
+    "copilotd-openai": {
       "models": {
         "gpt-5.5": {
           "cost": {
@@ -373,12 +379,13 @@
           }
         }
       },
-      "name": "Copilot Proxy",
+      "name": "copilotd (OpenAI)",
       "npm": "@ai-sdk/openai",
       "options": {
         "apiKey": "{env:OPENCODE_API_KEY}",
-        "baseURL": "https://copilot.ningw.net"
+        "baseURL": "https://copilotd.ningw.net/openai/v1"
       }
     }
   }
 }
+
