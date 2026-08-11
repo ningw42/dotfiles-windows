@@ -7,7 +7,9 @@ that right-aligns the metrics group. A shared ``Statusline`` base owns the look
 arithmetic, and payload capture -- while a thin per-agent subclass maps that
 agent's stdin JSON schema into the component contract (cost, tokens, context,
 model, effort). Every component is guaranteed present and rendered
-unconditionally.
+unconditionally. The token section matches pi-statusline: accumulated all-input
+(non-cache-read input) and output for the whole session; the context section
+shows the live input/context token count and limit.
 
 Invoked as ``statusline.py <claude|copilot>`` by a per-agent shell wrapper;
 ``statusline.py test`` runs the in-file unittest suite.
@@ -44,7 +46,8 @@ def fg(hex_color):
 
 # catppuccin-mocha
 TEAL = fg("#94E2D5")  # cost
-MAROON = fg("#EBA0AC")  # tokens + context bar
+SAPPHIRE = fg("#74C7EC")  # accumulated token usage
+MAROON = fg("#EBA0AC")  # context bar
 FLAMINGO = fg("#F2CDCD")  # model + effort
 RESET = "\033[0m"
 
@@ -167,10 +170,10 @@ class Statusline:
 
     The look (left starship modules, colours, context bar, flex/margin math,
     payload capture) lives here. Subclasses override only the per-agent
-    payload-schema accessors and the margin policy. ``input_tokens`` /
-    ``output_tokens`` present the latest model CALL (see the accessor note
-    below) and ``context_limit`` reads the shared ``context_window`` shape; an
-    agent with a different shape may override them.
+    payload-schema accessors and the margin policy. ``token_totals`` reports
+    accumulated session usage as (all input, non-cache-read input, output),
+    while ``context_tokens`` / ``context_limit`` report live context usage; an
+    agent with a different ``context_window`` shape may override them.
     """
 
     # Per-agent capture filename stem (set by subclasses).
@@ -187,6 +190,7 @@ class Statusline:
         self.raw = raw
         # Injection seam: tests pass a fake to keep render() from shelling out.
         self._starship = starship
+        self._token_totals_cache = None
 
     # -- shared left side -----------------------------------------------------
 
@@ -208,24 +212,66 @@ class Statusline:
 
     # -- shared payload accessors --------------------------------------------
     #
-    # ``input_tokens`` / ``output_tokens`` present the LATEST MODEL CALL -- the
-    # only token unit every agent can report identically. claude-code exposes
-    # only the last call (its ``total_*`` IS that call); copilot-cli's
-    # ``total_*`` is a per-turn aggregate (sum of the turn's tool-loop calls)
-    # and is overridden below to its ``last_call_*``; pi's extension reads its
-    # last assistant message. Both numbers are cache-inclusive: the full prompt
-    # input of that one call (uncached + cache read + cache write).
+    # The token section follows pi-statusline's accumulated-session unit:
+    # all input (normal + cache writes + cache reads), the spend-oriented
+    # non-cache-read subset in parentheses, and output. The base fallback uses
+    # the latest call because that is all claude-code's payload itself exposes;
+    # the Claude subclass scans its transcript, while Copilot's payload already
+    # carries cumulative totals.
 
     def _cw(self):
         cw = self.data.get("context_window")
         return cw if isinstance(cw, dict) else {}
 
+    @staticmethod
+    def _token_count(value):
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return max(0, value)
+        return 0
+
+    def _current_call_tokens(self):
+        """Return (all input, non-cache-read input, output) for the last call."""
+        cw = self._cw()
+        usage = cw.get("current_usage")
+        input_keys = (
+            "input_tokens",
+            "cache_creation_input_tokens",
+            "cache_read_input_tokens",
+        )
+        if isinstance(usage, dict) and any(key in usage for key in input_keys):
+            regular = self._token_count(usage.get("input_tokens"))
+            cache_write = self._token_count(usage.get("cache_creation_input_tokens"))
+            cache_read = self._token_count(usage.get("cache_read_input_tokens"))
+            output = self._token_count(usage.get("output_tokens"))
+            return (regular + cache_write + cache_read, regular + cache_write, output)
+
+        # Older payloads have only the cache-inclusive combined value, so the
+        # best available non-cache-read fallback is the same value.
+        all_input = self._token_count(cw.get("total_input_tokens"))
+        output = self._token_count(cw.get("total_output_tokens"))
+        return (all_input, all_input, output)
+
+    def _compute_token_totals(self):
+        return self._current_call_tokens()
+
+    def token_totals(self):
+        if self._token_totals_cache is None:
+            self._token_totals_cache = self._compute_token_totals()
+        return self._token_totals_cache
+
     def input_tokens(self):
-        # claude-code: total_input_tokens already IS the latest call.
-        return self._cw().get("total_input_tokens") or 0
+        return self.token_totals()[0]
+
+    def non_cache_read_input_tokens(self):
+        return self.token_totals()[1]
 
     def output_tokens(self):
-        return self._cw().get("total_output_tokens") or 0
+        return self.token_totals()[2]
+
+    def context_tokens(self):
+        # Claude Code defines total_input_tokens as the cache-inclusive input
+        # currently occupying the context window, not an accumulated total.
+        return self._token_count(self._cw().get("total_input_tokens"))
 
     def context_limit(self):
         return self._cw().get("context_window_size") or 0
@@ -250,12 +296,19 @@ class Statusline:
         return (TEAL, f"${self.cost_usd():.2f}")
 
     def _tokens_seg(self):
-        text = f"↑{fmt_tokens(self.input_tokens())} ↓{fmt_tokens(self.output_tokens())}"
-        return (MAROON, text)
+        all_input, non_cache_read, output = self.token_totals()
+        text = (
+            f"↑{fmt_tokens(all_input)} ({fmt_tokens(non_cache_read)}) "
+            f"↓{fmt_tokens(output)}"
+        )
+        return (SAPPHIRE, text)
 
     def _context_seg(self):
         pct = self.context_pct()
-        text = f"{context_bar(pct)} {num(pct)}%/{fmt_tokens(self.context_limit())}"
+        text = (
+            f"{context_bar(pct)} {num(pct)}% "
+            f"{fmt_tokens(self.context_tokens())}/{fmt_tokens(self.context_limit())}"
+        )
         return (MAROON, text)
 
     def _model_seg(self):
@@ -340,6 +393,77 @@ class ClaudeStatusline(Statusline):
     # The "[1m]" model trick appends " (1M context)" to display names; drop it.
     MODEL_1M = re.compile(r"\s*\(1M context\)$", re.IGNORECASE)
 
+    def _transcript_paths(self):
+        value = self.data.get("transcript_path")
+        if not isinstance(value, str) or not value:
+            return []
+
+        transcript = pathlib.Path(value).expanduser()
+        paths = [transcript]
+        subagents = transcript.with_suffix("") / "subagents"
+        try:
+            paths.extend(sorted(subagents.rglob("*.jsonl")))
+        except OSError:
+            pass
+        return paths
+
+    def _compute_token_totals(self):
+        """Accumulate every distinct Claude call, including subagent calls.
+
+        Claude writes one transcript entry per content block, so parallel tools
+        can repeat the same API usage under one message id. Deduplicate by that
+        id and keep the component-wise maximum; Anthropic recommends the maximum
+        when duplicate entries very rarely disagree. Reading every append-only
+        entry also keeps abandoned/rewound branches in incurred usage, matching
+        pi-statusline's all-entry accounting.
+        """
+        by_message_id = {}
+        for path in self._transcript_paths():
+            try:
+                lines = path.open(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            with lines:
+                for line in lines:
+                    try:
+                        entry = json.loads(line)
+                    except (json.JSONDecodeError, TypeError):
+                        # The final line can be observed while it is being appended.
+                        continue
+                    if not isinstance(entry, dict) or entry.get("type") != "assistant":
+                        continue
+                    message = entry.get("message")
+                    if not isinstance(message, dict):
+                        continue
+                    usage = message.get("usage")
+                    message_id = message.get("id") or entry.get("uuid")
+                    if not isinstance(usage, dict) or not isinstance(message_id, str):
+                        continue
+
+                    current = (
+                        self._token_count(usage.get("input_tokens")),
+                        self._token_count(usage.get("cache_creation_input_tokens")),
+                        self._token_count(usage.get("cache_read_input_tokens")),
+                        self._token_count(usage.get("output_tokens")),
+                    )
+                    previous = by_message_id.get(message_id, (0, 0, 0, 0))
+                    by_message_id[message_id] = tuple(
+                        max(old, new) for old, new in zip(previous, current)
+                    )
+
+        if not by_message_id:
+            return self._current_call_tokens()
+
+        regular, cache_write, cache_read, output = (
+            sum(tokens[index] for tokens in by_message_id.values())
+            for index in range(4)
+        )
+        return (
+            regular + cache_write + cache_read,
+            regular + cache_write,
+            output,
+        )
+
     def cost_usd(self):
         cost = self.data.get("cost")
         if not isinstance(cost, dict):
@@ -400,18 +524,29 @@ class CopilotStatusline(Statusline):
         # nano AIU -> AIC (/1e9), AIC -> USD (/100).
         return nano / 1_000_000_000 / 100
 
-    def input_tokens(self):
-        # Unify on the per-CALL figure. Copilot's total_input_tokens is a
-        # per-turn aggregate (sum of the turn's tool-loop calls); last_call_* is
-        # the single most recent call (cache-inclusive), matching claude-code's
-        # total_input_tokens so both statuslines show the same unit.
-        return self._cw().get("last_call_input_tokens") or 0
-
-    def output_tokens(self):
-        return self._cw().get("last_call_output_tokens") or 0
+    def _compute_token_totals(self):
+        # Copilot constructs total_* by summing every model's session metrics.
+        # total_input_tokens is already cache-inclusive; subtract only cache
+        # reads to retain normal input + cache writes in the parenthesized value.
+        cw = self._cw()
+        all_input = self._token_count(cw.get("total_input_tokens"))
+        cache_read = self._token_count(cw.get("total_cache_read_tokens"))
+        output = self._token_count(cw.get("total_output_tokens"))
+        return (all_input, max(0, all_input - cache_read), output)
 
     def context_pct(self):
         return self._cw().get("current_context_used_percentage") or 0
+
+    def context_tokens(self):
+        cw = self._cw()
+        current = cw.get("current_context_tokens")
+        if current is not None:
+            return self._token_count(current)
+        # Compatibility with payloads from before current_context_tokens was
+        # added: the latest call's input is the closest available context size.
+        return self._token_count(
+            cw.get("last_call_input_tokens") or cw.get("total_input_tokens")
+        )
 
     def context_limit(self):
         # Copilot leaves context_window_size null and reports the effective
@@ -439,11 +574,11 @@ class CopilotStatusline(Statusline):
     def format_model_label(value):
         """Turn a Copilot model id into a display label.
 
-        Copilot reports the dotted id form (e.g. `claude-opus-4.8`, `gpt-5.5`).
+        Copilot reports the dotted id form (e.g. `claude-haiku-4.5`, `gpt-5.5`).
         Split on -/_; drop a leading `claude` vendor prefix; keep version tokens
         (anything with a digit) verbatim, upcase `gpt`, and title-case the rest.
         GPT labels keep the prefix/version hyphen (`GPT-5.5`) but space-join
-        qualifiers (`GPT-5.6 Sol`); others are fully space-joined (`Opus 4.8`).
+        qualifiers (`GPT-5.6 Sol`); others are fully space-joined (`Opus 5`).
         """
         tokens = [tok for tok in re.split(r"[-_]+", value.strip()) if tok]
         if tokens and tokens[0].lower() == "claude":
@@ -530,10 +665,16 @@ def _run_tests(argv):
         "context_window": {
             "total_input_tokens": 1500,
             "total_output_tokens": 2500,
+            "current_usage": {
+                "input_tokens": 100,
+                "cache_creation_input_tokens": 400,
+                "cache_read_input_tokens": 1000,
+                "output_tokens": 2500,
+            },
             "used_percentage": 18,
             "context_window_size": 200000,
         },
-        "model": {"display_name": "Opus 4.8 (1M context)", "id": "claude-opus-4-8"},
+        "model": {"display_name": "Opus 5 (1M context)", "id": "claude-opus-5"},
         "thinking": {"enabled": True},
         "effort": {"level": "xhigh"},
     }
@@ -542,20 +683,23 @@ def _run_tests(argv):
         "workspace": {"current_dir": "/nonexistent-statusline-test-dir"},
         "ai_used": {"total_nano_aiu": 123_000_000_000},
         "context_window": {
-            # total_* is the per-turn aggregate -- deliberately different from
-            # last_call_* so the test proves the statusline shows the per-call
-            # value, not the turn total.
+            # total_* is accumulated across every model used in the session;
+            # last_call_* is deliberately different so the test proves the
+            # statusline uses the cumulative values.
             "total_input_tokens": 9000,
             "total_output_tokens": 8000,
+            "total_cache_read_tokens": 3000,
+            "total_cache_write_tokens": 2000,
             "last_call_input_tokens": 1500,
             "last_call_output_tokens": 2500,
+            "current_context_tokens": 36000,
             "current_context_used_percentage": 18,
             "context_window_size": None,
             "displayed_context_limit": 200000,
         },
         "model": {
-            "display_name": "claude-opus-4.8 · xhigh · 200k",
-            "id": "claude-opus-4.8",
+            "display_name": "claude-opus-5 · xhigh · 200k",
+            "id": "claude-opus-5",
         },
     }
 
@@ -586,7 +730,9 @@ def _run_tests(argv):
 
         def test_format_model_label(self):
             f = CopilotStatusline.format_model_label
-            self.assertEqual(f("claude-opus-4.8"), "Opus 4.8")
+            self.assertEqual(f("claude-opus-5"), "Opus 5")
+            # Dotted claude id: the version token keeps its dot verbatim.
+            self.assertEqual(f("claude-haiku-4.5"), "Haiku 4.5")
             self.assertEqual(f("gpt-5.5"), "GPT-5.5")
             self.assertEqual(f("gpt-5.6-sol"), "GPT-5.6 Sol")
 
@@ -597,16 +743,65 @@ def _run_tests(argv):
         def test_cost(self):
             self.assertEqual(self.sl._cost_seg()[1], "$1.23")
 
-        def test_tokens(self):
+        def test_tokens_fall_back_to_current_call(self):
             self.assertEqual(self.sl.input_tokens(), 1500)
+            self.assertEqual(self.sl.non_cache_read_input_tokens(), 500)
             self.assertEqual(self.sl.output_tokens(), 2500)
+            self.assertEqual(self.sl._tokens_seg()[1], "↑1.5k (500) ↓2.5k")
+
+        def test_tokens_accumulate_transcript_and_subagents(self):
+            def assistant(message_id, regular, cache_write, cache_read, output):
+                return json.dumps(
+                    {
+                        "type": "assistant",
+                        "uuid": f"entry-{message_id}-{output}",
+                        "message": {
+                            "id": message_id,
+                            "usage": {
+                                "input_tokens": regular,
+                                "cache_creation_input_tokens": cache_write,
+                                "cache_read_input_tokens": cache_read,
+                                "output_tokens": output,
+                            },
+                        },
+                    }
+                )
+
+            with tempfile.TemporaryDirectory() as directory:
+                transcript = pathlib.Path(directory) / "session.jsonl"
+                transcript.write_text(
+                    "\n".join(
+                        [
+                            assistant("call-1", 10, 20, 30, 5),
+                            # Repeated content blocks share one call id. Keep the
+                            # maximum if duplicate usage very rarely disagrees.
+                            assistant("call-1", 10, 20, 30, 7),
+                            assistant("call-2", 1, 2, 3, 4),
+                            "{partially appended",
+                        ]
+                    ),
+                    encoding="utf-8",
+                )
+                subagents = transcript.with_suffix("") / "subagents"
+                subagents.mkdir(parents=True)
+                (subagents / "agent-1.jsonl").write_text(
+                    assistant("call-3", 5, 6, 7, 8) + "\n",
+                    encoding="utf-8",
+                )
+                sl = ClaudeStatusline(
+                    {**claude_payload, "transcript_path": str(transcript)}
+                )
+                self.assertEqual(sl.token_totals(), (84, 44, 19))
+                self.assertEqual(sl._tokens_seg()[1], "↑84 (44) ↓19")
 
         def test_context(self):
             self.assertEqual(self.sl.context_pct(), 18)
+            self.assertEqual(self.sl.context_tokens(), 1500)
             self.assertEqual(self.sl.context_limit(), 200000)
+            self.assertIn("18% 1.5k/200k", self.sl._context_seg()[1])
 
         def test_model_strips_1m(self):
-            self.assertEqual(self.sl.model(), "Opus 4.8")
+            self.assertEqual(self.sl.model(), "Opus 5")
 
         def test_effort_level(self):
             self.assertEqual(self.sl.effort(), "xhigh")
@@ -633,14 +828,17 @@ def _run_tests(argv):
             self.assertEqual(self.sl._cost_seg()[1], "$1.23")
 
         def test_tokens(self):
-            # Per-call: reads last_call_*, NOT the per-turn total_* (9000/8000).
-            self.assertEqual(self.sl.input_tokens(), 1500)
-            self.assertEqual(self.sl.output_tokens(), 2500)
+            self.assertEqual(self.sl.input_tokens(), 9000)
+            self.assertEqual(self.sl.non_cache_read_input_tokens(), 6000)
+            self.assertEqual(self.sl.output_tokens(), 8000)
+            self.assertEqual(self.sl._tokens_seg()[1], "↑9k (6k) ↓8k")
 
         def test_context_pct_key(self):
             self.assertEqual(self.sl.context_pct(), 18)
+            self.assertEqual(self.sl.context_tokens(), 36000)
             # context_window_size is null for Copilot; limit comes from displayed_context_limit.
             self.assertEqual(self.sl.context_limit(), 200000)
+            self.assertIn("18% 36k/200k", self.sl._context_seg()[1])
 
         def test_context_limit_falls_back_to_window_size(self):
             payload = {
@@ -653,7 +851,7 @@ def _run_tests(argv):
             self.assertEqual(CopilotStatusline(payload).context_limit(), 128000)
 
         def test_model_from_packed_display_name(self):
-            self.assertEqual(self.sl.model(), "Opus 4.8")
+            self.assertEqual(self.sl.model(), "Opus 5")
 
         def test_effort_from_packed_display_name(self):
             self.assertEqual(self.sl.effort(), "xhigh")
@@ -661,14 +859,14 @@ def _run_tests(argv):
         def test_effort_none_recognized(self):
             payload = {
                 **copilot_payload,
-                "model": {"display_name": "claude-opus-4.8 · none · 200k", "id": "x"},
+                "model": {"display_name": "claude-opus-5 · none · 200k", "id": "x"},
             }
             self.assertEqual(CopilotStatusline(payload).effort(), "none")
 
         def test_effort_disabled_when_absent(self):
             payload = {
                 **copilot_payload,
-                "model": {"display_name": "claude-opus-4.8", "id": "x"},
+                "model": {"display_name": "claude-opus-5", "id": "x"},
             }
             self.assertEqual(CopilotStatusline(payload).effort(), "off")
 
@@ -678,8 +876,8 @@ def _run_tests(argv):
                 sl = cls({}, starship=fake_starship())
                 right = sl.render_right()
                 self.assertIn("$0.00", right)
-                self.assertIn("↑0 ↓0", right)
-                self.assertIn("0%/0", right)
+                self.assertIn("↑0 (0) ↓0", right)
+                self.assertIn("0% 0/0", right)
                 # five colour-reset-terminated segments, none dropped
                 self.assertEqual(right.count(RESET), 5)
 
@@ -707,7 +905,7 @@ def _run_tests(argv):
             fake = fake_starship({"directory": "~/proj"})
             line = ClaudeStatusline(claude_payload, starship=fake).render()
             self.assertIn("~/proj", line)
-            self.assertIn("Opus 4.8", line)
+            self.assertIn("Opus 5", line)
             self.assertIn("$1.23", line)
 
         def test_copilot_edge_guards(self):
