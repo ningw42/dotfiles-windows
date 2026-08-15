@@ -1,258 +1,199 @@
 # AGENTS.md
 
-Agent guidance for this repository. Human-facing overview lives in [`README.md`](README.md);
-this file is the operating manual for working **in** the repo.
+Operating rules for agents working in this repository. The human-facing overview
+is [`README.md`](README.md).
 
-## What this repo is
+## Repository model
 
-A [chezmoi](https://www.chezmoi.io/)-managed **dotfiles repo for Windows**. The repo root
-**is** the chezmoi source directory (`~/.local/share/chezmoi`). Files here are sources/templates
-that `chezmoi apply` renders into `$HOME`. The host is **Windows with PowerShell**; a Bash tool
-is also available, but configs, paths, and scripts are Windows-first.
+This is a Windows/PowerShell dotfiles repo, and its root is the chezmoi source
+directory (`~/.local/share/chezmoi`). Files here are sources that `chezmoi apply`
+renders into `$HOME`; they are not the deployed files themselves.
 
-## Golden rules
+## Non-negotiable rules
 
-1. **Edit sources here, never the deployed targets.** `~/.gitconfig`, `~/Documents/PowerShell/...`,
-   `~/.config/...` etc. are generated and overwritten on every apply. Change the source in this repo,
-   then re-apply.
-2. **The repo root is the chezmoi source dir.** Every plain file at the root is treated as a source
-   and would deploy to `~/` unless it's a `.chezmoi*` special file or listed in `.chezmoiignore`.
-   Any new repo-only doc/script (like this file) **must** be added to `.chezmoiignore`.
-3. **Preview before deploying:** `chezmoi diff`, then `chezmoi apply`.
-4. **Forward slashes in templates.** Use `/` and `{{ .chezmoi.homeDir | replace "\\" "/" }}` for home
-   paths; raw Windows backslashes break JSON/template parsing.
-5. **Commits:** Conventional Commits with a scope (e.g. `feat(statusline): ...`, `chore(chezmoi): ...`).
-   No `Co-authored-by` trailer (`includeCoAuthoredBy` is off).
-6. **Purge orphaned targets when you stop managing a file.** Deleting or renaming a source — or
-   switching a target to a different mechanism (inline tmpl → external, ccstatusline → custom script,
-   one tool's config replaced by another) — does **not** remove the already-deployed copy. chezmoi
-   simply stops tracking it and the stale file lingers in `$HOME`. Add the old target to
-   `.chezmoiremove` (always templated) so `chezmoi apply` deletes it on every machine. Orphaned
-   colorscheme theme files are the most common case; see [Colorscheme / theming](#colorscheme--theming-the-main-cross-cutting-concern).
+1. **Edit sources here, never deployed targets** such as `~/.gitconfig`,
+   `~/Documents/PowerShell/...`, or `~/.config/...`.
+2. **Keep repo-only root files out of `$HOME`.** Add any new root-level doc or
+   helper to `.chezmoiignore`. The ignore file is the authoritative list.
+3. **Preview before deploying.** Run `chezmoi diff`; run `chezmoi apply` only
+   when deployment is part of the task.
+4. **Use forward slashes in templates.** For home paths use
+   `{{ .chezmoi.homeDir | replace "\\" "/" }}`. Raw backslashes can break
+   JSON or template parsing.
+5. **Remove abandoned targets.** Deleting or renaming a source does not delete
+   its deployed copy. Add orphaned paths to `.chezmoiremove`, which is always
+   templated.
+6. **Use scoped Conventional Commits** such as `feat(statusline): ...`. Do not
+   add a `Co-authored-by` trailer.
+7. **Do not overwrite unrelated work.** Check `git status` and keep edits scoped
+   to the request.
 
-## Core workflow
+## Working with chezmoi
 
-```bash
-chezmoi diff                      # preview exactly what apply would change
-chezmoi apply                     # render sources -> $HOME
-chezmoi cat ~/.gitconfig          # show the rendered output of one target
-chezmoi execute-template < f.tmpl # render a template snippet to check syntax
-chezmoi doctor                    # environment / config health check
+```powershell
+chezmoi diff                       # preview all rendered changes
+chezmoi apply                      # deploy interactively
+chezmoi cat ~/.gitconfig                 # render one managed target
+Get-Content -Raw f.tmpl | chezmoi execute-template
+chezmoi doctor                           # check the environment
+chezmoi ignored                    # inspect ignored targets
 ```
 
-## chezmoi naming attributes used here
+Automated or agent-driven applies that may touch pi must use
+`chezmoi apply --force`; otherwise a prompt about pi's runtime edits to
+`~/.pi/agent/settings.json` can appear as a silent hang.
 
-| Pattern | Meaning |
+### Source conventions
+
+| Source pattern | Meaning |
 | :--- | :--- |
-| `dot_foo` | deploys as `~/.foo` (hidden dotfile) |
-| `readonly_foo` | deployed file is marked read-only (e.g. the PowerShell profile) |
-| `*.tmpl` | Go-template; rendered with the data vars below |
-| `.chezmoiscripts/run_onchange_*.ps1.tmpl` | script re-run when its (hashed) content changes |
-| `.chezmoitemplates/<tool>/<scheme>` | shared partials pulled via `{{ template "tool/scheme" . }}` |
-| `.chezmoiexternal.toml[.tmpl]` | remote files (themes/plugins) fetched + checksum-verified |
-| `.chezmoiignore` | targets to skip (also where repo-only files are excluded) |
-| `.chezmoiremove` | targets to delete on apply — **always processed as a template** |
-| `*.age` + `encryption = "age"` | age-encrypted sources, decrypted at apply time |
+| `dot_foo` | Deploy as `~/.foo` |
+| `readonly_foo` | Deploy read-only |
+| `*.tmpl` | Render as a Go template |
+| `.chezmoitemplates/...` | Shared template partial |
+| `.chezmoiexternal.toml[.tmpl]` | Checksum-pinned remote content |
+| `.chezmoiscripts/run_onchange_*` | Run when rendered content changes |
+| `.chezmoiscripts/run_after_*` | Run after each apply |
+| `*.age` | Age-encrypted source |
 
-## Template data variables
+`.chezmoi.toml.tmpl` is the source of truth for prompted data, provider choices,
+and the derived Claude Code base URL. Do not duplicate those lists elsewhere.
+`.chezmoidata.toml` holds pinned external-release metadata. Templates load
+secrets with `include "secrets.yaml.age" | decrypt | fromYaml`; referencing an
+undeclared data variable makes apply fail.
 
-Defined in `.chezmoi.toml.tmpl` (prompted once, cached in the **generated**
-`~/.config/chezmoi/chezmoi.toml`, which is *not* in this repo — don't edit it directly):
+## Cross-cutting configuration
 
-- `colorscheme` ∈ `catppuccin-latte` · `catppuccin-frappe` · `catppuccin-macchiato` · `catppuccin-mocha` · `gruvbox-dark`
-- `password_manager` ∈ `1password` · `bitwarden`
-- `git_username`, `git_useremail`, `git_signingkey`
-- `codex_provider` ∈ `litellm` · `router-maestro` · `copilot-proxy`
-- `claude_code_provider` ∈ `byokey` · `litellm` · `router-maestro` · `copilot-proxy`
-- `claude_code_base_url` is derived from `claude_code_provider` in `.chezmoi.toml.tmpl`; update that
-  derivation when adding or renaming Claude Code providers.
+### Colorschemes
 
-Secrets are pulled in templates via `include "secrets.yaml.age" | decrypt | fromYaml`.
-Using a variable in a `.tmpl` that isn't declared in `.chezmoi.toml.tmpl` makes `apply` fail.
+The valid choices live in `.chezmoi.toml.tmpl`. Themes are implemented through a
+mix of shared partials under `.chezmoitemplates/`, colorscheme-conditional
+externals, and inline template conditionals. To find every integration, search
+rather than relying on a copied list:
 
-## Colorscheme / theming (the main cross-cutting concern)
-
-Five valid schemes (above). `everforest-dark` exists as a few `.chezmoitemplates` assets but is **not**
-a prompt choice. Themes are wired three different ways depending on the tool:
-
-1. **Shared partials** — `{{ template "tool/scheme" . }}` / `includeTemplate` pulls from
-   `.chezmoitemplates/<tool>/` (bottom, eza, gitui, starship, fzf, windows-terminal).
-2. **Colorscheme-conditional externals** — a `.chezmoiexternal.toml.tmpl` downloads the matching
-   upstream theme file (bat, alacritty, yazi flavors/plugins, rio, glow, lazygit, btop).
-3. **Inline conditionals** — `{{ if eq .colorscheme ... }}` directly in a tmpl (wezterm, gitconfig delta features).
-   Zellij is a hybrid: its **pane theme** is now a plain built-in theme-*name* passthrough (`theme {{ .colorscheme | quote }}`,
-   no inline conditional), while the **status-bar palette** is the inline `$palettes` go-template dict in
-   `layouts/default.kdl.tmpl`; the zjstatus `.wasm` itself is a checksummed external
-   (`AppData/Roaming/Zellij/config/plugins/.chezmoiexternal.toml`) referenced via `file:`.
-
-⚠️ **Sync gotcha:** colorscheme `if`-blocks are duplicated across `AppData/Local/nvim/init.lua.tmpl`,
-`AppData/Roaming/yazi/config/init.lua.tmpl`, `AppData/Roaming/Zellij/config/layouts/default.kdl.tmpl`,
-`dot_gitconfig.tmpl`, and the per-tool theme tmpls. Adding or
-renaming a scheme means updating **all** of them *and* adding the matching `.chezmoitemplates/<tool>/<scheme>`
-files / external entries — otherwise apply silently mis-themes a tool or fails on a missing template name.
-Switching schemes can orphan the previous theme file; those are cleaned up in `.chezmoiremove`.
-
-## Externals & checksums
-
-Theme/plugin files come from `.chezmoiexternal.toml[.tmpl]` entries (`type`, `url`,
-`checksum.sha256`, `refreshPeriod`). Most are templated for the active colorscheme; `dot_config/delta/`
-is a plain `.toml`.
-
-⚠️ **If you change an external's URL you must refresh its checksum**, or `chezmoi apply` fails the
-integrity check. Run:
-
-```bash
-python update_externals.py            # rewrites stale sha256s in place
-python update_externals.py --dry-run  # preview only
+```powershell
+rg -l colorscheme -g '*.tmpl' -g '*.toml' -g '*.lua' -g '*.ps1'
 ```
 
-It rglobs every `.chezmoiexternal.toml*`, downloads each URL, and updates mismatched checksums
-(exit `0` none / `1` updated / `2` errors).
+When adding or renaming a scheme, update every integration, add the required
+partials/externals, and clean obsolete deployed theme files through
+`.chezmoiremove`.
 
-⚠️ **`AppData/Local/rio/` patches its external after download — don't "clean up" the filter.**
-Its `filter.command`/`filter.args` rewrite the theme's `tabs` value, because rio ≥ 0.4 repurposed that
-key from the tab-bar background to the *inactive tab title text* and upstream catppuccin still ships
-the ≤ 0.3 meaning (so inactive tab labels render in the background color). chezmoi runs the filter
-**after** checksum verification, so the sha256 keeps pinning upstream's bytes and any upstream edit
-fails the apply instead of silently voiding the patch. If that trips, check whether upstream has
-adopted the new semantics *before* running `update_externals.py` — if it has, delete the filter rather
-than refresh the sum. The file's own header comment carries the details.
+Rio is a special case: its Catppuccin external intentionally tracks the
+`ningw42/rio` `feat/update-color-schema` branch. It no longer uses a filter.
+Read the header in `AppData/Local/rio/.chezmoiexternal.toml.tmpl` before changing
+its URL or checksum.
 
-## Secrets (age)
+### Externals
 
-- `secrets.yaml.age` is committed (encrypted); plaintext `secrets.yaml` is **gitignored — never commit it**.
-- Decrypted at apply time with the identity at `~/.config/chezmoi/key.txt` (not in repo). The recipient
-  public key is in `.chezmoi.toml.tmpl`.
+Changing an external URL requires a matching SHA-256 update. Use:
 
-```bash
-age -d -i ~/.config/chezmoi/key.txt -o secrets.yaml secrets.yaml.age          # decrypt to edit
-age -e -r <recipient-from-.chezmoi.toml.tmpl> -o secrets.yaml.age secrets.yaml # re-encrypt after editing
+```powershell
+python update_externals.py --dry-run
+python update_externals.py
 ```
 
-Editing secrets means re-encrypting the `.age` blob. When that blob's content changes,
-`.chezmoiscripts/run_onchange_windows-env.ps1.tmpl` re-sets the persistent user env vars
-(`CODEX_API_KEY`, `CONTEXT7_API_KEY`, `GITHUB_PERSONAL_ACCESS_TOKEN`, …) for GUI apps.
+The updater checks every `.chezmoiexternal.toml*` and refreshes GitHub release
+pins in `.chezmoidata.toml`. Exit codes are `0` for unchanged, `1` for updated
+(or changes found in dry-run), and `2` for errors. Inspect upstream changes
+before accepting a new checksum.
 
-## AI coding tooling + the rtk ownership boundary
+### Secrets
 
-Managed agent configs: `dot_claude/` (Claude Code), `dot_codex/`, `dot_copilot/`,
-`dot_config/opencode/`, `dot_pi/` (pi). Provider URLs switch off the `claude_code_provider` /
-`codex_provider` data vars. A local MCP **plugin marketplace** lives in
-`dot_config/claude-code-chezmoi/` and is registered via `extraKnownMarketplaces` +
-`enabledPlugins` in `dot_claude/settings.json.tmpl`.
+- Commit `secrets.yaml.age`, never plaintext `secrets.yaml`.
+- The age identity is `~/.config/chezmoi/key.txt`; the recipient is declared in
+  `.chezmoi.toml.tmpl`.
+- After editing, re-encrypt the file. Changes cause
+  `.chezmoiscripts/run_onchange_windows-env.ps1.tmpl` to refresh persistent user
+  environment variables.
 
-- **MCP server list is mirrored in several files** — `dot_codex/config.toml.tmpl`,
+```powershell
+age -d -i ~/.config/chezmoi/key.txt -o secrets.yaml secrets.yaml.age
+age -e -r RECIPIENT_FROM_CHEZMOI_CONFIG -o secrets.yaml.age secrets.yaml
+```
+
+## Coding-agent configuration
+
+Managed sources include `dot_claude/`, `dot_codex/`, `dot_copilot/`,
+`dot_config/opencode/`, `dot_pi/`, and the shared status line in
+`dot_config/statusline/`.
+
+- Keep shared MCP server definitions aligned in `dot_codex/config.toml.tmpl`,
   `dot_copilot/mcp-config.json`, `dot_config/opencode/opencode.json`, and
-  `dot_config/claude-code-chezmoi/plugins/user-mcps/dot_mcp.json`. Keep shared server details in
-  sync; Copilot's config currently omits `github`.
-- **Copilot repo instructions** live in `.github/copilot-instructions.md` as a short safety-net
-  pointer back to this file. If the golden rules change, keep that file's summarized bullets aligned.
-- **Unified statusline:** `dot_config/statusline/statusline.py` serves both Claude Code and Copilot
-  (dispatch arg `claude` | `copilot`). It has an in-file test suite:
-  `python dot_config/statusline/statusline.py test`.
+  `dot_config/claude-code-chezmoi/plugins/user-mcps/dot_mcp.json`. Copilot
+  intentionally omits GitHub.
+- `dot_config/statusline/statusline.py` serves Claude Code and Copilot via the
+  `claude` and `copilot` dispatch arguments.
+- The Claude marketplace combines the local MCP plugin with symlinks to pinned
+  Superpowers and Matt Pocock skill archives. Release pins are in
+  `.chezmoidata.toml`; archives are materialized by
+  `dot_local/share/llm-agents/plugins/.chezmoiexternal.toml.tmpl`.
+- `.chezmoiscripts/run_after_shared-agent-skills.ps1.tmpl` publishes the
+  supported external skills under `~/.agents/skills` and refuses non-owned
+  collisions.
+- Keep `.github/copilot-instructions.md` aligned if the non-negotiable rules
+  change.
 
-⚠️ **pi gets its customization from a package, not from this repo.** The binary is a Scoop install
-(`ScoopPiCodingAgent`, bucket-qualified `main/pi-coding-agent`); everything else — extensions,
-skills, themes — comes from the [ningw42/pi-distribution](https://github.com/ningw42/pi-distribution)
-aggregate package. Only `~/.pi/agent/{settings.json,models.json}` are chezmoi-managed (`dot_pi/`), as
-**plain static JSON** mirroring what nixfiles generates, exactly like `dot_config/opencode/opencode.json`
-— deliberately not templated off the provider data vars. pi shells out to `npm install` for git
-packages, so nodejs (`ScoopNeovimDeps`) is a hard runtime prerequisite, as are `rtk >= 0.23` and
-`starship` for the bundled pi-rtk / pi-statusline extensions.
+### RTK ownership
 
-**The pins live in `dot_pi/agent/settings.json`, not in the script.** `pi install` records each
-source string in that file's `packages` array — `pi list` reads the array, not the filesystem — so
-the array *is* the declaration and `.chezmoiscripts/run_onchange_pi-packages.ps1.tmpl` is only the
-materialization (clone + `npm install`). That script interpolates the array via
-`include "dot_pi/agent/settings.json" | fromJson`, so its rendered content — and thus the
-`run_onchange_` hash — changes exactly when the declared package set does. Bump a revision in
-`settings.json` and the next `chezmoi apply` reinstalls; leave it alone and the script is a no-op.
+RTK owns its generated files; do not add them as chezmoi sources or edit deployed
+copies.
 
-⚠️ **`chezmoi apply` will prompt about `.pi/agent/settings.json`, and that is expected — answer it.**
-pi writes this file at runtime: `packages` on every install, `theme` from the `/theme` picker, and
-`lastChangelogVersion` on every pi version bump. chezmoi therefore sees a managed target modified
-outside its control and asks
-`"has changed since chezmoi last wrote it? diff/overwrite/all-overwrite/skip/quit"` — `overwrite` to
-reassert the repo, `skip` to keep pi's runtime state for now. This is a deliberate trade-off: the
-repo stays authoritative for `defaultProvider` / `defaultModel` / `enabledModels` / `packages`, at
-the cost of an occasional prompt. Do **not** try to silence it by matching pi's exact byte output —
-that was tried and fails, because `lastChangelogVersion` changes on pi's schedule, not ours.
+- Codex remains prompt-based: `run_onchange_rtk-init.ps1.tmpl` generates
+  `~/.codex/{AGENTS,RTK}.md`.
+- Claude Code uses the `rtk hook claude` hook in
+  `dot_claude/settings.json.tmpl`; its old awareness files are removed through
+  `.chezmoiremove`.
+- Copilot uses its generated `~/.copilot/hooks/rtk-rewrite.json`; the script
+  deletes the redundant generated instruction file.
+- Do not add pi to the RTK script. `pi-distribution` owns pi's RTK extension.
 
-⚠️ **That prompt hangs forever in a non-interactive apply** — no output, no CPU, no child process,
-so it looks like a freeze rather than a question. Any scripted, CI, or agent-driven `chezmoi apply`
-that might touch pi must pass `--force` (overwrite without asking). `models.json` has no such
-problem — pi never writes it.
+### pi ownership
 
-Two ownership boundaries follow from the package doing the customization:
+The repo manages pi's agent JSON files and workflow settings under `dot_pi/`, but
+pi's extensions, skills, and themes come from the pinned `pi-distribution`
+package.
 
-- **Do NOT add pi to `run_onchange_rtk-init.ps1.tmpl`.** pi-distribution vendors its own `pi-rtk`
-  extension (generated upstream by `rtk init -g --agent pi --no-patch`), so the package owns that
-  integration the way the PreToolUse hook owns Claude's.
-- **Do NOT add a `pi` dispatch arg to `dot_config/statusline/statusline.py`.** pi's status line is
-  the package's own starship-backed `pi-statusline` extension; it honors `PI_STATUSLINE_STARSHIP`
-  for an explicit binary path.
+`dot_pi/agent/settings.json` is authoritative for the package source strings.
+`.chezmoiscripts/run_onchange_pi-packages.ps1.tmpl` only materializes that array;
+bump the pin in `settings.json`, not in the script. Node.js, RTK, and starship are
+runtime dependencies installed by `configuration.dsc.yaml`.
 
-⚠️ **The `rtk` tool owns these generated files — do NOT add them to this repo or edit them as sources:**
-`~/.codex/{AGENTS,RTK}.md` and the copilot rtk hook (`~/.copilot/hooks/rtk-rewrite.json`). They are
-(re)generated by `.chezmoiscripts/run_onchange_rtk-init.ps1.tmpl` (`rtk init -g --codex` / `--copilot`),
-only when the rtk binary version changes. **Claude Code and Copilot CLI are hook-only:** Claude's
-transparent `rtk hook claude` PreToolUse hook (wired in `dot_claude/settings.json.tmpl`, which stays
-chezmoi-owned) and Copilot's deny-with-suggestion `rtk hook copilot` hook both make their prompt-injection
-files redundant. So we don't run `rtk init` for Claude at all, and for Copilot we keep only the hook —
-deleting the bundled `copilot-instructions.md` in the script (rtk ignores a redirected `$HOME` on Windows,
-so the nixfiles sandbox-and-copy trick can't be used). The orphaned `~/.claude/{RTK,CLAUDE}.md` and
-`~/.copilot/copilot-instructions.md` are purged via `.chezmoiremove`. **Only Codex stays prompt-based** —
-rtk ships no `rtk hook codex` yet (its `rtk hook claude` output is rejected by Codex), so its RTK.md/AGENTS.md
-injection is the genuine exception. Mirrors nixfiles' per-agent llm-agents modules. Note: that rtk-owned
-`~/.codex/AGENTS.md` (global) is **not** this repo's root `AGENTS.md` (project doc) — don't confuse the two.
+Pi also rewrites `settings.json` at runtime (for package/theme/version state), so
+interactive apply may ask whether to overwrite it. This is expected: overwrite
+to reassert the repo or skip to retain the runtime copy temporarily. Do not try
+to mirror pi's volatile output. For non-interactive apply, use `--force`.
 
-## Repo-local vs managed Claude config
+Do not add pi to the shared Python status line; `pi-distribution` provides pi's
+starship-backed status-line extension.
 
-- `.claude/` at the repo root = settings for an agent **working in this repo** (the permission
-  allowlist, project MCP servers). `.claude/settings.local.json` is gitignored personal overrides.
-- `dot_claude/` = the **managed** `~/.claude` that gets deployed to the home directory.
+### Local versus deployed Claude settings
 
-## Provisioning (bootstrap only)
+- Root `.claude/` configures an agent working in this repository.
+- `dot_claude/` deploys the managed user configuration to `~/.claude/`.
+- `.claude/settings.local.json` is an ignored personal override.
 
-`configuration.dsc.yaml` is a WinGet DSC config applied with `winget configure`. It is idempotent and
-bootstraps Scoop (+ `extras` bucket), installs the Scoop/WinGet CLI tools and GUI apps, the PSFzf module,
-and per-user fonts (Iosevkata / SarasaFixedSC, fetched via the authenticated `gh` API). The PowerShell
-profile (`readonly_Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl`, templated) decrypts secrets,
-sets env vars/aliases, initializes starship/zoxide/PSFzf, and short-circuits inside Codex sessions.
+## Provisioning
 
-⚠️ **Per-user fonts need a FontCache restart, not `AddFontResource`.** The font resources install packs
-to `%LOCALAPPDATA%\Microsoft\Windows\Fonts` + HKCU (no admin) and replace files **in place** on a version
-bump. DirectWrite apps (Windows Terminal, WezTerm, VS Code, browsers) serve fonts from the **Windows
-`FontCache` service**'s shared system collection — keyed by *path + last-write-time* — and ignore GDI's
-`AddFontResource` / `WM_FONTCHANGE`. So an in-place replacement leaves a dangling reference (DirectWrite
-returns `DWRITE_E_FILENOTFOUND`) and the new font stays unusable until that cache is rebuilt — which
-otherwise needs a full reboot. The restart needs admin, but the installs are deliberately per-user, so
-the two `SetScript`s **don't** restart anything — when a pack actually updates they drop a
-`%LOCALAPPDATA%\Microsoft\Windows\Fonts\.cache-refresh-needed` sentinel. A dedicated
-`RestartFontCacheForFonts` resource marked `securityContext: elevated` (depends on both installs) then
-runs the `Restart-Service FontCache` behind WinGet's single up-front UAC prompt and clears the sentinel —
-so **only** that unit runs elevated while the installs stay in user context (writing the logged-in user's
-HKCU + `%LOCALAPPDATA%`). No sentinel → its `TestScript` passes → no restart. Best-effort: if it can't
-elevate (or is run via the WinGet PowerShell module, which ignores `securityContext`) it warns and leaves
-the sentinel to retry next apply, degrading to reboot-required. Needs WinGet ≥ 1.9 for mixed elevation.
-`AddFontResourceEx` + `WM_FONTCHANGE` was verified **not**
-to refresh DirectWrite, so the cache restart — not that GDI sequence — is the fix. The robust alternative,
-if the per-user path ever acts up, is an all-users install into `C:\Windows\Fonts` (+ HKLM, always admin).
+`configuration.dsc.yaml` is the idempotent WinGet configuration for Scoop,
+command-line and GUI tools, PowerShell modules, and per-user fonts. Keep its
+resources Windows-first.
 
-## Files that must NOT deploy to `$HOME`
+Font updates deliberately install in user context, write a
+`.cache-refresh-needed` sentinel, and let the elevated
+`RestartFontCacheForFonts` resource restart `FontCache`. Do not replace this with
+`AddFontResource`/`WM_FONTCHANGE`; those do not refresh DirectWrite. Mixed
+security contexts require WinGet 1.9 or newer, and a failed elevation should
+leave the sentinel for retry.
 
-These repo-only files are excluded in `.chezmoiignore`: `README.md`, `configuration.dsc.yaml`,
-`update_externals.py`, `secrets.yaml`, `secrets.yaml.age`, `AGENTS.md`, `CLAUDE.md`. **Add any new
-root-level doc or helper script to `.chezmoiignore`**, or `chezmoi apply` will create it under `~/`.
+## Validation
 
-## Command cheat-sheet
+Run the checks relevant to the change; do not deploy merely to validate.
 
-| Task | Command |
+| Change | Check |
 | :--- | :--- |
-| Preview / deploy | `chezmoi diff` · `chezmoi apply` |
-| Render one target / snippet | `chezmoi cat <target>` · `chezmoi execute-template < f.tmpl` |
-| Health check | `chezmoi doctor` |
-| List ignored targets | `chezmoi ignored` |
-| Refresh external checksums | `python update_externals.py [--dry-run]` |
-| Statusline self-test | `python dot_config/statusline/statusline.py test` |
-| Edit secrets | `age -d ...` → edit → `age -e ...` (see above) |
+| Any template/config | `chezmoi diff` |
+| External URLs or pins | `python update_externals.py --dry-run` |
+| External updater | `python -m unittest discover -s tests` |
+| Shared status line | `python dot_config/statusline/statusline.py test` |
+| Chezmoi environment | `chezmoi doctor` |
