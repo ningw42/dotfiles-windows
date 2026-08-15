@@ -1,0 +1,104 @@
+{{ if eq .chezmoi.os "windows" -}}
+param(
+    [string]$PiDistributionRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.pi/agent/git/github.com/ningw42/pi-distribution',
+    [string]$OutputPath = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.pi/agent/agents/Explore.md'
+)
+
+$ErrorActionPreference = 'Stop'
+
+$subagentsRoot = Join-Path $PiDistributionRoot 'node_modules/@tintinweb/pi-subagents'
+$requiredSources = @('default-agents.ts', 'agent-file-toggle.ts', 'types.ts')
+foreach ($sourceName in $requiredSources) {
+    $sourcePath = Join-Path $subagentsRoot "src/$sourceName"
+    if (-not (Test-Path -LiteralPath $sourcePath -PathType Leaf)) {
+        throw "The installed pi-subagents package is missing '$sourcePath'. Reinstall the pinned pi-distribution package."
+    }
+}
+
+$node = Join-Path $env:USERPROFILE 'scoop/apps/nodejs/current/node.exe'
+if (-not (Test-Path -LiteralPath $node -PathType Leaf)) {
+    throw "Node.js was not found at '$node'. Install the Scoop nodejs dependency before applying this source."
+}
+
+$work = Join-Path ([IO.Path]::GetTempPath()) ("chezmoi-pi-explore-{0}" -f [Guid]::NewGuid().ToString('N'))
+try {
+    $sourceDir = Join-Path $work 'src'
+    $stubDir = Join-Path $work 'node_modules/@earendil-works/pi-coding-agent'
+    New-Item -ItemType Directory -Path $sourceDir, $stubDir -Force | Out-Null
+
+    foreach ($sourceName in $requiredSources) {
+        Copy-Item -LiteralPath (Join-Path $subagentsRoot "src/$sourceName") -Destination $sourceDir
+    }
+
+    $utf8NoBom = [Text.UTF8Encoding]::new($false)
+    [IO.File]::WriteAllText(
+        (Join-Path $stubDir 'package.json'),
+        "{ `"name`": `"@earendil-works/pi-coding-agent`", `"main`": `"index.js`" }`n",
+        $utf8NoBom
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $stubDir 'index.js'),
+        "exports.getAgentDir = () => `".`";`nexports.parseFrontmatter = () => ({ frontmatter: {} });`n",
+        $utf8NoBom
+    )
+
+    $generatorPath = Join-Path $work 'generate.mjs'
+    [IO.File]::WriteAllText(
+        $generatorPath,
+        @'
+const { DEFAULT_AGENTS } = await import("./src/default-agents.ts");
+const { serializeAgentFile } = await import("./src/agent-file-toggle.ts");
+
+const builtin = DEFAULT_AGENTS.get("Explore");
+if (!builtin) throw new Error("pi-subagents has no built-in Explore agent");
+
+const explore = { ...builtin };
+delete explore.model;
+const serialized = serializeAgentFile(explore);
+if (/^model:/m.test(serialized)) throw new Error("Explore model pin was not removed");
+process.stdout.write(serialized);
+'@,
+        $utf8NoBom
+    )
+
+    $startInfo = [Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $node
+    $startInfo.WorkingDirectory = $work
+    $startInfo.UseShellExecute = $false
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $startInfo.ArgumentList.Add('--no-warnings')
+    $startInfo.ArgumentList.Add('--experimental-strip-types')
+    $startInfo.ArgumentList.Add($generatorPath)
+
+    $process = [Diagnostics.Process]::Start($startInfo)
+    $serialized = $process.StandardOutput.ReadToEnd()
+    $stderr = $process.StandardError.ReadToEnd()
+    $process.WaitForExit()
+    if ($process.ExitCode -ne 0) {
+        throw "Failed to generate the Explore agent (exit $($process.ExitCode)): $stderr"
+    }
+    if ([string]::IsNullOrWhiteSpace($serialized)) {
+        throw 'The pi-subagents Explore serializer produced empty output.'
+    }
+    if ($serialized -match '(?m)^model:') {
+        throw 'The generated Explore agent still contains a model pin.'
+    }
+
+    $outputDirectory = Split-Path -Parent $OutputPath
+    New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
+    $existing = if (Test-Path -LiteralPath $OutputPath -PathType Leaf) {
+        [IO.File]::ReadAllText($OutputPath)
+    } else {
+        $null
+    }
+    if ($existing -cne $serialized) {
+        [IO.File]::WriteAllText($OutputPath, $serialized, $utf8NoBom)
+    }
+}
+finally {
+    if (Test-Path -LiteralPath $work) {
+        Remove-Item -LiteralPath $work -Recurse -Force
+    }
+}
+{{ end -}}

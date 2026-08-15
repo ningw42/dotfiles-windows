@@ -31,8 +31,11 @@ $Env:CODEX_API_KEY = "{{ $secrets.codex_api_key }}"
 # opencode: API key for Router Maestro / LiteLLM providers
 $Env:OPENCODE_API_KEY = "{{ $secrets.opencode_api_key }}"
 
-# pi: API key referenced as $PI_API_KEY by the providers in ~/.pi/agent/models.json
+# pi: provider credential plus the runtime behavior supplied by nixfiles' wrapper
 $Env:PI_API_KEY = "{{ $secrets.pi_api_key }}"
+$Env:PI_STATUSLINE_STARSHIP = "{{ .chezmoi.homeDir | replace "\\" "/" }}/scoop/shims/starship.exe"
+$Env:PI_SKIP_VERSION_CHECK = "1"
+$Env:PI_TELEMETRY = "0"
 
 # mcp secrets
 $Env:CONTEXT7_API_KEY = "{{ $secrets.context7_api_key }}"

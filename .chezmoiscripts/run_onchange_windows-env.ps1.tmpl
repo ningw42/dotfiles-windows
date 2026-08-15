@@ -10,8 +10,11 @@
 # opencode
 [Environment]::SetEnvironmentVariable("OPENCODE_API_KEY", "{{ $secrets.opencode_api_key }}", "User")
 
-# pi — referenced as $PI_API_KEY by the providers in ~/.pi/agent/models.json
+# pi — provider credential plus the runtime behavior supplied by nixfiles' wrapper
 [Environment]::SetEnvironmentVariable("PI_API_KEY", "{{ $secrets.pi_api_key }}", "User")
+[Environment]::SetEnvironmentVariable("PI_STATUSLINE_STARSHIP", "{{ .chezmoi.homeDir | replace "\\" "/" }}/scoop/shims/starship.exe", "User")
+[Environment]::SetEnvironmentVariable("PI_SKIP_VERSION_CHECK", "1", "User")
+[Environment]::SetEnvironmentVariable("PI_TELEMETRY", "0", "User")
 
 # mcps
 [Environment]::SetEnvironmentVariable("CONTEXT7_API_KEY", "{{ $secrets.context7_api_key }}", "User")

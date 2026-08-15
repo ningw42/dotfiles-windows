@@ -1,7 +1,6 @@
 {
   "diffIndicatorMode": "bars",
   "diffViewMode": "auto",
-  "fixedEditorFeatures": false,
   "mode": "on",
   "previewLines": 0
 }

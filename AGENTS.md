@@ -114,14 +114,14 @@ age -e -r RECIPIENT_FROM_CHEZMOI_CONFIG -o secrets.yaml.age secrets.yaml
 
 ## Coding-agent configuration
 
-Managed sources include `dot_claude/`, `dot_codex/`, `dot_copilot/`,
-`dot_config/opencode/`, `dot_pi/`, and the shared status line in
+Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
+`dot_copilot/`, `dot_config/opencode/`, `dot_pi/`, and the shared status line in
 `dot_config/statusline/`.
 
 - Keep shared MCP server definitions aligned in `dot_codex/config.toml.tmpl`,
-  `dot_copilot/mcp-config.json`, `dot_config/opencode/opencode.json`, and
-  `dot_config/claude-code-chezmoi/plugins/user-mcps/dot_mcp.json`. Copilot
-  intentionally omits GitHub.
+  `dot_copilot/mcp-config.json`, `dot_config/opencode/opencode.json`,
+  `dot_config/claude-code-chezmoi/plugins/user-mcps/dot_mcp.json`, and
+  `dot_config/mcp/readonly_mcp.json` for pi. Copilot intentionally omits GitHub.
 - `dot_config/statusline/statusline.py` serves Claude Code and Copilot via the
   `claude` and `copilot` dispatch arguments.
 - The Claude marketplace combines the local MCP plugin with symlinks to pinned
@@ -130,7 +130,8 @@ Managed sources include `dot_claude/`, `dot_codex/`, `dot_copilot/`,
   `dot_local/share/llm-agents/plugins/.chezmoiexternal.toml.tmpl`.
 - `.chezmoiscripts/run_after_shared-agent-skills.ps1.tmpl` publishes the
   supported external skills under `~/.agents/skills` and refuses non-owned
-  collisions.
+  collisions. Repo-owned human-invoked skills live directly under
+  `dot_agents/skills/`; the publisher preserves those non-owned directories.
 - Keep `.github/copilot-instructions.md` aligned if the non-negotiable rules
   change.
 
@@ -150,14 +151,27 @@ copies.
 
 ### pi ownership
 
-The repo manages pi's agent JSON files and workflow settings under `dot_pi/`, but
-pi's extensions, skills, and themes come from the pinned `pi-distribution`
-package.
+The repo manages pi's agent JSON files and workflow settings under `dot_pi/`.
+Pi's packaged extensions, packaged skills, and packaged themes come from the
+pinned `pi-distribution` package; the human-invoked skills under
+`dot_agents/skills/` are deliberate additions to that package-owned set. Do not
+add separate pi theme externals.
 
 `dot_pi/agent/settings.json` is authoritative for the package source strings.
 `.chezmoiscripts/run_onchange_pi-packages.ps1.tmpl` only materializes that array;
 bump the pin in `settings.json`, not in the script. Node.js, RTK, and starship are
-runtime dependencies installed by `configuration.dsc.yaml`.
+runtime dependencies installed by `configuration.dsc.yaml`. The PowerShell
+profile and persistent Windows environment set `PI_STATUSLINE_STARSHIP`, disable
+pi's own version check, and opt out of install telemetry to reproduce the
+nixfiles wrapper.
+
+The global pi-subagents and pi-tasks defaults live in
+`dot_pi/agent/{subagents.json,tasks-config.json}`. The global `Explore` override
+is generated after every apply by
+`.chezmoiscripts/run_after_pi-subagents-explore.ps1.tmpl` from the installed,
+pinned pi-subagents sources; it deliberately removes the upstream model pin so
+Explore inherits the parent model. Do not edit or add
+`~/.pi/agent/agents/Explore.md` as a chezmoi source.
 
 Pi also rewrites `settings.json` at runtime (for package/theme/version state), so
 interactive apply may ask whether to overwrite it. This is expected: overwrite
