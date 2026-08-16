@@ -31,9 +31,10 @@ choices.
 
 - **Shell and developer tools:** PowerShell, Git, SSH, Neovim, Yazi, fzf,
   starship, bat, delta, lazygit, gitui, eza, bottom, btop, and related tools.
-- **Terminals:** Windows Terminal, WezTerm, Rio, Alacritty, and Zellij.
+- **Terminals:** Windows Terminal, WezTerm, Rio, Alacritty, Zellij, and HerdR.
 - **Coding agents:** Claude Code, Codex, Copilot CLI, OpenCode, and pi, plus
-  shared MCP/skills infrastructure and a Claude/Copilot status line.
+  shared MCP/skills infrastructure, release-matched HerdR integrations, and a
+  Claude/Copilot status line.
 - **Bootstrap:** `configuration.dsc.yaml` installs Scoop packages, WinGet apps,
   PowerShell modules, and per-user fonts.
 

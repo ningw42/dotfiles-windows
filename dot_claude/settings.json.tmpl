@@ -31,6 +31,18 @@
     "defaultMode": "auto"
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{{ .chezmoi.homeDir | replace "\\" "/" }}/.claude/hooks/herdr-agent-state.ps1\" session",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",

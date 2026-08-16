@@ -1,0 +1,224 @@
+{{ if eq .chezmoi.os "windows" -}}
+{{- /*
+  Materialize HerdR's release-matched integrations without letting its installer
+  mutate the Claude/Codex configuration files owned by chezmoi. The installed
+  binary is the source of truth for the hook/plugin implementations, just as
+  nixfiles runs `herdr integration install` in an isolated Nix build HOME.
+
+  Embedding the installed version in this rendered script makes chezmoi rerun
+  it after a HerdR upgrade.
+*/ -}}
+# HerdR version: {{ output "herdr" "--version" | trim }}
+param(
+    [string]$HerdrPath = '{{ .chezmoi.homeDir | replace "\\" "/" }}/scoop/shims/herdr.exe',
+    [string]$HomeRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}',
+    [string]$SkillOutputPath = ''
+)
+
+$ErrorActionPreference = 'Stop'
+$utf8NoBom = [Text.UTF8Encoding]::new($false)
+
+if (-not (Test-Path -LiteralPath $HerdrPath -PathType Leaf)) {
+    throw "HerdR was not found at '$HerdrPath'. Run 'winget configure -f configuration.dsc.yaml' first."
+}
+if ([string]::IsNullOrWhiteSpace($SkillOutputPath)) {
+    $SkillOutputPath = Join-Path $HomeRoot '.local/share/herdr/skills/herdr/SKILL.md'
+}
+
+function Invoke-Herdr(
+    [string[]]$Arguments,
+    [hashtable]$Environment = @{},
+    [string]$WorkingDirectory = $HomeRoot
+) {
+    $startInfo = [Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $HerdrPath
+    $startInfo.WorkingDirectory = $WorkingDirectory
+    $startInfo.UseShellExecute = $false
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    foreach ($argument in $Arguments) {
+        $startInfo.ArgumentList.Add($argument)
+    }
+    foreach ($entry in $Environment.GetEnumerator()) {
+        $startInfo.Environment[$entry.Key] = [string]$entry.Value
+    }
+
+    $process = [Diagnostics.Process]::Start($startInfo)
+    $stdout = $process.StandardOutput.ReadToEnd()
+    $stderr = $process.StandardError.ReadToEnd()
+    $process.WaitForExit()
+    if ($process.ExitCode -ne 0) {
+        $command = @($Arguments) -join ' '
+        throw "HerdR command '$command' failed (exit $($process.ExitCode)): $stderr"
+    }
+    return $stdout
+}
+
+function Test-HerdrOwnedFile([string]$Path, [string]$IntegrationId) {
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        return $false
+    }
+    $content = [IO.File]::ReadAllText($Path)
+    return (
+        $content.Contains('installed by herdr') -and
+        $content.Contains("HERDR_INTEGRATION_ID=$IntegrationId")
+    )
+}
+
+function Set-HerdrIntegrationFile(
+    [string]$Source,
+    [string]$Destination,
+    [string]$IntegrationId
+) {
+    if (-not (Test-HerdrOwnedFile $Source $IntegrationId)) {
+        throw "Generated integration '$Source' has no valid HerdR ownership marker for '$IntegrationId'."
+    }
+    if ((Test-Path -LiteralPath $Destination) -and -not (Test-HerdrOwnedFile $Destination $IntegrationId)) {
+        throw "Refusing to overwrite non-HerdR file '$Destination'."
+    }
+
+    $destinationDirectory = Split-Path -Parent $Destination
+    New-Item -ItemType Directory -Path $destinationDirectory -Force | Out-Null
+    if (Test-Path -LiteralPath $Destination -PathType Leaf) {
+        $sourceHash = (Get-FileHash -LiteralPath $Source -Algorithm SHA256).Hash
+        $destinationHash = (Get-FileHash -LiteralPath $Destination -Algorithm SHA256).Hash
+        if ($sourceHash -ceq $destinationHash) {
+            return
+        }
+    }
+
+    $temporaryDestination = "$Destination.chezmoi-herdr-$([Guid]::NewGuid().ToString('N')).tmp"
+    try {
+        Copy-Item -LiteralPath $Source -Destination $temporaryDestination
+        [IO.File]::Move($temporaryDestination, $Destination, $true)
+    }
+    finally {
+        Remove-Item -LiteralPath $temporaryDestination -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Set-TextFile([string]$Path, [string]$Content) {
+    $directory = Split-Path -Parent $Path
+    New-Item -ItemType Directory -Path $directory -Force | Out-Null
+    $existing = if (Test-Path -LiteralPath $Path -PathType Leaf) {
+        [IO.File]::ReadAllText($Path)
+    } else {
+        $null
+    }
+    if ($existing -cne $Content) {
+        [IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
+    }
+}
+
+function Set-HerdrSkillLink([string]$Path, [string]$Target) {
+    $normalizedTarget = [IO.Path]::GetFullPath($Target)
+    $existing = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+    if ($null -ne $existing) {
+        $storedTargets = @(if ($null -eq $existing.LinkType) { @() } else { @($existing.LinkTarget) })
+        $owned = (
+            $existing.LinkType -eq 'SymbolicLink' -and
+            $existing.PSIsContainer -and
+            $storedTargets.Count -eq 1 -and
+            [IO.Path]::IsPathFullyQualified([string]$storedTargets[0]) -and
+            [IO.Path]::GetFullPath([string]$storedTargets[0]).Equals(
+                $normalizedTarget,
+                [StringComparison]::OrdinalIgnoreCase
+            )
+        )
+        if (-not $owned) {
+            throw "Refusing non-owned HerdR skill collision at '$Path'."
+        }
+        return
+    }
+
+    New-Item -ItemType Directory -Path (Split-Path -Parent $Path) -Force | Out-Null
+    New-Item -ItemType SymbolicLink -Path $Path -Target $normalizedTarget | Out-Null
+}
+
+$work = Join-Path ([IO.Path]::GetTempPath()) ("chezmoi-herdr-{0}" -f [Guid]::NewGuid().ToString('N'))
+try {
+    $profile = Join-Path $work 'home'
+    $xdgConfig = Join-Path $profile '.config'
+    $appData = Join-Path $profile 'AppData/Roaming'
+    $localAppData = Join-Path $profile 'AppData/Local'
+    New-Item -ItemType Directory -Force -Path @(
+        (Join-Path $profile '.pi/agent'),
+        (Join-Path $profile '.claude'),
+        (Join-Path $profile '.codex'),
+        (Join-Path $xdgConfig 'opencode'),
+        $appData,
+        $localAppData
+    ) | Out-Null
+
+    Set-TextFile (Join-Path $profile '.claude/settings.json') "{}`n"
+    Set-TextFile (Join-Path $profile '.codex/config.toml') ''
+    Set-TextFile (Join-Path $profile '.codex/hooks.json') "{}`n"
+    Set-TextFile (Join-Path $xdgConfig 'opencode/opencode.json') "{}`n"
+
+    $isolatedEnvironment = @{
+        HOME = $profile
+        USERPROFILE = $profile
+        XDG_CONFIG_HOME = $xdgConfig
+        APPDATA = $appData
+        LOCALAPPDATA = $localAppData
+    }
+    foreach ($integration in @('pi', 'claude', 'codex', 'opencode')) {
+        $null = Invoke-Herdr `
+            -Arguments @('integration', 'install', $integration) `
+            -Environment $isolatedEnvironment `
+            -WorkingDirectory $profile
+    }
+
+    $integrations = @(
+        @{
+            Id = 'pi'
+            Source = Join-Path $profile '.pi/agent/extensions/herdr-agent-state.ts'
+            Destination = Join-Path $HomeRoot '.pi/agent/extensions/herdr-agent-state.ts'
+        },
+        @{
+            Id = 'claude'
+            Source = Join-Path $profile '.claude/hooks/herdr-agent-state.ps1'
+            Destination = Join-Path $HomeRoot '.claude/hooks/herdr-agent-state.ps1'
+        },
+        @{
+            Id = 'codex'
+            Source = Join-Path $profile '.codex/herdr-agent-state.ps1'
+            Destination = Join-Path $HomeRoot '.codex/herdr-agent-state.ps1'
+        },
+        @{
+            Id = 'opencode'
+            Source = Join-Path $xdgConfig 'opencode/plugins/herdr-agent-state.js'
+            Destination = Join-Path $HomeRoot '.config/opencode/plugins/herdr-agent-state.js'
+        }
+    )
+    foreach ($integration in $integrations) {
+        Set-HerdrIntegrationFile `
+            -Source $integration.Source `
+            -Destination $integration.Destination `
+            -IntegrationId $integration.Id
+    }
+
+    $skill = Invoke-Herdr -Arguments @('--skill')
+    if ([string]::IsNullOrWhiteSpace($skill) -or $skill -notmatch '(?m)^name:\s*herdr\s*$') {
+        throw 'HerdR emitted an invalid or empty skill.'
+    }
+    Set-TextFile -Path $SkillOutputPath -Content $skill
+
+    # Pi discovers the cross-agent standard path; explicit links for Claude,
+    # Codex, and OpenCode also mirror nixfiles' per-program skill
+    # declarations and avoid relying on incidental cross-agent discovery.
+    foreach ($skillLink in @(
+        (Join-Path $HomeRoot '.agents/skills/herdr'),
+        (Join-Path $HomeRoot '.claude/skills/herdr'),
+        (Join-Path $HomeRoot '.codex/skills/herdr'),
+        (Join-Path $HomeRoot '.config/opencode/skills/herdr')
+    )) {
+        Set-HerdrSkillLink -Path $skillLink -Target (Split-Path -Parent $SkillOutputPath)
+    }
+}
+finally {
+    if (Test-Path -LiteralPath $work) {
+        Remove-Item -LiteralPath $work -Recurse -Force
+    }
+}
+{{ end -}}

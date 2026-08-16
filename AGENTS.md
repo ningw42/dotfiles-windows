@@ -132,6 +132,11 @@ Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
   supported external skills under `~/.agents/skills` and refuses non-owned
   collisions. Repo-owned human-invoked skills live directly under
   `dot_agents/skills/`; the publisher preserves those non-owned directories.
+- HerdR owns its release-matched generated hooks, plugins, and skill.
+  `.chezmoiscripts/run_onchange_herdr-integrations.ps1.tmpl` extracts them from
+  the installed binary in an isolated profile and publishes collision-checked
+  skill links for Claude Code, Codex, pi, and OpenCode. Do not add those
+  generated outputs as chezmoi sources or edit their deployed copies.
 - Keep `.github/copilot-instructions.md` aligned if the non-negotiable rules
   change.
 
@@ -154,8 +159,10 @@ copies.
 The repo manages pi's agent JSON files and workflow settings under `dot_pi/`.
 Pi's packaged extensions, packaged skills, and packaged themes come from the
 pinned `pi-distribution` package; the human-invoked skills under
-`dot_agents/skills/` are deliberate additions to that package-owned set. Do not
-add separate pi theme externals.
+`dot_agents/skills/` are deliberate additions to that package-owned set. The
+HerdR state extension and skill are a separate generated integration owned by
+`run_onchange_herdr-integrations.ps1.tmpl`, not by `pi-distribution`. Do not add
+separate pi theme externals.
 
 `dot_pi/agent/settings.json` is authoritative for the package source strings.
 `.chezmoiscripts/run_onchange_pi-packages.ps1.tmpl` only materializes that array;
