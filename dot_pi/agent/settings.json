@@ -17,7 +17,7 @@
     "mermaid": "final"
   },
   "packages": [
-    "git:github.com/ningw42/pi-distribution@v26.08.13"
+    "git:github.com/ningw42/pi-distribution@v26.08.14"
   ],
   "quietStartup": true,
   "retry": {
@@ -27,7 +27,7 @@
   },
   "showCacheMissNotices": true,
   "showHardwareCursor": false,
-  "theme": "dark",
+  "theme": "catppuccin-mocha",
   "tuiMode": "fullscreen",
   "shellPath": "C:\\Users\\ningw\\scoop\\apps\\git\\current\\bin\\bash.exe"
 }
