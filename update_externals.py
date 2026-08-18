@@ -36,8 +36,22 @@ GITHUB_RELEASE_VALUE_RE = re.compile(
     re.MULTILINE,
 )
 
+GITHUB_RELEASE_ASSET_ROOT_VALUE_RE = re.compile(
+    r'^[ \t]*(?P<key>repository|tag)[ \t]*=[ \t]*"'
+    r'(?P<value>(?:[^"\\\r\n]|\\.)*)"[ \t]*(?:#[^\r\n]*)?\r?$',
+    re.MULTILINE,
+)
+
+GITHUB_RELEASE_ASSET_VALUE_RE = re.compile(
+    r'^[ \t]*(?P<key>name|sha256)[ \t]*=[ \t]*"'
+    r'(?P<value>(?:[^"\\\r\n]|\\.)*)"[ \t]*(?:#[^\r\n]*)?\r?$',
+    re.MULTILINE,
+)
+
 GITHUB_RELEASE_SECTION_PREFIX = "external_resources.github_releases."
+GITHUB_RELEASE_ASSET_SECTION_PREFIX = "external_resources.github_release_assets."
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024
+SHA256_RE = re.compile(r"[0-9a-fA-F]{64}")
 
 
 @dataclass(frozen=True)
@@ -48,6 +62,23 @@ class GithubReleasePin:
     sha256: str
     tag_span: tuple[int, int]
     sha256_span: tuple[int, int]
+
+
+@dataclass(frozen=True)
+class GithubReleaseAsset:
+    name: str
+    filename: str
+    sha256: str
+    sha256_span: tuple[int, int]
+
+
+@dataclass(frozen=True)
+class GithubReleaseAssetPin:
+    name: str
+    repository: str
+    tag: str
+    tag_span: tuple[int, int]
+    assets: tuple[GithubReleaseAsset, ...]
 
 
 def find_external_files(repo_root):
@@ -81,8 +112,8 @@ def github_archive_url(repository, tag):
     return f"https://github.com/{repository}/archive/refs/tags/{quoted_tag}.tar.gz"
 
 
-def fetch_latest_release_tag(repository, timeout=30):
-    """Return the repository's latest GitHub release tag, or None on error."""
+def fetch_latest_release(repository, timeout=30):
+    """Return the repository's latest GitHub release payload, or None on error."""
     url = f"https://api.github.com/repos/{repository}/releases/latest"
     try:
         request = urllib.request.Request(
@@ -94,10 +125,7 @@ def fetch_latest_release_tag(repository, timeout=30):
         )
         with urllib.request.urlopen(request, timeout=timeout) as response:
             payload = json.loads(response.read())
-        if not isinstance(payload, dict):
-            return None
-        tag = payload.get("tag_name")
-        return tag if isinstance(tag, str) and tag else None
+        return payload if isinstance(payload, dict) else None
     except (
         urllib.error.URLError,
         urllib.error.HTTPError,
@@ -109,6 +137,15 @@ def fetch_latest_release_tag(repository, timeout=30):
         return None
 
 
+def fetch_latest_release_tag(repository, timeout=30):
+    """Return the repository's latest GitHub release tag, or None on error."""
+    payload = fetch_latest_release(repository, timeout=timeout)
+    if payload is None:
+        return None
+    tag = payload.get("tag_name")
+    return tag if isinstance(tag, str) and tag else None
+
+
 def build_github_release_update(repository):
     """Return the latest release tag and archive checksum, or None on error."""
     tag = fetch_latest_release_tag(repository)
@@ -118,6 +155,54 @@ def build_github_release_update(repository):
     if digest is None:
         return None
     return tag, digest
+
+
+def build_github_release_asset_update(repository, asset_filenames):
+    """Return the latest release tag and requested asset digests."""
+    release = fetch_latest_release(repository)
+    if release is None:
+        return None
+
+    tag = release.get("tag_name")
+    assets = release.get("assets")
+    if not isinstance(tag, str) or not tag or not isinstance(assets, list):
+        print(
+            f"  [ERROR] Latest release metadata is incomplete for {repository}",
+            file=sys.stderr,
+        )
+        return None
+
+    digests = []
+    for filename_template in asset_filenames:
+        filename = filename_template.replace("{tag}", tag)
+        matches = [
+            asset
+            for asset in assets
+            if isinstance(asset, dict) and asset.get("name") == filename
+        ]
+        if len(matches) != 1:
+            print(
+                f"  [ERROR] Expected one release asset {filename!r} in {repository}@{tag}, "
+                f"found {len(matches)}",
+                file=sys.stderr,
+            )
+            return None
+
+        digest = matches[0].get("digest")
+        match = (
+            re.fullmatch(r"sha256:(?P<sha256>[0-9a-fA-F]{64})", digest)
+            if isinstance(digest, str)
+            else None
+        )
+        if match is None:
+            print(
+                f"  [ERROR] Release asset {filename!r} has no valid SHA-256 digest",
+                file=sys.stderr,
+            )
+            return None
+        digests.append(match.group("sha256").lower())
+
+    return tag, tuple(digests)
 
 
 def _decode_toml_basic_string(value):
@@ -198,12 +283,163 @@ def extract_github_release_pins(content):
     return pins
 
 
+def extract_github_release_asset_pins(content):
+    """Extract release pins whose checksums come from named GitHub assets."""
+    pins = []
+    headers = list(SECTION_HEADER_RE.finditer(content))
+
+    for index, header in enumerate(headers):
+        section = header.group("section")
+        if not section.startswith(GITHUB_RELEASE_ASSET_SECTION_PREFIX):
+            continue
+
+        name = section[len(GITHUB_RELEASE_ASSET_SECTION_PREFIX) :]
+        if not name or ".assets." in name or "." in name:
+            continue
+
+        section_end = (
+            headers[index + 1].start() if index + 1 < len(headers) else len(content)
+        )
+        values = {}
+        for match in GITHUB_RELEASE_ASSET_ROOT_VALUE_RE.finditer(
+            content, header.end(), section_end
+        ):
+            key = match.group("key")
+            if key in values:
+                raise ValueError(
+                    f"Duplicate {key!r} in GitHub release asset pin {name!r}"
+                )
+            raw_value = match.group("value")
+            try:
+                value = _decode_toml_basic_string(raw_value)
+            except tomllib.TOMLDecodeError as error:
+                raise ValueError(
+                    f"Invalid {key!r} in GitHub release asset pin {name!r}: {error}"
+                ) from error
+            values[key] = (value, match.span("value"))
+
+        missing = {"repository", "tag"} - values.keys()
+        if missing:
+            missing_list = ", ".join(sorted(missing))
+            raise ValueError(
+                f"GitHub release asset pin {name!r} is missing: {missing_list}"
+            )
+
+        repository = values["repository"][0]
+        tag = values["tag"][0]
+        if not repository.strip():
+            raise ValueError(
+                f"GitHub release asset pin {name!r} repository must not be empty"
+            )
+
+        asset_section_prefix = f"{section}.assets."
+        assets = []
+        for asset_index, asset_header in enumerate(headers):
+            asset_section = asset_header.group("section")
+            if not asset_section.startswith(asset_section_prefix):
+                continue
+            asset_name = asset_section[len(asset_section_prefix) :]
+            if not asset_name or "." in asset_name:
+                raise ValueError(
+                    f"Invalid asset name in GitHub release asset pin {name!r}"
+                )
+
+            asset_section_end = (
+                headers[asset_index + 1].start()
+                if asset_index + 1 < len(headers)
+                else len(content)
+            )
+            asset_values = {}
+            for match in GITHUB_RELEASE_ASSET_VALUE_RE.finditer(
+                content, asset_header.end(), asset_section_end
+            ):
+                key = match.group("key")
+                if key in asset_values:
+                    raise ValueError(
+                        f"Duplicate {key!r} for asset {asset_name!r} in pin {name!r}"
+                    )
+                raw_value = match.group("value")
+                try:
+                    value = _decode_toml_basic_string(raw_value)
+                except tomllib.TOMLDecodeError as error:
+                    raise ValueError(
+                        f"Invalid {key!r} for asset {asset_name!r} in pin {name!r}: "
+                        f"{error}"
+                    ) from error
+                asset_values[key] = (value, match.span("value"))
+
+            missing = {"name", "sha256"} - asset_values.keys()
+            if missing:
+                missing_list = ", ".join(sorted(missing))
+                raise ValueError(
+                    f"Asset {asset_name!r} in pin {name!r} is missing: {missing_list}"
+                )
+            filename = asset_values["name"][0]
+            sha256 = asset_values["sha256"][0]
+            if filename.count("{tag}") != 1:
+                raise ValueError(
+                    f"Asset {asset_name!r} in pin {name!r} must contain one "
+                    "'{tag}' placeholder"
+                )
+            if sha256 and SHA256_RE.fullmatch(sha256) is None:
+                raise ValueError(
+                    f"Asset {asset_name!r} in pin {name!r} sha256 must be "
+                    "64 hexadecimal characters"
+                )
+            assets.append(
+                GithubReleaseAsset(
+                    name=asset_name,
+                    filename=filename,
+                    sha256=sha256,
+                    sha256_span=asset_values["sha256"][1],
+                )
+            )
+
+        if not assets:
+            raise ValueError(
+                f"GitHub release asset pin {name!r} must declare at least one asset"
+            )
+        if any(bool(asset.sha256) != bool(tag) for asset in assets):
+            raise ValueError(
+                f"GitHub release asset pin {name!r} tag and all sha256 values "
+                "must be empty or set together"
+            )
+
+        pins.append(
+            GithubReleaseAssetPin(
+                name=name,
+                repository=repository,
+                tag=tag,
+                tag_span=values["tag"][1],
+                assets=tuple(assets),
+            )
+        )
+
+    return pins
+
+
 def apply_github_release_updates(content, updates):
     """Apply tag and checksum updates without disturbing surrounding formatting."""
     replacements = []
     for pin, tag, sha256 in updates:
         replacements.append((*pin.tag_span, _encode_toml_basic_string(tag)))
         replacements.append((*pin.sha256_span, _encode_toml_basic_string(sha256)))
+    return apply_replacements(content, replacements)
+
+
+def apply_github_release_asset_updates(content, updates):
+    """Apply release asset tag and checksum updates without reformatting TOML."""
+    replacements = []
+    for pin, tag, sha256_values in updates:
+        if len(sha256_values) != len(pin.assets):
+            raise ValueError(
+                f"GitHub release asset pin {pin.name!r} returned the wrong asset count"
+            )
+        replacements.append((*pin.tag_span, _encode_toml_basic_string(tag)))
+        for asset, sha256 in zip(pin.assets, sha256_values):
+            replacements.append(
+                (*asset.sha256_span, _encode_toml_basic_string(sha256))
+            )
     return apply_replacements(content, replacements)
 
 
@@ -224,10 +460,10 @@ def _write_bytes_atomically(path, data):
 
 
 def update_github_release_metadata(path, dry_run=False):
-    """Refresh every GitHub release pin atomically.
+    """Refresh every GitHub release source and asset pin atomically.
 
     Return ``(updated_count, error_count)``. No bytes are written unless every
-    pin resolves and its archive checksum can be calculated.
+    pin resolves and all of its checksums are available.
     """
     path = Path(path)
     if not path.exists():
@@ -239,7 +475,9 @@ def update_github_release_metadata(path, dry_run=False):
         print(f"  [ERROR] {path}\n          {error}", file=sys.stderr)
         return 0, 1
     pins = extract_github_release_pins(content)
+    asset_pins = extract_github_release_asset_pins(content)
     updates = []
+    asset_updates = []
     errors = 0
 
     for pin in pins:
@@ -259,11 +497,45 @@ def update_github_release_metadata(path, dry_run=False):
 
         updates.append((pin, tag, sha256))
 
+    for pin in asset_pins:
+        candidate = build_github_release_asset_update(
+            pin.repository, tuple(asset.filename for asset in pin.assets)
+        )
+        if candidate is None:
+            print(
+                f"  [ERROR] GitHub release asset pin {pin.name} ({pin.repository})",
+                file=sys.stderr,
+            )
+            errors += 1
+            continue
+
+        tag, sha256_values = candidate
+        if tag == pin.tag and all(
+            sha256 == asset.sha256
+            for asset, sha256 in zip(pin.assets, sha256_values)
+        ):
+            print(f"  [OK]      GitHub release asset pin {pin.name}")
+            continue
+
+        asset_updates.append((pin, tag, sha256_values))
+
     if errors:
         return 0, errors
 
-    if updates and not dry_run:
-        updated_content = apply_github_release_updates(content, updates)
+    if (updates or asset_updates) and not dry_run:
+        replacements = []
+        for pin, tag, sha256 in updates:
+            replacements.append((*pin.tag_span, _encode_toml_basic_string(tag)))
+            replacements.append(
+                (*pin.sha256_span, _encode_toml_basic_string(sha256))
+            )
+        for pin, tag, sha256_values in asset_updates:
+            replacements.append((*pin.tag_span, _encode_toml_basic_string(tag)))
+            for asset, sha256 in zip(pin.assets, sha256_values):
+                replacements.append(
+                    (*asset.sha256_span, _encode_toml_basic_string(sha256))
+                )
+        updated_content = apply_replacements(content, replacements)
         try:
             _write_bytes_atomically(path, updated_content.encode("utf-8"))
         except OSError as error:
@@ -274,8 +546,13 @@ def update_github_release_metadata(path, dry_run=False):
         print(f"  [UPDATE]  GitHub release pin {pin.name}")
         print(f"            tag: {pin.tag} -> {tag}")
         print(f"         sha256: {pin.sha256} -> {sha256}")
+    for pin, tag, sha256_values in asset_updates:
+        print(f"  [UPDATE]  GitHub release asset pin {pin.name}")
+        print(f"            tag: {pin.tag} -> {tag}")
+        for asset, sha256 in zip(pin.assets, sha256_values):
+            print(f"  {asset.name}.sha256: {asset.sha256} -> {sha256}")
 
-    return len(updates), 0
+    return len(updates) + len(asset_updates), 0
 
 
 def apply_replacements(content, replacements):

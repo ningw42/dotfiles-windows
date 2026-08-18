@@ -40,6 +40,10 @@
 # cross-machine purge of any already-deployed copy.
 .copilot/copilot-instructions.md
 
+# pi-distribution moved from Pi's git package store to a checksum-pinned chezmoi
+# external under ~/.pi/agent/packages.
+.pi/agent/git/github.com/ningw42/pi-distribution
+
 # Stale gruvbox-dark leftovers from when these were static sources. They are now
 # provided by colorscheme-conditional externals, so only remove them when
 # gruvbox-dark is NOT the active colorscheme (otherwise we would fight the

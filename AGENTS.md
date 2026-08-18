@@ -94,9 +94,9 @@ python update_externals.py
 ```
 
 The updater checks every `.chezmoiexternal.toml*` and refreshes GitHub release
-pins in `.chezmoidata.toml`. Exit codes are `0` for unchanged, `1` for updated
-(or changes found in dry-run), and `2` for errors. Inspect upstream changes
-before accepting a new checksum.
+source-archive and release-asset pins in `.chezmoidata.toml`. Exit codes are `0`
+for unchanged, `1` for updated (or changes found in dry-run), and `2` for errors.
+Inspect upstream changes before accepting a new checksum.
 
 ### Secrets
 
@@ -158,19 +158,21 @@ copies.
 
 The repo manages pi's agent JSON files and workflow settings under `dot_pi/`.
 Pi's packaged extensions, packaged skills, and packaged themes come from the
-pinned `pi-distribution` package; the human-invoked skills under
-`dot_agents/skills/` are deliberate additions to that package-owned set. The
-HerdR state extension and skill are a separate generated integration owned by
+checksum-pinned `pi-distribution` release external under
+`dot_pi/agent/packages/`; the human-invoked skills under `dot_agents/skills/`
+are deliberate additions to that package-owned set. The HerdR state extension
+and skill are a separate generated integration owned by
 `run_onchange_herdr-integrations.ps1.tmpl`, not by `pi-distribution`. Do not add
 separate pi theme externals.
 
-`dot_pi/agent/settings.json` is authoritative for the package source strings.
-`.chezmoiscripts/run_onchange_pi-packages.ps1.tmpl` only materializes that array;
-bump the pin in `settings.json`, not in the script. Node.js, RTK, and starship are
-runtime dependencies installed by `configuration.dsc.yaml`. The PowerShell
-profile and persistent Windows environment set `PI_STATUSLINE_STARSHIP`, disable
-pi's own version check, and opt out of install telemetry to reproduce the
-nixfiles wrapper.
+The `pi-distribution` tag and architecture-specific asset checksums live in
+`.chezmoidata.toml`; `dot_pi/agent/settings.json` declares only its stable local
+package path. Refresh the pin with `update_externals.py`, and let
+`dot_pi/agent/packages/.chezmoiexternal.toml.tmpl` materialize it. Node.js, RTK,
+and starship are runtime dependencies installed by `configuration.dsc.yaml`.
+The PowerShell profile and persistent Windows environment set
+`PI_STATUSLINE_STARSHIP`, disable pi's own version check, and opt out of install
+telemetry to reproduce the nixfiles wrapper.
 
 The global pi-subagents and pi-tasks defaults live in
 `dot_pi/agent/{subagents.json,tasks-config.json}`. The global `Explore` override

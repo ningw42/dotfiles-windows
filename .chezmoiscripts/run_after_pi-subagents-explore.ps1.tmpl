@@ -1,6 +1,6 @@
 {{ if eq .chezmoi.os "windows" -}}
 param(
-    [string]$PiDistributionRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.pi/agent/git/github.com/ningw42/pi-distribution',
+    [string]$PiDistributionRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.pi/agent/packages/pi-distribution',
     [string]$OutputPath = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.pi/agent/agents/Explore.md'
 )
 
@@ -11,7 +11,7 @@ $requiredSources = @('default-agents.ts', 'agent-file-toggle.ts', 'types.ts')
 foreach ($sourceName in $requiredSources) {
     $sourcePath = Join-Path $subagentsRoot "src/$sourceName"
     if (-not (Test-Path -LiteralPath $sourcePath -PathType Leaf)) {
-        throw "The installed pi-subagents package is missing '$sourcePath'. Reinstall the pinned pi-distribution package."
+        throw "The installed pi-subagents package is missing '$sourcePath'. Reapply the pinned pi-distribution external."
     }
 }
 

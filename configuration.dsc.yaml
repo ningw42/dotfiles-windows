@@ -319,10 +319,9 @@ properties:
 
     # pi (pi-coding-agent) — minimal terminal coding harness. Config lives at
     # dot_pi/agent/{settings.json,models.json}; the extension / skill / theme set
-    # is the pinned ningw42/pi-distribution aggregate package, installed by
-    # .chezmoiscripts/run_onchange_pi-packages.ps1.tmpl. pi shells out to `npm
-    # install` for git packages, so nodejs (ScoopNeovimDeps) is a runtime
-    # prerequisite, as are rtk >= 0.23 (ScoopRtk) and starship
+    # comes from the checksum-pinned ningw42/pi-distribution release external
+    # under dot_pi/agent/packages. Its native artifact is selected by architecture.
+    # Runtime prerequisites include rtk >= 0.23 (ScoopRtk) and starship
     # (ScoopShellAndGitTools) for the package's pi-rtk / pi-statusline
     # extensions. Bucket-qualified since `pi` is a common name. This resource
     # only installs the binary.

@@ -35,6 +35,20 @@ tag = "1.0.0"
 sha256 = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
 """
 
+ASSET_DATA = """
+[external_resources.github_release_assets.pi_distribution]
+repository = "ningw42/pi-distribution"
+tag = "v1.0.0"
+
+[external_resources.github_release_assets.pi_distribution.assets.windows_x64]
+name = "pi-distribution-{tag}-windows-x64.tgz"
+sha256 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+[external_resources.github_release_assets.pi_distribution.assets.windows_arm64]
+name = "pi-distribution-{tag}-windows-arm64.tgz"
+sha256 = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+""".lstrip()
+
 EXTERNAL_DATA = """
 ["resource.txt"]
 type = "file"
@@ -55,6 +69,24 @@ class RepositoryGithubReleaseConfigurationTests(unittest.TestCase):
         self.assertEqual(pin.repository, "mattpocock/skills")
         self.assertTrue(pin.tag)
         self.assertRegex(pin.sha256, r"^[0-9a-f]{64}$")
+
+    def test_repository_declares_pi_distribution_release_assets(self):
+        content = (REPO_ROOT / ".chezmoidata.toml").read_text(encoding="utf-8")
+        pins = {
+            pin.name: pin
+            for pin in update_externals.extract_github_release_asset_pins(content)
+        }
+
+        pin = pins["pi_distribution"]
+        self.assertEqual(pin.repository, "ningw42/pi-distribution")
+        self.assertTrue(pin.tag)
+        self.assertEqual(
+            {asset.name for asset in pin.assets},
+            {"windows_x64", "windows_arm64"},
+        )
+        for asset in pin.assets:
+            self.assertIn("{tag}", asset.filename)
+            self.assertRegex(asset.sha256, r"^[0-9a-f]{64}$")
 
 
 class GithubReleasePinParsingTests(unittest.TestCase):
@@ -129,6 +161,49 @@ sha256 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
         with self.assertRaises(ValueError):
             update_externals.extract_github_release_pins(invalid)
+
+
+class GithubReleaseAssetPinParsingTests(unittest.TestCase):
+    def test_extracts_release_asset_pin(self):
+        pin = update_externals.extract_github_release_asset_pins(ASSET_DATA)[0]
+
+        self.assertEqual(pin.name, "pi_distribution")
+        self.assertEqual(pin.repository, "ningw42/pi-distribution")
+        self.assertEqual(pin.tag, "v1.0.0")
+        self.assertEqual(
+            [(asset.name, asset.filename) for asset in pin.assets],
+            [
+                ("windows_x64", "pi-distribution-{tag}-windows-x64.tgz"),
+                ("windows_arm64", "pi-distribution-{tag}-windows-arm64.tgz"),
+            ],
+        )
+
+    def test_applies_asset_tag_and_checksums_together(self):
+        pin = update_externals.extract_github_release_asset_pins(ASSET_DATA)[0]
+
+        updated = update_externals.apply_github_release_asset_updates(
+            ASSET_DATA, [(pin, "v1.1.0", ("c" * 64, "d" * 64))]
+        )
+
+        self.assertIn('tag = "v1.1.0"', updated)
+        self.assertIn(f'sha256 = "{"c" * 64}"', updated)
+        self.assertIn(f'sha256 = "{"d" * 64}"', updated)
+        self.assertIn('name = "pi-distribution-{tag}-windows-x64.tgz"', updated)
+
+    def test_rejects_asset_name_without_tag_placeholder(self):
+        invalid = ASSET_DATA.replace(
+            "pi-distribution-{tag}-windows-x64.tgz",
+            "pi-distribution-v1.0.0-windows-x64.tgz",
+        )
+
+        with self.assertRaises(ValueError):
+            update_externals.extract_github_release_asset_pins(invalid)
+
+    def test_rejects_half_initialized_asset_pin(self):
+        invalid = ASSET_DATA.replace("a" * 64, "")
+
+        with self.assertRaises(ValueError):
+            update_externals.extract_github_release_asset_pins(invalid)
 
 
 class GithubReleaseLookupTests(unittest.TestCase):
@@ -229,6 +304,65 @@ class GithubReleaseLookupTests(unittest.TestCase):
             "https://github.com/obra/superpowers/archive/refs/tags/"
             "release%2F6.1.1.tar.gz"
         )
+
+    def test_build_asset_update_uses_release_asset_digests(self):
+        release = {
+            "tag_name": "v1.1.0",
+            "assets": [
+                {
+                    "name": "pi-distribution-v1.1.0-windows-x64.tgz",
+                    "digest": f"sha256:{'c' * 64}",
+                },
+                {
+                    "name": "pi-distribution-v1.1.0-windows-arm64.tgz",
+                    "digest": f"sha256:{'d' * 64}",
+                },
+            ],
+        }
+        with patch.object(
+            update_externals, "fetch_latest_release", return_value=release
+        ):
+            result = update_externals.build_github_release_asset_update(
+                "ningw42/pi-distribution",
+                (
+                    "pi-distribution-{tag}-windows-x64.tgz",
+                    "pi-distribution-{tag}-windows-arm64.tgz",
+                ),
+            )
+
+        self.assertEqual(result, ("v1.1.0", ("c" * 64, "d" * 64)))
+
+    def test_build_asset_update_rejects_missing_asset(self):
+        release = {"tag_name": "v1.1.0", "assets": []}
+        with patch.object(
+            update_externals, "fetch_latest_release", return_value=release
+        ), redirect_stderr(io.StringIO()):
+            result = update_externals.build_github_release_asset_update(
+                "ningw42/pi-distribution",
+                ("pi-distribution-{tag}-windows-x64.tgz",),
+            )
+
+        self.assertIsNone(result)
+
+    def test_build_asset_update_rejects_malformed_digest(self):
+        release = {
+            "tag_name": "v1.1.0",
+            "assets": [
+                {
+                    "name": "pi-distribution-v1.1.0-windows-x64.tgz",
+                    "digest": "sha256:not-a-digest",
+                }
+            ],
+        }
+        with patch.object(
+            update_externals, "fetch_latest_release", return_value=release
+        ), redirect_stderr(io.StringIO()):
+            result = update_externals.build_github_release_asset_update(
+                "ningw42/pi-distribution",
+                ("pi-distribution-{tag}-windows-x64.tgz",),
+            )
+
+        self.assertIsNone(result)
 
 
 class GithubReleaseMetadataUpdateTests(unittest.TestCase):
@@ -332,6 +466,44 @@ class GithubReleaseMetadataUpdateTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 update_externals.update_github_release_metadata(path)
 
+            self.assertEqual(path.read_bytes(), original)
+
+    def test_updates_release_asset_metadata_atomically(self):
+        with TemporaryDirectory() as directory:
+            path = self.write_metadata(directory, DATA + "\n" + ASSET_DATA)
+            with patch.object(
+                update_externals,
+                "build_github_release_update",
+                return_value=("6.1.0", "a" * 64),
+            ), patch.object(
+                update_externals,
+                "build_github_release_asset_update",
+                return_value=("v1.1.0", ("c" * 64, "d" * 64)),
+            ), redirect_stdout(io.StringIO()):
+                result = update_externals.update_github_release_metadata(path)
+
+            self.assertEqual(result, (1, 0))
+            content = path.read_text(encoding="utf-8")
+            self.assertIn('tag = "v1.1.0"', content)
+            self.assertIn(f'sha256 = "{"c" * 64}"', content)
+            self.assertIn(f'sha256 = "{"d" * 64}"', content)
+
+    def test_release_asset_failure_leaves_source_pin_unchanged(self):
+        with TemporaryDirectory() as directory:
+            path = self.write_metadata(directory, DATA + "\n" + ASSET_DATA)
+            original = path.read_bytes()
+            with patch.object(
+                update_externals,
+                "build_github_release_update",
+                return_value=("6.1.1", "c" * 64),
+            ), patch.object(
+                update_externals,
+                "build_github_release_asset_update",
+                return_value=None,
+            ), redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                result = update_externals.update_github_release_metadata(path)
+
+            self.assertEqual(result, (0, 1))
             self.assertEqual(path.read_bytes(), original)
 
 
