@@ -57,6 +57,25 @@ checksum.sha256 = "ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 """.lstrip()
 
 
+class ExternalChecksumParsingTests(unittest.TestCase):
+    def test_extracts_pair_with_options_between_url_and_checksum(self):
+        content = EXTERNAL_DATA.replace(
+            "checksum.sha256", '    stripComponents = 1\nchecksum.sha256'
+        )
+
+        for line_ending in ("\n", "\r\n"):
+            with self.subTest(line_ending=repr(line_ending)):
+                pairs = update_externals.extract_url_checksum_pairs(
+                    content.replace("\n", line_ending)
+                )
+
+                self.assertEqual(len(pairs), 1)
+                self.assertEqual(
+                    pairs[0][:2],
+                    ("https://example.test/resource.txt", "c" * 64),
+                )
+
+
 class RepositoryGithubReleaseConfigurationTests(unittest.TestCase):
     def test_repository_declares_mattpocock_skills_release_pin(self):
         content = (REPO_ROOT / ".chezmoidata.toml").read_text(encoding="utf-8")
@@ -97,34 +116,6 @@ class GithubReleasePinParsingTests(unittest.TestCase):
         self.assertEqual(pins[0].name, "superpowers")
         self.assertEqual(pins[0].repository, "obra/superpowers")
         self.assertEqual(pins[0].tag, "6.1.0")
-
-    def test_applies_tag_and_checksum_update_together(self):
-        pin = update_externals.extract_github_release_pins(DATA)[0]
-
-        updated = update_externals.apply_github_release_updates(
-            DATA, [(pin, "6.1.1", "b" * 64)]
-        )
-
-        self.assertIn('tag = "6.1.1"', updated)
-        self.assertIn(f'sha256 = "{"b" * 64}"', updated)
-        self.assertNotIn("6.1.0", updated)
-
-    def test_escapes_and_round_trips_quote_in_updated_tag(self):
-        pin = update_externals.extract_github_release_pins(DATA)[0]
-
-        updated = update_externals.apply_github_release_updates(
-            DATA, [(pin, 'release"1', "b" * 64)]
-        )
-
-        parsed = tomllib.loads(updated)
-        self.assertEqual(
-            parsed["external_resources"]["github_releases"]["superpowers"]["tag"],
-            'release"1',
-        )
-        self.assertEqual(
-            update_externals.extract_github_release_pins(updated)[0].tag,
-            'release"1',
-        )
 
     def test_accepts_fully_empty_pin_for_first_refresh(self):
         pin = update_externals.extract_github_release_pins(EMPTY_DATA)[0]
@@ -178,18 +169,6 @@ class GithubReleaseAssetPinParsingTests(unittest.TestCase):
             ],
         )
 
-    def test_applies_asset_tag_and_checksums_together(self):
-        pin = update_externals.extract_github_release_asset_pins(ASSET_DATA)[0]
-
-        updated = update_externals.apply_github_release_asset_updates(
-            ASSET_DATA, [(pin, "v1.1.0", ("c" * 64, "d" * 64))]
-        )
-
-        self.assertIn('tag = "v1.1.0"', updated)
-        self.assertIn(f'sha256 = "{"c" * 64}"', updated)
-        self.assertIn(f'sha256 = "{"d" * 64}"', updated)
-        self.assertIn('name = "pi-distribution-{tag}-windows-x64.tgz"', updated)
-
     def test_rejects_asset_name_without_tag_placeholder(self):
         invalid = ASSET_DATA.replace(
             "pi-distribution-{tag}-windows-x64.tgz",
@@ -241,16 +220,18 @@ class GithubReleaseLookupTests(unittest.TestCase):
         self.assertEqual(len(set(response.read_sizes)), 1)
         self.assertGreater(response.read_sizes[0], 0)
 
-    def test_fetches_latest_release_tag_from_github_api(self):
+    def test_fetches_latest_release_from_github_api(self):
         response = MagicMock()
         response.__enter__.return_value.read.return_value = b'{"tag_name":"6.1.1"}'
 
-        with patch.object(update_externals.urllib.request, "urlopen", return_value=response) as urlopen:
-            tag = update_externals.fetch_latest_release_tag(
+        with patch.object(
+            update_externals.urllib.request, "urlopen", return_value=response
+        ) as urlopen:
+            release = update_externals.fetch_latest_release(
                 "obra/superpowers", timeout=12
             )
 
-        self.assertEqual(tag, "6.1.1")
+        self.assertEqual(release, {"tag_name": "6.1.1"})
         request = urlopen.call_args.args[0]
         self.assertEqual(
             request.full_url,
@@ -262,18 +243,18 @@ class GithubReleaseLookupTests(unittest.TestCase):
         )
         self.assertEqual(urlopen.call_args.kwargs["timeout"], 12)
 
-    def test_fetch_latest_release_tag_catches_invalid_url(self):
+    def test_fetch_latest_release_catches_invalid_url(self):
         with patch.object(
             update_externals.urllib.request,
             "Request",
             side_effect=ValueError("invalid URL"),
         ), redirect_stderr(io.StringIO()):
-            tag = update_externals.fetch_latest_release_tag("invalid\nrepository")
+            release = update_externals.fetch_latest_release("invalid\nrepository")
 
-        self.assertIsNone(tag)
+        self.assertIsNone(release)
 
     def test_build_update_returns_none_without_latest_release(self):
-        with patch.object(update_externals, "fetch_latest_release_tag", return_value=None):
+        with patch.object(update_externals, "fetch_latest_release", return_value=None):
             self.assertIsNone(
                 update_externals.build_github_release_update("obra/superpowers")
             )
@@ -290,8 +271,8 @@ class GithubReleaseLookupTests(unittest.TestCase):
     def test_build_update_hashes_latest_release_archive(self):
         with patch.object(
             update_externals,
-            "fetch_latest_release_tag",
-            return_value="release/6.1.1",
+            "fetch_latest_release",
+            return_value={"tag_name": "release/6.1.1"},
         ), patch.object(
             update_externals, "fetch_sha256", return_value="b" * 64
         ) as fetch_sha256:
@@ -389,6 +370,30 @@ class GithubReleaseMetadataUpdateTests(unittest.TestCase):
                 .encode("utf-8"),
             )
 
+    def test_escapes_and_round_trips_updated_tag(self):
+        with TemporaryDirectory() as directory:
+            path = self.write_metadata(directory)
+            with patch.object(
+                update_externals,
+                "build_github_release_update",
+                return_value=('release"1', "b" * 64),
+            ), redirect_stdout(io.StringIO()):
+                result = update_externals.update_github_release_metadata(path)
+
+            self.assertEqual(result, (1, 0))
+            content = path.read_text(encoding="utf-8")
+            parsed = tomllib.loads(content)
+            self.assertEqual(
+                parsed["external_resources"]["github_releases"]["superpowers"][
+                    "tag"
+                ],
+                'release"1',
+            )
+            self.assertEqual(
+                update_externals.extract_github_release_pins(content)[0].tag,
+                'release"1',
+            )
+
     def test_first_refresh_populates_empty_tag_and_checksum(self):
         with TemporaryDirectory() as directory:
             path = self.write_metadata(directory, EMPTY_DATA)
@@ -409,10 +414,8 @@ class GithubReleaseMetadataUpdateTests(unittest.TestCase):
             original = path.read_bytes()
             with patch.object(
                 update_externals,
-                "fetch_latest_release_tag",
-                return_value="6.1.1",
-            ), patch.object(
-                update_externals, "fetch_sha256", return_value=None
+                "build_github_release_update",
+                return_value=None,
             ), redirect_stderr(io.StringIO()):
                 result = update_externals.update_github_release_metadata(path)
 
@@ -487,6 +490,24 @@ class GithubReleaseMetadataUpdateTests(unittest.TestCase):
             self.assertIn('tag = "v1.1.0"', content)
             self.assertIn(f'sha256 = "{"c" * 64}"', content)
             self.assertIn(f'sha256 = "{"d" * 64}"', content)
+
+    def test_wrong_release_asset_count_leaves_metadata_unchanged(self):
+        with TemporaryDirectory() as directory:
+            path = self.write_metadata(directory, DATA + "\n" + ASSET_DATA)
+            original = path.read_bytes()
+            with patch.object(
+                update_externals,
+                "build_github_release_update",
+                return_value=("6.1.0", "a" * 64),
+            ), patch.object(
+                update_externals,
+                "build_github_release_asset_update",
+                return_value=("v1.1.0", ("c" * 64,)),
+            ), redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                result = update_externals.update_github_release_metadata(path)
+
+            self.assertEqual(result, (0, 1))
+            self.assertEqual(path.read_bytes(), original)
 
     def test_release_asset_failure_leaves_source_pin_unchanged(self):
         with TemporaryDirectory() as directory:
