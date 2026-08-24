@@ -10,12 +10,12 @@ sha256 = "238fac54d0f53d3e2d0501c1b38c9c0e4e9bc26f6b057b53a7328ea15d43b66f"
 
 [external_resources.github_release_assets.pi_distribution]
 repository = "ningw42/pi-distribution"
-tag = "v26.08.21"
+tag = "v26.08.25"
 
 [external_resources.github_release_assets.pi_distribution.assets.windows_x64]
 name = "pi-distribution-{tag}-windows-x64.tgz"
-sha256 = "442c293c6c26103651cb7dd6cc95400da2093c2cec084193e1de256f40b16383"
+sha256 = "0a6bb7c98af7b97178f460f93c12217f4f41f2cda5b817b7fead0967e0f5ae4f"
 
 [external_resources.github_release_assets.pi_distribution.assets.windows_arm64]
 name = "pi-distribution-{tag}-windows-arm64.tgz"
-sha256 = "a5f71f12fd435bec03811d0a26e3135e581cf7adc8a213e4c5110e8fb33c6e9a"
+sha256 = "2dde06799b90a778f7fe7e5ab7d50ad6651d00cafe5720e980e514caed1b1aa4"
