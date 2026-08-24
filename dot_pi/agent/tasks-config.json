@@ -1,5 +1,29 @@
 {
   "autoCascade": true,
   "autoClearCompleted": "on_list_complete",
-  "taskScope": "session"
+  "taskScope": "session",
+  "glyphs": {
+    "completed": "󰄴 ",
+    "inProgress": "󰣕 ",
+    "pending": "󰄰 ",
+    "spinner": [
+      "󰪞 ",
+      "󰪟 ",
+      "󰪠 ",
+      "󰪡 ",
+      "󰪢 ",
+      "󰪣 ",
+      "󰪤 ",
+      "󰪥 "
+    ],
+    "completedSummary": "󰄴 ",
+    "header": "󰝥 ",
+    "overflow": "…",
+    "blocked": "›",
+    "inputTokens": "↑",
+    "outputTokens": "↓",
+    "statsSeparator": "·",
+    "trailingEllipsis": "…",
+    "truncation": "…"
+  }
 }
