@@ -31,6 +31,15 @@ try {
     }
 
     $utf8NoBom = [Text.UTF8Encoding]::new($false)
+
+    # serializeAgentFile does not use parseAgentFrontmatter, but its module imports
+    # that helper at load time. Stub the unused edge instead of copying the loader's
+    # growing runtime dependency graph into this isolated generator.
+    [IO.File]::WriteAllText(
+        (Join-Path $sourceDir 'custom-agents.js'),
+        "exports.parseAgentFrontmatter = () => { throw new Error(`"parseAgentFrontmatter is unavailable in the Explore generator`"); };`n",
+        $utf8NoBom
+    )
     [IO.File]::WriteAllText(
         (Join-Path $stubDir 'package.json'),
         "{ `"name`": `"@earendil-works/pi-coding-agent`", `"main`": `"index.js`" }`n",
