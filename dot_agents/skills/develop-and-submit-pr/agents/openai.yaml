@@ -1,0 +1,6 @@
+interface:
+  display_name: "Develop and Submit PR"
+  short_description: "Apply feature-branch and PR submission conventions"
+  default_prompt: "Use $develop-and-submit-pr while implementing this plan."
+policy:
+  allow_implicit_invocation: false

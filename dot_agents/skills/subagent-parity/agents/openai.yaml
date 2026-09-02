@@ -1,0 +1,6 @@
+interface:
+  display_name: "Subagent Parity"
+  short_description: "Match subagent model and effort to the main conversation"
+  default_prompt: "Use $subagent-parity when spawning subagents."
+policy:
+  allow_implicit_invocation: false
