@@ -1,9 +1,9 @@
 {
   "providers": {
-    "copilotd-anthropic": {
+    "yylx-anthropic": {
       "api": "anthropic-messages",
-      "apiKey": "$PI_API_KEY",
-      "baseUrl": "https://copilotd.ningw.net/anthropic",
+      "apiKey": "$YYLX_API_KEY",
+      "baseUrl": "https://app.yylx.io",
       "models": [
         {
           "compat": {
@@ -22,7 +22,7 @@
             "text",
             "image"
           ],
-          "maxTokens": 64000,
+          "maxTokens": 128000,
           "name": "Opus 5",
           "reasoning": true,
           "thinkingLevelMap": {
@@ -37,18 +37,44 @@
           },
           "contextWindow": 1000000,
           "cost": {
-            "cacheRead": 0.3,
-            "cacheWrite": 3.75,
-            "input": 3,
-            "output": 15
+            "cacheRead": 0.2,
+            "cacheWrite": 2.5,
+            "input": 2,
+            "output": 10
           },
           "id": "claude-sonnet-5",
           "input": [
             "text",
             "image"
           ],
-          "maxTokens": 64000,
+          "maxTokens": 128000,
           "name": "Sonnet 5",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "max": "max",
+            "minimal": null,
+            "xhigh": "xhigh"
+          }
+        },
+        {
+          "compat": {
+            "forceAdaptiveThinking": true,
+            "supportsTemperature": false
+          },
+          "contextWindow": 1000000,
+          "cost": {
+            "cacheRead": 0.25,
+            "cacheWrite": 12.5,
+            "input": 10,
+            "output": 50
+          },
+          "id": "claude-fable-5-1",
+          "input": [
+            "text",
+            "image"
+          ],
+          "maxTokens": 128000,
+          "name": "Fable 5.1",
           "reasoning": true,
           "thinkingLevelMap": {
             "max": "max",
@@ -67,7 +93,7 @@
             "input": 1,
             "output": 5
           },
-          "id": "claude-haiku-4.5",
+          "id": "claude-haiku-4-5",
           "input": [
             "text",
             "image"

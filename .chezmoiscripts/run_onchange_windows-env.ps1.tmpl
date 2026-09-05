@@ -4,6 +4,11 @@
 # Rendered secret values are embedded below, so any rotation changes the file
 # content and triggers chezmoi to re-run this script automatically.
 
+# claude — apiKeyHelper reads YYLX_API_KEY; clear fixed names that override it
+Remove-ItemProperty -LiteralPath "HKCU:\Environment" -Name "ANTHROPIC_API_KEY" -ErrorAction SilentlyContinue
+Remove-ItemProperty -LiteralPath "HKCU:\Environment" -Name "ANTHROPIC_AUTH_TOKEN" -ErrorAction SilentlyContinue
+[Environment]::SetEnvironmentVariable("YYLX_API_KEY", "{{ $secrets.yylx_api_key }}", "User")
+
 # codex
 [Environment]::SetEnvironmentVariable("CODEX_API_KEY", "{{ $secrets.codex_api_key }}", "User")
 

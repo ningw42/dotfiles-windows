@@ -22,8 +22,10 @@ $Env:MOOR = "--no-linenumbers --statusbar=bold --tab-size=2 --style=catppuccin-m
 # lazygit config
 $Env:LG_CONFIG_FILE = "$Env:LOCALAPPDATA\lazygit\config.yml,$Env:LOCALAPPDATA\lazygit\{{ .colorscheme }}-blue.yml";
 
-# claude: auth token for Router Maestro
-$Env:ANTHROPIC_AUTH_TOKEN = "{{ $secrets.anthropic_auth_token }}"
+# claude: YYLX is authoritative; fixed Anthropic variables override apiKeyHelper
+Remove-Item Env:ANTHROPIC_API_KEY -ErrorAction SilentlyContinue
+Remove-Item Env:ANTHROPIC_AUTH_TOKEN -ErrorAction SilentlyContinue
+$Env:YYLX_API_KEY = "{{ $secrets.yylx_api_key }}"
 
 # codex: API key for LiteLLM / Router Maestro providers
 $Env:CODEX_API_KEY = "{{ $secrets.codex_api_key }}"

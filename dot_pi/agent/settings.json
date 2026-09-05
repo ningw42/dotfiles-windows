@@ -10,9 +10,10 @@
     "write"
   ],
   "enabledModels": [
-    "copilotd-anthropic/claude-opus-5:xhigh",
-    "copilotd-anthropic/claude-sonnet-5:xhigh",
-    "copilotd-anthropic/claude-haiku-4.5",
+    "yylx-anthropic/claude-opus-5:xhigh",
+    "yylx-anthropic/claude-sonnet-5:xhigh",
+    "yylx-anthropic/claude-fable-5-1:xhigh",
+    "yylx-anthropic/claude-haiku-4-5",
     "copilotd-openai/gpt-5.5:xhigh",
     "copilotd-openai/gpt-5.6-luna:xhigh",
     "copilotd-openai/gpt-5.6-sol:xhigh",
