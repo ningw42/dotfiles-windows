@@ -421,6 +421,47 @@
               "reasoningEffort": "xhigh"
             }
           }
+        },
+        "gpt-6-astra": {
+          "cost": {
+            "cache_read": 1,
+            "input": 10,
+            "output": 50
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "GPT-6 Astra",
+          "options": {
+            "reasoningEffort": "xhigh"
+          },
+          "variants": {
+            "high": {
+              "reasoningEffort": "high"
+            },
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "max": {
+              "reasoningEffort": "max"
+            },
+            "medium": {
+              "reasoningEffort": "medium"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh"
+            }
+          }
         }
       },
       "name": "copilotd (OpenAI)",

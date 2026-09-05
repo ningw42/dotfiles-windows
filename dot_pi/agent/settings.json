@@ -17,7 +17,8 @@
     "copilotd-openai/gpt-5.6-luna:xhigh",
     "copilotd-openai/gpt-5.6-sol:xhigh",
     "copilotd-openai/gpt-5.6-sol-fast:xhigh",
-    "copilotd-openai/gpt-5.6-terra:xhigh"
+    "copilotd-openai/gpt-5.6-terra:xhigh",
+    "copilotd-openai/gpt-6-astra:xhigh"
   ],
   "hideThinkingBlock": true,
   "httpIdleTimeoutMs": 600000,

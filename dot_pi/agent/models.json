@@ -196,6 +196,32 @@
             "off": "none",
             "xhigh": "xhigh"
           }
+        },
+        {
+          "compat": {
+            "supportsTemperature": false
+          },
+          "contextWindow": 1000000,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 12.5,
+            "input": 10,
+            "output": 50
+          },
+          "id": "gpt-6-astra",
+          "input": [
+            "text",
+            "image"
+          ],
+          "maxTokens": 128000,
+          "name": "GPT-6 Astra",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "max": "max",
+            "minimal": null,
+            "off": null,
+            "xhigh": "xhigh"
+          }
         }
       ]
     }
