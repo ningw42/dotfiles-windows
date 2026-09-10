@@ -1,22 +1,32 @@
 {{ if eq .chezmoi.os "windows" -}}
+{{- $herdrPath := printf "%s/scoop/shims/herdr.exe" (.chezmoi.homeDir | replace "\\" "/") -}}
 {{- /*
   Materialize HerdR's release-matched integrations without letting its installer
-  mutate the Claude/Codex configuration files owned by chezmoi. The installed
-  binary is the source of truth for the hook/plugin implementations, just as
-  nixfiles runs `herdr integration install` in an isolated Nix build HOME.
+  mutate the Claude/Codex/Copilot configuration files owned by chezmoi. The
+  installed binary is the source of truth for the hook/plugin implementations,
+  just as nixfiles runs `herdr integration install` in an isolated Nix build
+  HOME.
 
   Embedding the installed version in this rendered script makes chezmoi rerun
-  it after a HerdR upgrade.
+  it after a HerdR upgrade. The migration gate below then requires an explicit
+  review whenever that binary changes an integration format.
 */ -}}
-# HerdR version: {{ output "herdr" "--version" | trim }}
+# HerdR version: {{ output $herdrPath "--version" | trim }}
 param(
-    [string]$HerdrPath = '{{ .chezmoi.homeDir | replace "\\" "/" }}/scoop/shims/herdr.exe',
+    [string]$HerdrPath = '{{ $herdrPath }}',
     [string]$HomeRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}',
     [string]$SkillOutputPath = ''
 )
 
 $ErrorActionPreference = 'Stop'
 $utf8NoBom = [Text.UTF8Encoding]::new($false)
+$expectedIntegrationVersions = [ordered]@{
+    pi = 8
+    claude = 9
+    codex = 8
+    copilot = 3
+    opencode = 11
+}
 
 if (-not (Test-Path -LiteralPath $HerdrPath -PathType Leaf)) {
     throw "HerdR was not found at '$HerdrPath'. Run 'winget configure -f configuration.dsc.yaml' first."
@@ -65,18 +75,7 @@ function Test-HerdrOwnedFile([string]$Path, [string]$IntegrationId) {
     )
 }
 
-function Set-HerdrIntegrationFile(
-    [string]$Source,
-    [string]$Destination,
-    [string]$IntegrationId
-) {
-    if (-not (Test-HerdrOwnedFile $Source $IntegrationId)) {
-        throw "Generated integration '$Source' has no valid HerdR ownership marker for '$IntegrationId'."
-    }
-    if ((Test-Path -LiteralPath $Destination) -and -not (Test-HerdrOwnedFile $Destination $IntegrationId)) {
-        throw "Refusing to overwrite non-HerdR file '$Destination'."
-    }
-
+function Copy-FileAtomically([string]$Source, [string]$Destination) {
     $destinationDirectory = Split-Path -Parent $Destination
     New-Item -ItemType Directory -Path $destinationDirectory -Force | Out-Null
     if (Test-Path -LiteralPath $Destination -PathType Leaf) {
@@ -97,6 +96,29 @@ function Set-HerdrIntegrationFile(
     }
 }
 
+function Set-HerdrIntegrationFile(
+    [string]$Source,
+    [string]$Destination,
+    [string]$IntegrationId,
+    [int]$ExpectedVersion
+) {
+    if (-not (Test-HerdrOwnedFile $Source $IntegrationId)) {
+        throw "Generated integration '$Source' has no valid HerdR ownership marker for '$IntegrationId'."
+    }
+
+    $sourceContent = [IO.File]::ReadAllText($Source)
+    $versionMatch = [regex]::Match($sourceContent, 'HERDR_INTEGRATION_VERSION=([0-9]+)')
+    $actualVersion = if ($versionMatch.Success) { $versionMatch.Groups[1].Value } else { 'unknown' }
+    if (-not $versionMatch.Success -or [int]::Parse($actualVersion) -ne $ExpectedVersion) {
+        throw "HerdR '$IntegrationId' integration changed: expected v$ExpectedVersion, generated v$actualVersion. Review the migration before updating the gate."
+    }
+
+    if ((Test-Path -LiteralPath $Destination) -and -not (Test-HerdrOwnedFile $Destination $IntegrationId)) {
+        throw "Refusing to overwrite non-HerdR file '$Destination'."
+    }
+    Copy-FileAtomically -Source $Source -Destination $Destination
+}
+
 function Set-TextFile([string]$Path, [string]$Content) {
     $directory = Split-Path -Parent $Path
     New-Item -ItemType Directory -Path $directory -Force | Out-Null
@@ -108,6 +130,83 @@ function Set-TextFile([string]$Path, [string]$Content) {
     if ($existing -cne $Content) {
         [IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
     }
+}
+
+function Test-HerdrOpenCodeTuiConfig([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        return $false
+    }
+    try {
+        $config = [IO.File]::ReadAllText($Path) | ConvertFrom-Json
+    }
+    catch {
+        return $false
+    }
+
+    $properties = @($config.PSObject.Properties.Name)
+    $plugins = @($config.plugin)
+    return (
+        $properties.Count -eq 1 -and
+        $properties[0] -ceq 'plugin' -and
+        $plugins.Count -eq 1 -and
+        [string]$plugins[0] -ceq './herdr-tui-session.js'
+    )
+}
+
+function Set-HerdrOpenCodeTuiConfig([string]$Source, [string]$Destination) {
+    if (-not (Test-HerdrOpenCodeTuiConfig $Source)) {
+        throw "Generated OpenCode TUI config '$Source' has an unexpected format."
+    }
+    if ((Test-Path -LiteralPath $Destination) -and -not (Test-HerdrOpenCodeTuiConfig $Destination)) {
+        throw "Refusing to overwrite non-HerdR OpenCode TUI config '$Destination'."
+    }
+    Copy-FileAtomically -Source $Source -Destination $Destination
+}
+
+function Test-HerdrCopilotHookConfig([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        return $false
+    }
+    try {
+        $config = [IO.File]::ReadAllText($Path) | ConvertFrom-Json
+    }
+    catch {
+        return $false
+    }
+
+    $hooks = @($config.hooks.SessionStart)
+    if ($hooks.Count -ne 1) {
+        return $false
+    }
+    $hook = $hooks[0]
+    return (
+        [int]$config.version -eq 1 -and
+        [string]$hook.type -ceq 'command' -and
+        [int]$hook.timeoutSec -eq 10 -and
+        [string]$hook.powershell -match '(?i)herdr-agent-state\.ps1"?$'
+    )
+}
+
+function Set-HerdrCopilotHookConfig([string]$Path, [string]$HookPath) {
+    if ((Test-Path -LiteralPath $Path) -and -not (Test-HerdrCopilotHookConfig $Path)) {
+        throw "Refusing to overwrite non-HerdR Copilot hook config '$Path'."
+    }
+
+    $normalizedHookPath = [IO.Path]::GetFullPath($HookPath).Replace('\', '/')
+    $definition = [ordered]@{
+        version = 1
+        hooks = [ordered]@{
+            SessionStart = @(
+                [ordered]@{
+                    type = 'command'
+                    powershell = "pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$normalizedHookPath`""
+                    timeoutSec = 10
+                }
+            )
+        }
+    }
+    $content = ($definition | ConvertTo-Json -Depth 8) + "`n"
+    Set-TextFile -Path $Path -Content $content
 }
 
 function Set-HerdrSkillLink([string]$Path, [string]$Target) {
@@ -145,6 +244,7 @@ try {
         (Join-Path $profile '.pi/agent'),
         (Join-Path $profile '.claude'),
         (Join-Path $profile '.codex'),
+        (Join-Path $profile '.copilot'),
         (Join-Path $xdgConfig 'opencode'),
         $appData,
         $localAppData
@@ -153,6 +253,7 @@ try {
     Set-TextFile (Join-Path $profile '.claude/settings.json') "{}`n"
     Set-TextFile (Join-Path $profile '.codex/config.toml') ''
     Set-TextFile (Join-Path $profile '.codex/hooks.json') "{}`n"
+    Set-TextFile (Join-Path $profile '.copilot/settings.json') "{}`n"
     Set-TextFile (Join-Path $xdgConfig 'opencode/opencode.json') "{}`n"
 
     $isolatedEnvironment = @{
@@ -162,7 +263,7 @@ try {
         APPDATA = $appData
         LOCALAPPDATA = $localAppData
     }
-    foreach ($integration in @('pi', 'claude', 'codex', 'opencode')) {
+    foreach ($integration in $expectedIntegrationVersions.Keys) {
         $null = Invoke-Herdr `
             -Arguments @('integration', 'install', $integration) `
             -Environment $isolatedEnvironment `
@@ -172,31 +273,55 @@ try {
     $integrations = @(
         @{
             Id = 'pi'
+            ExpectedVersion = $expectedIntegrationVersions.pi
             Source = Join-Path $profile '.pi/agent/extensions/herdr-agent-state.ts'
             Destination = Join-Path $HomeRoot '.pi/agent/extensions/herdr-agent-state.ts'
         },
         @{
             Id = 'claude'
+            ExpectedVersion = $expectedIntegrationVersions.claude
             Source = Join-Path $profile '.claude/hooks/herdr-agent-state.ps1'
             Destination = Join-Path $HomeRoot '.claude/hooks/herdr-agent-state.ps1'
         },
         @{
             Id = 'codex'
+            ExpectedVersion = $expectedIntegrationVersions.codex
             Source = Join-Path $profile '.codex/herdr-agent-state.ps1'
             Destination = Join-Path $HomeRoot '.codex/herdr-agent-state.ps1'
         },
         @{
+            Id = 'copilot'
+            ExpectedVersion = $expectedIntegrationVersions.copilot
+            Source = Join-Path $profile '.copilot/hooks/herdr-agent-state.ps1'
+            Destination = Join-Path $HomeRoot '.copilot/hooks/herdr-agent-state.ps1'
+        },
+        @{
             Id = 'opencode'
+            ExpectedVersion = $expectedIntegrationVersions.opencode
             Source = Join-Path $xdgConfig 'opencode/plugins/herdr-agent-state.js'
             Destination = Join-Path $HomeRoot '.config/opencode/plugins/herdr-agent-state.js'
+        },
+        @{
+            Id = 'opencode-tui'
+            ExpectedVersion = $expectedIntegrationVersions.opencode
+            Source = Join-Path $xdgConfig 'opencode/herdr-tui-session.js'
+            Destination = Join-Path $HomeRoot '.config/opencode/herdr-tui-session.js'
         }
     )
     foreach ($integration in $integrations) {
         Set-HerdrIntegrationFile `
             -Source $integration.Source `
             -Destination $integration.Destination `
-            -IntegrationId $integration.Id
+            -IntegrationId $integration.Id `
+            -ExpectedVersion $integration.ExpectedVersion
     }
+
+    Set-HerdrOpenCodeTuiConfig `
+        -Source (Join-Path $xdgConfig 'opencode/tui.jsonc') `
+        -Destination (Join-Path $HomeRoot '.config/opencode/tui.jsonc')
+    Set-HerdrCopilotHookConfig `
+        -Path (Join-Path $HomeRoot '.copilot/hooks/herdr.json') `
+        -HookPath (Join-Path $HomeRoot '.copilot/hooks/herdr-agent-state.ps1')
 
     $skill = Invoke-Herdr -Arguments @('--skill')
     if ([string]::IsNullOrWhiteSpace($skill) -or $skill -notmatch '(?m)^name:\s*herdr\s*$') {
@@ -205,12 +330,13 @@ try {
     Set-TextFile -Path $SkillOutputPath -Content $skill
 
     # Pi discovers the cross-agent standard path; explicit links for Claude,
-    # Codex, and OpenCode also mirror nixfiles' per-program skill
+    # Codex, Copilot, and OpenCode mirror nixfiles' per-program skill
     # declarations and avoid relying on incidental cross-agent discovery.
     foreach ($skillLink in @(
         (Join-Path $HomeRoot '.agents/skills/herdr'),
         (Join-Path $HomeRoot '.claude/skills/herdr'),
         (Join-Path $HomeRoot '.codex/skills/herdr'),
+        (Join-Path $HomeRoot '.copilot/skills/herdr'),
         (Join-Path $HomeRoot '.config/opencode/skills/herdr')
     )) {
         Set-HerdrSkillLink -Path $skillLink -Target (Split-Path -Parent $SkillOutputPath)

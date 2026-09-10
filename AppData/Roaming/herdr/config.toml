@@ -1,3 +1,5 @@
+onboarding = false
+
 [keys]
 prefix = "ctrl+b"
 goto = "prefix+g"
@@ -19,7 +21,7 @@ new_cwd = "follow"
 
 [theme]
 name = "catppuccin"
-auto_switch = true
+auto_switch = false
 light_name = "catppuccin-latte"
 dark_name = "catppuccin"
 

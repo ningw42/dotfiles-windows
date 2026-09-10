@@ -132,11 +132,13 @@ Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
   supported external skills under `~/.agents/skills` and refuses non-owned
   collisions. Repo-owned human-invoked skills live directly under
   `dot_agents/skills/`; the publisher preserves those non-owned directories.
-- HerdR owns its release-matched generated hooks, plugins, and skill.
-  `.chezmoiscripts/run_onchange_herdr-integrations.ps1.tmpl` extracts them from
-  the installed binary in an isolated profile and publishes collision-checked
-  skill links for Claude Code, Codex, pi, and OpenCode. Do not add those
-  generated outputs as chezmoi sources or edit their deployed copies.
+- HerdR owns its release-matched generated hooks, plugins, OpenCode TUI glue,
+  and skill. `.chezmoiscripts/run_onchange_herdr-integrations.ps1.tmpl`
+  extracts them from the installed binary in an isolated profile and publishes
+  collision-checked skill links for Claude Code, Codex, Copilot CLI, pi, and
+  OpenCode. Its Copilot SessionStart hook coexists with RTK's independently
+  generated PreToolUse hook. Do not add those generated outputs as chezmoi
+  sources or edit their deployed copies.
 - Keep `.github/copilot-instructions.md` aligned if the non-negotiable rules
   change.
 
