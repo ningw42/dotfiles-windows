@@ -1,6 +1,7 @@
 {
   "diffIndicatorMode": "bars",
   "diffViewMode": "auto",
+  "enableSessionReference": false,
   "mode": "on",
   "previewLines": 0
 }

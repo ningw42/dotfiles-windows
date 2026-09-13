@@ -1,4 +1,7 @@
 {
   "workflowsEnabled": false,
-  "graceTurns": 10
+  "graceTurns": 10,
+  "reportUsage": true,
+  "showCost": true,
+  "showModel": true
 }

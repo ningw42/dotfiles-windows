@@ -112,32 +112,19 @@
         {
           "contextWindow": 1050000,
           "cost": {
-            "cacheRead": 0.5,
-            "cacheWrite": 0,
-            "input": 5,
-            "output": 30
-          },
-          "id": "gpt-5.5",
-          "input": [
-            "text",
-            "image"
-          ],
-          "maxTokens": 128000,
-          "name": "GPT-5.5",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "minimal": null,
-            "off": "none",
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "contextWindow": 1050000,
-          "cost": {
-            "cacheRead": 0.1,
-            "cacheWrite": 1.25,
-            "input": 1,
-            "output": 6
+            "cacheRead": 0.02,
+            "cacheWrite": 0.25,
+            "input": 0.2,
+            "output": 1.2,
+            "tiers": [
+              {
+                "cacheRead": 0.04,
+                "cacheWrite": 0.5,
+                "input": 0.4,
+                "inputTokensAbove": 272000,
+                "output": 1.8
+              }
+            ]
           },
           "id": "gpt-5.6-luna",
           "input": [
@@ -157,10 +144,19 @@
         {
           "contextWindow": 1050000,
           "cost": {
-            "cacheRead": 0.5,
-            "cacheWrite": 6.25,
-            "input": 5,
-            "output": 30
+            "cacheRead": 0.4,
+            "cacheWrite": 5,
+            "input": 4,
+            "output": 20,
+            "tiers": [
+              {
+                "cacheRead": 0.8,
+                "cacheWrite": 10,
+                "input": 8,
+                "inputTokensAbove": 272000,
+                "output": 30
+              }
+            ]
           },
           "id": "gpt-5.6-sol-fast",
           "input": [
@@ -180,10 +176,19 @@
         {
           "contextWindow": 1050000,
           "cost": {
-            "cacheRead": 0.25,
-            "cacheWrite": 3.125,
-            "input": 2.5,
-            "output": 15
+            "cacheRead": 0.2,
+            "cacheWrite": 2.5,
+            "input": 2,
+            "output": 12,
+            "tiers": [
+              {
+                "cacheRead": 0.4,
+                "cacheWrite": 5,
+                "input": 4,
+                "inputTokensAbove": 272000,
+                "output": 18
+              }
+            ]
           },
           "id": "gpt-5.6-terra",
           "input": [
@@ -204,12 +209,21 @@
           "compat": {
             "supportsTemperature": false
           },
-          "contextWindow": 1000000,
+          "contextWindow": 1050000,
           "cost": {
             "cacheRead": 1,
             "cacheWrite": 12.5,
             "input": 10,
-            "output": 50
+            "output": 50,
+            "tiers": [
+              {
+                "cacheRead": 2,
+                "cacheWrite": 25,
+                "input": 20,
+                "inputTokensAbove": 272000,
+                "output": 75
+              }
+            ]
           },
           "id": "gpt-6-astra",
           "input": [
