@@ -1,0 +1,6 @@
+interface:
+  display_name: "Unlimited Subagent Turns"
+  short_description: "Run subagents without turn caps"
+  default_prompt: "Use $unlimited-subagent-turns when spawning or resuming subagents."
+policy:
+  allow_implicit_invocation: false

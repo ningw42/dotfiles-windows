@@ -1,0 +1,6 @@
+interface:
+  display_name: "Close Code Review"
+  short_description: "Resolve review findings with the implementer"
+  default_prompt: "Use $close-code-review to resolve these review findings with the implementer."
+policy:
+  allow_implicit_invocation: false
