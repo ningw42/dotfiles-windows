@@ -25,6 +25,9 @@ auto_switch = false
 light_name = "catppuccin-latte"
 dark_name = "catppuccin"
 
+[ui]
+pane_scrollbars = false
+
 [update]
 version_check = false
 manifest_check = true
