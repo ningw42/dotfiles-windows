@@ -21,12 +21,13 @@ param(
 $ErrorActionPreference = 'Stop'
 $utf8NoBom = [Text.UTF8Encoding]::new($false)
 $expectedIntegrationVersions = [ordered]@{
-    pi = 8
-    claude = 9
+    pi = 9
+    claude = 10
     codex = 8
     copilot = 3
-    opencode = 11
+    opencode = 12
 }
+$expectedClaudeSessionStartMatcher = '^(startup|resume|clear|compact|fork)$'
 
 if (-not (Test-Path -LiteralPath $HerdrPath -PathType Leaf)) {
     throw "HerdR was not found at '$HerdrPath'. Run 'winget configure -f configuration.dsc.yaml' first."
@@ -132,6 +133,35 @@ function Set-TextFile([string]$Path, [string]$Content) {
     }
 }
 
+function Test-HerdrClaudeHookConfig([string]$Path, [string]$ExpectedMatcher) {
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        return $false
+    }
+    try {
+        $config = [IO.File]::ReadAllText($Path) | ConvertFrom-Json
+    }
+    catch {
+        return $false
+    }
+
+    $entries = @($config.hooks.SessionStart)
+    if ($entries.Count -ne 1) {
+        return $false
+    }
+    $entry = $entries[0]
+    $hooks = @($entry.hooks)
+    if ($hooks.Count -ne 1) {
+        return $false
+    }
+    $hook = $hooks[0]
+    return (
+        [string]$entry.matcher -ceq $ExpectedMatcher -and
+        [string]$hook.type -ceq 'command' -and
+        [int]$hook.timeout -eq 10 -and
+        [string]$hook.command -match '(?i)herdr-agent-state\.ps1"?\s+session$'
+    )
+}
+
 function Test-HerdrOpenCodeTuiConfig([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
         return $false
@@ -159,6 +189,37 @@ function Set-HerdrOpenCodeTuiConfig([string]$Source, [string]$Destination) {
     }
     if ((Test-Path -LiteralPath $Destination) -and -not (Test-HerdrOpenCodeTuiConfig $Destination)) {
         throw "Refusing to overwrite non-HerdR OpenCode TUI config '$Destination'."
+    }
+    Copy-FileAtomically -Source $Source -Destination $Destination
+}
+
+function Test-HerdrOpenCodeCliConfig([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        return $false
+    }
+    try {
+        $config = [IO.File]::ReadAllText($Path) | ConvertFrom-Json
+    }
+    catch {
+        return $false
+    }
+
+    $properties = @($config.PSObject.Properties.Name)
+    $plugins = @($config.plugins)
+    return (
+        $properties.Count -eq 1 -and
+        $properties[0] -ceq 'plugins' -and
+        $plugins.Count -eq 1 -and
+        [string]$plugins[0] -ceq './herdr-opencode'
+    )
+}
+
+function Set-HerdrOpenCodeCliConfig([string]$Source, [string]$Destination) {
+    if (-not (Test-HerdrOpenCodeCliConfig $Source)) {
+        throw "Generated OpenCode CLI config '$Source' has an unexpected format."
+    }
+    if ((Test-Path -LiteralPath $Destination) -and -not (Test-HerdrOpenCodeCliConfig $Destination)) {
+        throw "Refusing to overwrite non-HerdR OpenCode CLI config '$Destination'."
     }
     Copy-FileAtomically -Source $Source -Destination $Destination
 }
@@ -270,6 +331,11 @@ try {
             -WorkingDirectory $profile
     }
 
+    $generatedClaudeSettings = Join-Path $profile '.claude/settings.json'
+    if (-not (Test-HerdrClaudeHookConfig $generatedClaudeSettings $expectedClaudeSessionStartMatcher)) {
+        throw "Generated Claude hook config '$generatedClaudeSettings' has an unexpected format."
+    }
+
     $integrations = @(
         @{
             Id = 'pi'
@@ -306,6 +372,12 @@ try {
             ExpectedVersion = $expectedIntegrationVersions.opencode
             Source = Join-Path $xdgConfig 'opencode/herdr-tui-session.js'
             Destination = Join-Path $HomeRoot '.config/opencode/herdr-tui-session.js'
+        },
+        @{
+            Id = 'opencode-tui-v2'
+            ExpectedVersion = $expectedIntegrationVersions.opencode
+            Source = Join-Path $xdgConfig 'opencode/herdr-opencode/tui.js'
+            Destination = Join-Path $HomeRoot '.config/opencode/herdr-opencode/tui.js'
         }
     )
     foreach ($integration in $integrations) {
@@ -319,6 +391,9 @@ try {
     Set-HerdrOpenCodeTuiConfig `
         -Source (Join-Path $xdgConfig 'opencode/tui.jsonc') `
         -Destination (Join-Path $HomeRoot '.config/opencode/tui.jsonc')
+    Set-HerdrOpenCodeCliConfig `
+        -Source (Join-Path $xdgConfig 'opencode/cli.json') `
+        -Destination (Join-Path $HomeRoot '.config/opencode/cli.json')
     Set-HerdrCopilotHookConfig `
         -Path (Join-Path $HomeRoot '.copilot/hooks/herdr.json') `
         -HookPath (Join-Path $HomeRoot '.copilot/hooks/herdr-agent-state.ps1')
