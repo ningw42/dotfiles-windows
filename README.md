@@ -67,4 +67,7 @@ python dot_config/statusline/statusline.py test
 ```
 
 `update_externals.py` refreshes both checksum-pinned external files and the
-GitHub release pins in `.chezmoidata.toml`.
+GitHub release pins in `.chezmoidata.toml`. Literal external URLs are only
+re-hashed at their configured location; an external that should track the
+latest GitHub release must render its tag and checksum from a release pin in
+`.chezmoidata.toml`.

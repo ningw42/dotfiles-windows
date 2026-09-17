@@ -19,3 +19,11 @@ sha256 = "7485ecfc19ca55bdc89a1d079c712994e9193d0a6b7df6343d60b6bbd7e27ecf"
 [external_resources.github_release_assets.pi_distribution.assets.windows_arm64]
 name = "pi-distribution-{tag}-windows-arm64.tgz"
 sha256 = "c61e46fa4094da14f0513f3300e09f9227a9876bc4a70e92a411967b66d70142"
+
+[external_resources.github_release_assets.zjstatus]
+repository = "dj95/zjstatus"
+tag = "v0.25.0"
+
+[external_resources.github_release_assets.zjstatus.assets.wasm]
+name = "zjstatus.wasm"
+sha256 = "282ceab219e56e1908c9fac33907241fe6c3e1ef7d85faab3e5f438cef87b8fe"

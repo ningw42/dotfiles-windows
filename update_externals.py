@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Update SHA-256 checksums for all chezmoi external resources."""
+"""Update GitHub release pins and SHA-256 checksums for external resources."""
 
 import argparse
 import hashlib
@@ -303,9 +303,9 @@ def extract_github_release_asset_pins(content):
             filename, sha256 = (
                 asset_values[key][0] for key in ("name", "sha256")
             )
-            if filename.count("{tag}") != 1:
+            if filename.count("{tag}") > 1:
                 raise ValueError(
-                    f"{asset_context} must contain one '{{tag}}' placeholder"
+                    f"{asset_context} must contain at most one '{{tag}}' placeholder"
                 )
             if sha256 and SHA256_RE.fullmatch(sha256) is None:
                 raise ValueError(
@@ -514,7 +514,7 @@ def update_external_files(repo_root, dry_run=False):
 
 def main(argv=None, repo_root=None):
     parser = argparse.ArgumentParser(
-        description="Update SHA-256 checksums for all chezmoi external resources."
+        description="Update GitHub release pins and external resource checksums."
     )
     parser.add_argument(
         "--dry-run",

@@ -49,6 +49,16 @@ name = "pi-distribution-{tag}-windows-arm64.tgz"
 sha256 = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 """.lstrip()
 
+STATIC_ASSET_DATA = """
+[external_resources.github_release_assets.zjstatus]
+repository = "dj95/zjstatus"
+tag = "v0.23.0"
+
+[external_resources.github_release_assets.zjstatus.assets.wasm]
+name = "zjstatus.wasm"
+sha256 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+""".lstrip()
+
 EXTERNAL_DATA = """
 ["resource.txt"]
 type = "file"
@@ -106,6 +116,20 @@ class RepositoryGithubReleaseConfigurationTests(unittest.TestCase):
         for asset in pin.assets:
             self.assertIn("{tag}", asset.filename)
             self.assertRegex(asset.sha256, r"^[0-9a-f]{64}$")
+
+    def test_repository_declares_zjstatus_release_asset(self):
+        content = (REPO_ROOT / ".chezmoidata.toml").read_text(encoding="utf-8")
+        pins = {
+            pin.name: pin
+            for pin in update_externals.extract_github_release_asset_pins(content)
+        }
+
+        pin = pins["zjstatus"]
+        self.assertEqual(pin.repository, "dj95/zjstatus")
+        self.assertTrue(pin.tag)
+        self.assertEqual(len(pin.assets), 1)
+        self.assertEqual(pin.assets[0].filename, "zjstatus.wasm")
+        self.assertRegex(pin.assets[0].sha256, r"^[0-9a-f]{64}$")
 
 
 class GithubReleasePinParsingTests(unittest.TestCase):
@@ -169,10 +193,16 @@ class GithubReleaseAssetPinParsingTests(unittest.TestCase):
             ],
         )
 
-    def test_rejects_asset_name_without_tag_placeholder(self):
+    def test_accepts_release_asset_with_static_filename(self):
+        pin = update_externals.extract_github_release_asset_pins(STATIC_ASSET_DATA)[0]
+
+        self.assertEqual(pin.repository, "dj95/zjstatus")
+        self.assertEqual(pin.assets[0].filename, "zjstatus.wasm")
+
+    def test_rejects_asset_name_with_multiple_tag_placeholders(self):
         invalid = ASSET_DATA.replace(
             "pi-distribution-{tag}-windows-x64.tgz",
-            "pi-distribution-v1.0.0-windows-x64.tgz",
+            "pi-distribution-{tag}-{tag}-windows-x64.tgz",
         )
 
         with self.assertRaises(ValueError):
@@ -490,6 +520,21 @@ class GithubReleaseMetadataUpdateTests(unittest.TestCase):
             self.assertIn('tag = "v1.1.0"', content)
             self.assertIn(f'sha256 = "{"c" * 64}"', content)
             self.assertIn(f'sha256 = "{"d" * 64}"', content)
+
+    def test_updates_static_release_asset_metadata(self):
+        with TemporaryDirectory() as directory:
+            path = self.write_metadata(directory, STATIC_ASSET_DATA)
+            with patch.object(
+                update_externals,
+                "build_github_release_asset_update",
+                return_value=("v0.25.0", ("b" * 64,)),
+            ), redirect_stdout(io.StringIO()):
+                result = update_externals.update_github_release_metadata(path)
+
+            self.assertEqual(result, (1, 0))
+            content = path.read_text(encoding="utf-8")
+            self.assertIn('tag = "v0.25.0"', content)
+            self.assertIn(f'sha256 = "{"b" * 64}"', content)
 
     def test_wrong_release_asset_count_leaves_metadata_unchanged(self):
         with TemporaryDirectory() as directory:
