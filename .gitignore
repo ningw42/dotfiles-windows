@@ -1,3 +1,4 @@
 .claude
 .pi/
 secrets.yaml
+__pycache__/

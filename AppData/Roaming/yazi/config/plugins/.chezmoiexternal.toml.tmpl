@@ -1,53 +1,53 @@
 ["full-border.yazi/main.lua"]
     type = "file"
-    url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/full-border.yazi/main.lua"
-    checksum.sha256 = "08b950c4eea9d85787f28dff186728747114ed92bac9ee5e82e82c955c711cde"
+    url = "{{ .external_resources.pins.yazi_full_border.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_full_border.sha256 }}"
 ["git.yazi/main.lua"]
     type = "file"
-    url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/git.yazi/main.lua"
-    checksum.sha256 = "945895aa22cc4b3066d8663cbb7bd57707225d93cf2525aefbe18158aa3798c3"
+    url = "{{ .external_resources.pins.yazi_git_main.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_git_main.sha256 }}"
 ["git.yazi/types.lua"]
     type = "file"
-    url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/git.yazi/types.lua"
-    checksum.sha256 = "b6c2a0592a3206b8d7b9338f3b41828cf100b3662f248d8c99d273d314283186"
+    url = "{{ .external_resources.pins.yazi_git_types.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_git_types.sha256 }}"
 ["mediainfo.yazi"]
     type = "archive"
-    url = "https://github.com/boydaihungst/mediainfo.yazi/archive/refs/heads/master.zip"
+    url = "{{ .external_resources.pins.yazi_mediainfo.url }}"
     stripComponents = 1
     include = ["*.lua"]
-    checksum.sha256 = "4948adaec04289e7ad25677e81d2e29696cf6b745e62a8c442145e4b1913c202"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_mediainfo.sha256 }}"
 ["ouch.yazi/main.lua"]
     type = "file"
-    url = "https://raw.githubusercontent.com/ndtoan96/ouch.yazi/main/main.lua"
-    checksum.sha256 = "9522a863b0064b595bfa156f4dafb5f083f7280db2f2dd2ea499194fa55da359"
+    url = "{{ .external_resources.pins.yazi_ouch.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_ouch.sha256 }}"
 ["piper.yazi/main.lua"]
     type = "file"
-    url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/piper.yazi/main.lua"
-    checksum.sha256 = "7b8cb4012ee0f5a09a8691b0cc39f899278dd70666213a31b0a647170e31c5a1"
+    url = "{{ .external_resources.pins.yazi_piper.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_piper.sha256 }}"
 ["smart-enter.yazi/main.lua"]
     type = "file"
-    url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/smart-enter.yazi/main.lua"
-    checksum.sha256 = "5def5b84dd01cd5bb59357a3162f77dfc38be5433e36bbb9df6260917f786e5a"
+    url = "{{ .external_resources.pins.yazi_smart_enter.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_smart_enter.sha256 }}"
 ["torrent-preview.yazi/main.lua"]
     type = "file"
-    url = "https://raw.githubusercontent.com/kirasok/torrent-preview.yazi/main/main.lua"
-    checksum.sha256 = "1b151709d364500ebbc71fae719b714748d55201d1171953646c9ffb14d73e89"
+    url = "{{ .external_resources.pins.yazi_torrent_preview.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_torrent_preview.sha256 }}"
 ["vcs-files.yazi/main.lua"]
     type = "file"
-    url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/vcs-files.yazi/main.lua"
-    checksum.sha256 = "40b3a929788bc4dbf3ce4943dcdadff913c41be984ca3cee30962e0f4ddd5795"
+    url = "{{ .external_resources.pins.yazi_vcs_files.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_vcs_files.sha256 }}"
 ["yatline.yazi/main.lua"]
     type = "file"
-    url = "https://raw.githubusercontent.com/imsi32/yatline.yazi/main/main.lua"
-    checksum.sha256 = "bd62cdb273e070deeb4e7f378c8c1f793436c8f74bb04979584677b9b2dfa4da"
+    url = "{{ .external_resources.pins.yazi_yatline.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_yatline.sha256 }}"
 {{ if or (eq .colorscheme "catppuccin-frappe") (eq .colorscheme "catppuccin-latte") (eq .colorscheme "catppuccin-macchiato") (eq .colorscheme "catppuccin-mocha") }}
 ["yatline-catppuccin.yazi/main.lua"]
     type = "file"
-    url = "https://raw.githubusercontent.com/imsi32/yatline-catppuccin.yazi/main/main.lua"
-    checksum.sha256 = "1a17e0e7593d5ceee5008047ca2688778593b7dc014ebf98524e37c172fc9739"
+    url = "{{ .external_resources.pins.yazi_yatline_catppuccin.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_yatline_catppuccin.sha256 }}"
 {{ else if eq .colorscheme "gruvbox-dark" }}
 ["yatline-gruvbox.yazi/main.lua"]
     type = "file"
-    url = "https://raw.githubusercontent.com/imsi32/yatline-gruvbox.yazi/main/main.lua"
-    checksum.sha256 = "45443d8a04fc5a43672741862e490d5fac39df073467ce13eaf229a99ff64cd6"
+    url = "{{ .external_resources.pins.yazi_yatline_gruvbox.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_yatline_gruvbox.sha256 }}"
 {{ end }}

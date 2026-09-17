@@ -1,15 +1,13 @@
 {{ if eq .chezmoi.os "windows" -}}
-{{- $pin := .external_resources.github_release_assets.pi_distribution -}}
-{{- $assetKeyByArch := dict "amd64" "windows_x64" "arm64" "windows_arm64" -}}
-{{- if not (hasKey $assetKeyByArch .chezmoi.arch) -}}
+{{- $pinByArch := dict "amd64" .external_resources.pins.pi_distribution_windows_x64 "arm64" .external_resources.pins.pi_distribution_windows_arm64 -}}
+{{- if not (hasKey $pinByArch .chezmoi.arch) -}}
 {{- fail (printf "pi-distribution has no release asset for architecture %q" .chezmoi.arch) -}}
 {{- end -}}
-{{- $asset := index $pin.assets (index $assetKeyByArch .chezmoi.arch) -}}
-{{- $filename := $asset.name | replace "{tag}" $pin.tag -}}
+{{- $pin := index $pinByArch .chezmoi.arch -}}
 ["pi-distribution"]
     type = "archive"
-    url = "https://github.com/{{ $pin.repository }}/releases/download/{{ $pin.tag | urlquery }}/{{ $filename | urlquery }}"
+    url = "{{ $pin.url }}"
     stripComponents = 1
     exact = true
-    checksum.sha256 = "{{ $asset.sha256 }}"
+    checksum.sha256 = "{{ $pin.sha256 }}"
 {{ end -}}

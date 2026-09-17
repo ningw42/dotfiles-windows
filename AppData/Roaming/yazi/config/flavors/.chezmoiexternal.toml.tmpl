@@ -1,55 +1,55 @@
 {{ if eq .colorscheme "catppuccin-frappe" }}
 ["catppuccin-frappe.yazi/flavor.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/frappe/catppuccin-frappe-blue.toml"
-    checksum.sha256 = "6efe36b7349bf2c0edddc4e579a2dd9eeb7be28ecd6611e801409b0231e34418"
+    url = "{{ .external_resources.pins.catppuccin_yazi_frappe_blue.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_yazi_frappe_blue.sha256 }}"
 ["catppuccin-frappe.yazi/tmtheme.xml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Frappe.tmTheme"
-    checksum.sha256 = "3446d8a3cfb9eb559bc65a3894e6ae8f3579030fac6130c4f96ff524f3e2784f"
+    url = "{{ .external_resources.pins.catppuccin_bat_frappe.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_bat_frappe.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-latte" }}
 ["catppuccin-latte.yazi/flavor.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/latte/catppuccin-latte-blue.toml"
-    checksum.sha256 = "4ebc97278e7039957ab362a74a3cf1ec04ce523f00f9f3401d638835c860606d"
+    url = "{{ .external_resources.pins.catppuccin_yazi_latte_blue.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_yazi_latte_blue.sha256 }}"
 ["catppuccin-latte.yazi/tmtheme.xml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Latte.tmTheme"
-    checksum.sha256 = "a2ddb65bfcf7328802ee4770d1e34ef4093a20fd5c300be3138c99f8a45ed5cb"
+    url = "{{ .external_resources.pins.catppuccin_bat_latte.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_bat_latte.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-macchiato" }}
 ["catppuccin-macchiato.yazi/flavor.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/macchiato/catppuccin-macchiato-blue.toml"
-    checksum.sha256 = "ed2b38313095d982ae683cde702ba49e18aecf59d821c8425ac50aa87b584985"
+    url = "{{ .external_resources.pins.catppuccin_yazi_macchiato_blue.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_yazi_macchiato_blue.sha256 }}"
 ["catppuccin-macchiato.yazi/tmtheme.xml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Macchiato.tmTheme"
-    checksum.sha256 = "110090f655b970e569d82fb3780c161769b59ba234c290d0039c1e8c49bb5a06"
+    url = "{{ .external_resources.pins.catppuccin_bat_macchiato.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_bat_macchiato.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-mocha" }}
 ["catppuccin-mocha.yazi/flavor.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/mocha/catppuccin-mocha-blue.toml"
-    checksum.sha256 = "0d1f380aff156934ee1c1aeb2c1e5505b21a8cd892c206f9838fc0621bab18e9"
+    url = "{{ .external_resources.pins.catppuccin_yazi_mocha_blue.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_yazi_mocha_blue.sha256 }}"
 ["catppuccin-mocha.yazi/tmtheme.xml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Mocha.tmTheme"
-    checksum.sha256 = "395566f08ceb301b936b91c077690ef94f7aeb651b121553f201c99c2bd4aa77"
+    url = "{{ .external_resources.pins.catppuccin_bat_mocha.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_bat_mocha.sha256 }}"
 {{ else if eq .colorscheme "everforest-dark" }}
 ["everforest-dark.yazi/flavor.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/Chromium-3-Oxide/everforest-medium.yazi/main/flavor.toml"
-    checksum.sha256 = "73016614f30f12537be950b3ed9c3da369117780526fe5400cf19d13e59ce5f3"
+    url = "{{ .external_resources.pins.yazi_everforest_medium_flavor.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_everforest_medium_flavor.sha256 }}"
 ["everforest-dark.yazi/tmtheme.xml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/Chromium-3-Oxide/everforest-medium.yazi/main/tmtheme.xml"
-    checksum.sha256 = "ade1ff57064dd81fedfeb2df44730d93fedf48752dfe7da803473ce3d0846471"
+    url = "{{ .external_resources.pins.yazi_everforest_medium_tmtheme.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_everforest_medium_tmtheme.sha256 }}"
 {{ else if eq .colorscheme "gruvbox-dark" }}
 ["gruvbox-dark.yazi/flavor.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/bennyyip/gruvbox-dark.yazi/main/flavor.toml"
-    checksum.sha256 = "f0097295f307002be2465d7ea251c8c1d038ac7a720784013407d7b22f25e9c7"
+    url = "{{ .external_resources.pins.yazi_gruvbox_dark_flavor.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_gruvbox_dark_flavor.sha256 }}"
 ["gruvbox-dark.yazi/tmtheme.xml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/bennyyip/gruvbox-dark.yazi/main/tmtheme.xml"
-    checksum.sha256 = "7947f50a0f32f9fb0052b9d6e206857dff18ac877f736f0d2a866a97ff0df50b"
+    url = "{{ .external_resources.pins.yazi_gruvbox_dark_tmtheme.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.yazi_gruvbox_dark_tmtheme.sha256 }}"
 {{ end }}

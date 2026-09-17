@@ -7,3 +7,4 @@ secrets.yaml
 secrets.yaml.age
 docs/
 tests/
+__pycache__/

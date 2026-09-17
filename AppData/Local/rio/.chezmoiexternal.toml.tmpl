@@ -47,28 +47,29 @@
 # them (dark: lightness * 0.94, chroma + 8, hue + 2; latte: lightness * 1.09,
 # hue + 2) -- e.g. mocha `light-red` should be #f37799, not #f38ba8.
 #
-# The URLs track a BRANCH, so any push to feat/update-color-schema changes these
-# bytes and fails the checksum on the next apply. That is the intended tripwire.
-# Refresh with `python update_externals.py` after an intentional push; once the
-# PR merges, repoint these back at catppuccin/rio main and refresh once more.
+# The pins in .chezmoidata.toml track a BRANCH, so any push to
+# feat/update-color-schema changes these bytes and fails the checksum on the
+# next apply. That is the intended tripwire. Refresh with
+# `python update_externals.py` after an intentional push; once the PR merges,
+# repoint those pins back at catppuccin/rio main and refresh once more.
 {{ if eq .colorscheme "catppuccin-latte" }}
 ["themes/catppuccin-latte.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/ningw42/rio/feat/update-color-schema/themes/catppuccin-latte.toml"
-    checksum.sha256 = "a678682d7ca5af69b767b6cc94a575c0aac17918e1072a4f13837aeb01e45911"
+    url = "{{ .external_resources.pins.catppuccin_rio_latte.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_rio_latte.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-frappe" }}
 ["themes/catppuccin-frappe.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/ningw42/rio/feat/update-color-schema/themes/catppuccin-frappe.toml"
-    checksum.sha256 = "5c0d52a4550c5a85ed59bcf536c9004a68227590ec2ba1919403645c09998c5c"
+    url = "{{ .external_resources.pins.catppuccin_rio_frappe.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_rio_frappe.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-macchiato" }}
 ["themes/catppuccin-macchiato.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/ningw42/rio/feat/update-color-schema/themes/catppuccin-macchiato.toml"
-    checksum.sha256 = "3a7d7598563fee8692d3a27dee795331c7679ae10beeb31565db32a0ab41ab06"
+    url = "{{ .external_resources.pins.catppuccin_rio_macchiato.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_rio_macchiato.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-mocha" }}
 ["themes/catppuccin-mocha.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/ningw42/rio/feat/update-color-schema/themes/catppuccin-mocha.toml"
-    checksum.sha256 = "6969d0af6a1722081cd7f08086295bed5107300b81a4349430161dc5ef0aa753"
+    url = "{{ .external_resources.pins.catppuccin_rio_mocha.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_rio_mocha.sha256 }}"
 {{ end }}

@@ -1,21 +1,21 @@
 {{ if eq .colorscheme "catppuccin-latte" }}
 ["catppuccin-latte-blue.yml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/lazygit/main/themes-mergable/latte/blue.yml"
-    checksum.sha256 = "00ca9f3ecb9199945076e4001bdd1a9dcd950d16ecf29c3eea9ca1c8d7b589b8"
+    url = "{{ .external_resources.pins.catppuccin_lazygit_latte_blue.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_lazygit_latte_blue.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-frappe" }}
 ["catppuccin-frappe-blue.yml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/lazygit/main/themes-mergable/frappe/blue.yml"
-    checksum.sha256 = "7b76fad5c2dafc0d743e8210b604ce9b6fbc9d234b8f57017cea2ed505d67224"
+    url = "{{ .external_resources.pins.catppuccin_lazygit_frappe_blue.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_lazygit_frappe_blue.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-macchiato" }}
 ["catppuccin-macchiato-blue.yml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/lazygit/main/themes-mergable/macchiato/blue.yml"
-    checksum.sha256 = "5fea9abc0f089ec9925c1265f7f75ba4b194d0f642b027e2190ac7a9dc6a2763"
+    url = "{{ .external_resources.pins.catppuccin_lazygit_macchiato_blue.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_lazygit_macchiato_blue.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-mocha" }}
 ["catppuccin-mocha-blue.yml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/lazygit/main/themes-mergable/mocha/blue.yml"
-    checksum.sha256 = "651ef6210ebb18b4f3a0974458e67b93cf60039a9852aaff3269a8c97e670ca9"
+    url = "{{ .external_resources.pins.catppuccin_lazygit_mocha_blue.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_lazygit_mocha_blue.sha256 }}"
 {{ end }}

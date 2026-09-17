@@ -1,31 +1,31 @@
 {{ if eq .colorscheme "gruvbox-dark" }}
 ["themes/gruvbox-dark.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/alacritty/alacritty-theme/master/themes/gruvbox_dark.toml"
-    checksum.sha256 = "85da5eac732cb89ba0a1d334232b9e255e901f4978d3e5eb5512a71d14116ea7"
+    url = "{{ .external_resources.pins.alacritty_gruvbox_dark.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.alacritty_gruvbox_dark.sha256 }}"
 {{ else if eq .colorscheme "everforest-dark" }}
 ["themes/everforest-dark.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/alacritty/alacritty-theme/master/themes/everforest_dark_medium.toml"
-    checksum.sha256 = "0b6f445b955a8d3972136e47ead1a83ba4985b553e69f6bb9ef293bbf2e5ad27"
+    url = "{{ .external_resources.pins.alacritty_everforest_dark_medium.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.alacritty_everforest_dark_medium.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-latte" }}
 ["themes/catppuccin-latte.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-latte.toml"
-    checksum.sha256 = "add4020af6910d8baa02bb765f6e12f631c38c092689815a2549d5acbdca3418"
+    url = "{{ .external_resources.pins.catppuccin_alacritty_latte.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_alacritty_latte.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-frappe" }}
 ["themes/catppuccin-frappe.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-frappe.toml"
-    checksum.sha256 = "bac9843f0f984f03928342369564527382aedd1d9f6b49273a2f3bf99e28124f"
+    url = "{{ .external_resources.pins.catppuccin_alacritty_frappe.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_alacritty_frappe.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-macchiato" }}
 ["themes/catppuccin-macchiato.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-macchiato.toml"
-    checksum.sha256 = "fd06f991f47937a99331c2fa97aa9476c1b7db0a64a44487bb9aa35f7188507c"
+    url = "{{ .external_resources.pins.catppuccin_alacritty_macchiato.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_alacritty_macchiato.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-mocha" }}
 ["themes/catppuccin-mocha.toml"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-mocha.toml"
-    checksum.sha256 = "949cef17c3ec50420b82c70b22e3aa2ea0a5d27dfcc13284192bd5284b5db2c5"
+    url = "{{ .external_resources.pins.catppuccin_alacritty_mocha.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_alacritty_mocha.sha256 }}"
 {{ end }}

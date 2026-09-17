@@ -1,0 +1,890 @@
+{
+  "baseline_commit": "0608f32e9b858f4e1b92b8285205d83a14fb69ce",
+  "baseline_renderer": "chezmoi version v2.72.2, commit 125d00fe730fc9abf456ec312ba85b18c859bc50, built at 2026-09-13T18:23:26Z, built by goreleaser",
+  "baseline_platform": "windows/amd64",
+  "by_theme": {
+    "catppuccin-latte": {
+      "AppData/Local/glow/Config/.chezmoiexternal.toml": {
+        "catppuccin-latte.json": {
+          "type": "file",
+          "pin": "catppuccin_glamour_latte"
+        }
+      },
+      "AppData/Local/lazygit/.chezmoiexternal.toml": {
+        "catppuccin-latte-blue.yml": {
+          "type": "file",
+          "pin": "catppuccin_lazygit_latte_blue"
+        }
+      },
+      "AppData/Local/rio/.chezmoiexternal.toml": {
+        "themes/catppuccin-latte.toml": {
+          "type": "file",
+          "pin": "catppuccin_rio_latte"
+        }
+      },
+      "AppData/Roaming/Zellij/config/plugins/.chezmoiexternal.toml": {
+        "zjstatus.wasm": {
+          "type": "file",
+          "refreshPeriod": "168h",
+          "pin": "zjstatus"
+        }
+      },
+      "AppData/Roaming/alacritty/.chezmoiexternal.toml": {
+        "themes/catppuccin-latte.toml": {
+          "type": "file",
+          "pin": "catppuccin_alacritty_latte"
+        }
+      },
+      "AppData/Roaming/yazi/config/flavors/.chezmoiexternal.toml": {
+        "catppuccin-latte.yazi/flavor.toml": {
+          "type": "file",
+          "pin": "catppuccin_yazi_latte_blue"
+        },
+        "catppuccin-latte.yazi/tmtheme.xml": {
+          "type": "file",
+          "pin": "catppuccin_bat_latte"
+        }
+      },
+      "AppData/Roaming/yazi/config/plugins/.chezmoiexternal.toml": {
+        "full-border.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_full_border"
+        },
+        "git.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_git_main"
+        },
+        "git.yazi/types.lua": {
+          "type": "file",
+          "pin": "yazi_git_types"
+        },
+        "mediainfo.yazi": {
+          "type": "archive",
+          "stripComponents": 1,
+          "include": [
+            "*.lua"
+          ],
+          "pin": "yazi_mediainfo"
+        },
+        "ouch.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_ouch"
+        },
+        "piper.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_piper"
+        },
+        "smart-enter.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_smart_enter"
+        },
+        "torrent-preview.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_torrent_preview"
+        },
+        "vcs-files.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_vcs_files"
+        },
+        "yatline.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_yatline"
+        },
+        "yatline-catppuccin.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_yatline_catppuccin"
+        }
+      },
+      "dot_config/bat/.chezmoiexternal.toml": {
+        "themes/Catppuccin Latte.tmTheme": {
+          "type": "file",
+          "pin": "catppuccin_bat_latte"
+        }
+      },
+      "dot_config/delta/.chezmoiexternal.toml": {
+        "catppuccin.gitconfig": {
+          "type": "file",
+          "pin": "catppuccin_delta"
+        }
+      },
+      "dot_config/fzf/.chezmoiexternal.toml": {
+        "catppuccin-latte.ps1": {
+          "type": "file",
+          "pin": "catppuccin_fzf_latte"
+        }
+      },
+      "dot_local/share/llm-agents/plugins/.chezmoiexternal.toml": {
+        "superpowers": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "superpowers"
+        },
+        "mattpocock-skills": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "mattpocock_skills"
+        }
+      },
+      "dot_pi/agent/packages/.chezmoiexternal.toml": {
+        "pi-distribution": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "pi_distribution_windows_x64"
+        }
+      },
+      "scoop/persist/btop/themes/.chezmoiexternal.toml": {
+        "catppuccin_latte.theme": {
+          "type": "file",
+          "pin": "catppuccin_btop_latte"
+        }
+      }
+    },
+    "catppuccin-frappe": {
+      "AppData/Local/glow/Config/.chezmoiexternal.toml": {
+        "catppuccin-frappe.json": {
+          "type": "file",
+          "pin": "catppuccin_glamour_frappe"
+        }
+      },
+      "AppData/Local/lazygit/.chezmoiexternal.toml": {
+        "catppuccin-frappe-blue.yml": {
+          "type": "file",
+          "pin": "catppuccin_lazygit_frappe_blue"
+        }
+      },
+      "AppData/Local/rio/.chezmoiexternal.toml": {
+        "themes/catppuccin-frappe.toml": {
+          "type": "file",
+          "pin": "catppuccin_rio_frappe"
+        }
+      },
+      "AppData/Roaming/Zellij/config/plugins/.chezmoiexternal.toml": {
+        "zjstatus.wasm": {
+          "type": "file",
+          "refreshPeriod": "168h",
+          "pin": "zjstatus"
+        }
+      },
+      "AppData/Roaming/alacritty/.chezmoiexternal.toml": {
+        "themes/catppuccin-frappe.toml": {
+          "type": "file",
+          "pin": "catppuccin_alacritty_frappe"
+        }
+      },
+      "AppData/Roaming/yazi/config/flavors/.chezmoiexternal.toml": {
+        "catppuccin-frappe.yazi/flavor.toml": {
+          "type": "file",
+          "pin": "catppuccin_yazi_frappe_blue"
+        },
+        "catppuccin-frappe.yazi/tmtheme.xml": {
+          "type": "file",
+          "pin": "catppuccin_bat_frappe"
+        }
+      },
+      "AppData/Roaming/yazi/config/plugins/.chezmoiexternal.toml": {
+        "full-border.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_full_border"
+        },
+        "git.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_git_main"
+        },
+        "git.yazi/types.lua": {
+          "type": "file",
+          "pin": "yazi_git_types"
+        },
+        "mediainfo.yazi": {
+          "type": "archive",
+          "stripComponents": 1,
+          "include": [
+            "*.lua"
+          ],
+          "pin": "yazi_mediainfo"
+        },
+        "ouch.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_ouch"
+        },
+        "piper.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_piper"
+        },
+        "smart-enter.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_smart_enter"
+        },
+        "torrent-preview.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_torrent_preview"
+        },
+        "vcs-files.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_vcs_files"
+        },
+        "yatline.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_yatline"
+        },
+        "yatline-catppuccin.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_yatline_catppuccin"
+        }
+      },
+      "dot_config/bat/.chezmoiexternal.toml": {
+        "themes/Catppuccin Frappe.tmTheme": {
+          "type": "file",
+          "pin": "catppuccin_bat_frappe"
+        }
+      },
+      "dot_config/delta/.chezmoiexternal.toml": {
+        "catppuccin.gitconfig": {
+          "type": "file",
+          "pin": "catppuccin_delta"
+        }
+      },
+      "dot_config/fzf/.chezmoiexternal.toml": {
+        "catppuccin-frappe.ps1": {
+          "type": "file",
+          "pin": "catppuccin_fzf_frappe"
+        }
+      },
+      "dot_local/share/llm-agents/plugins/.chezmoiexternal.toml": {
+        "superpowers": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "superpowers"
+        },
+        "mattpocock-skills": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "mattpocock_skills"
+        }
+      },
+      "dot_pi/agent/packages/.chezmoiexternal.toml": {
+        "pi-distribution": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "pi_distribution_windows_x64"
+        }
+      },
+      "scoop/persist/btop/themes/.chezmoiexternal.toml": {
+        "catppuccin_frappe.theme": {
+          "type": "file",
+          "pin": "catppuccin_btop_frappe"
+        }
+      }
+    },
+    "catppuccin-macchiato": {
+      "AppData/Local/glow/Config/.chezmoiexternal.toml": {
+        "catppuccin-macchiato.json": {
+          "type": "file",
+          "pin": "catppuccin_glamour_macchiato"
+        }
+      },
+      "AppData/Local/lazygit/.chezmoiexternal.toml": {
+        "catppuccin-macchiato-blue.yml": {
+          "type": "file",
+          "pin": "catppuccin_lazygit_macchiato_blue"
+        }
+      },
+      "AppData/Local/rio/.chezmoiexternal.toml": {
+        "themes/catppuccin-macchiato.toml": {
+          "type": "file",
+          "pin": "catppuccin_rio_macchiato"
+        }
+      },
+      "AppData/Roaming/Zellij/config/plugins/.chezmoiexternal.toml": {
+        "zjstatus.wasm": {
+          "type": "file",
+          "refreshPeriod": "168h",
+          "pin": "zjstatus"
+        }
+      },
+      "AppData/Roaming/alacritty/.chezmoiexternal.toml": {
+        "themes/catppuccin-macchiato.toml": {
+          "type": "file",
+          "pin": "catppuccin_alacritty_macchiato"
+        }
+      },
+      "AppData/Roaming/yazi/config/flavors/.chezmoiexternal.toml": {
+        "catppuccin-macchiato.yazi/flavor.toml": {
+          "type": "file",
+          "pin": "catppuccin_yazi_macchiato_blue"
+        },
+        "catppuccin-macchiato.yazi/tmtheme.xml": {
+          "type": "file",
+          "pin": "catppuccin_bat_macchiato"
+        }
+      },
+      "AppData/Roaming/yazi/config/plugins/.chezmoiexternal.toml": {
+        "full-border.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_full_border"
+        },
+        "git.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_git_main"
+        },
+        "git.yazi/types.lua": {
+          "type": "file",
+          "pin": "yazi_git_types"
+        },
+        "mediainfo.yazi": {
+          "type": "archive",
+          "stripComponents": 1,
+          "include": [
+            "*.lua"
+          ],
+          "pin": "yazi_mediainfo"
+        },
+        "ouch.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_ouch"
+        },
+        "piper.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_piper"
+        },
+        "smart-enter.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_smart_enter"
+        },
+        "torrent-preview.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_torrent_preview"
+        },
+        "vcs-files.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_vcs_files"
+        },
+        "yatline.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_yatline"
+        },
+        "yatline-catppuccin.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_yatline_catppuccin"
+        }
+      },
+      "dot_config/bat/.chezmoiexternal.toml": {
+        "themes/Catppuccin Macchiato.tmTheme": {
+          "type": "file",
+          "pin": "catppuccin_bat_macchiato"
+        }
+      },
+      "dot_config/delta/.chezmoiexternal.toml": {
+        "catppuccin.gitconfig": {
+          "type": "file",
+          "pin": "catppuccin_delta"
+        }
+      },
+      "dot_config/fzf/.chezmoiexternal.toml": {
+        "catppuccin-macchiato.ps1": {
+          "type": "file",
+          "pin": "catppuccin_fzf_macchiato"
+        }
+      },
+      "dot_local/share/llm-agents/plugins/.chezmoiexternal.toml": {
+        "superpowers": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "superpowers"
+        },
+        "mattpocock-skills": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "mattpocock_skills"
+        }
+      },
+      "dot_pi/agent/packages/.chezmoiexternal.toml": {
+        "pi-distribution": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "pi_distribution_windows_x64"
+        }
+      },
+      "scoop/persist/btop/themes/.chezmoiexternal.toml": {
+        "catppuccin_macchiato.theme": {
+          "type": "file",
+          "pin": "catppuccin_btop_macchiato"
+        }
+      }
+    },
+    "catppuccin-mocha": {
+      "AppData/Local/glow/Config/.chezmoiexternal.toml": {
+        "catppuccin-mocha.json": {
+          "type": "file",
+          "pin": "catppuccin_glamour_mocha"
+        }
+      },
+      "AppData/Local/lazygit/.chezmoiexternal.toml": {
+        "catppuccin-mocha-blue.yml": {
+          "type": "file",
+          "pin": "catppuccin_lazygit_mocha_blue"
+        }
+      },
+      "AppData/Local/rio/.chezmoiexternal.toml": {
+        "themes/catppuccin-mocha.toml": {
+          "type": "file",
+          "pin": "catppuccin_rio_mocha"
+        }
+      },
+      "AppData/Roaming/Zellij/config/plugins/.chezmoiexternal.toml": {
+        "zjstatus.wasm": {
+          "type": "file",
+          "refreshPeriod": "168h",
+          "pin": "zjstatus"
+        }
+      },
+      "AppData/Roaming/alacritty/.chezmoiexternal.toml": {
+        "themes/catppuccin-mocha.toml": {
+          "type": "file",
+          "pin": "catppuccin_alacritty_mocha"
+        }
+      },
+      "AppData/Roaming/yazi/config/flavors/.chezmoiexternal.toml": {
+        "catppuccin-mocha.yazi/flavor.toml": {
+          "type": "file",
+          "pin": "catppuccin_yazi_mocha_blue"
+        },
+        "catppuccin-mocha.yazi/tmtheme.xml": {
+          "type": "file",
+          "pin": "catppuccin_bat_mocha"
+        }
+      },
+      "AppData/Roaming/yazi/config/plugins/.chezmoiexternal.toml": {
+        "full-border.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_full_border"
+        },
+        "git.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_git_main"
+        },
+        "git.yazi/types.lua": {
+          "type": "file",
+          "pin": "yazi_git_types"
+        },
+        "mediainfo.yazi": {
+          "type": "archive",
+          "stripComponents": 1,
+          "include": [
+            "*.lua"
+          ],
+          "pin": "yazi_mediainfo"
+        },
+        "ouch.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_ouch"
+        },
+        "piper.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_piper"
+        },
+        "smart-enter.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_smart_enter"
+        },
+        "torrent-preview.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_torrent_preview"
+        },
+        "vcs-files.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_vcs_files"
+        },
+        "yatline.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_yatline"
+        },
+        "yatline-catppuccin.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_yatline_catppuccin"
+        }
+      },
+      "dot_config/bat/.chezmoiexternal.toml": {
+        "themes/Catppuccin Mocha.tmTheme": {
+          "type": "file",
+          "pin": "catppuccin_bat_mocha"
+        }
+      },
+      "dot_config/delta/.chezmoiexternal.toml": {
+        "catppuccin.gitconfig": {
+          "type": "file",
+          "pin": "catppuccin_delta"
+        }
+      },
+      "dot_config/fzf/.chezmoiexternal.toml": {
+        "catppuccin-mocha.ps1": {
+          "type": "file",
+          "pin": "catppuccin_fzf_mocha"
+        }
+      },
+      "dot_local/share/llm-agents/plugins/.chezmoiexternal.toml": {
+        "superpowers": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "superpowers"
+        },
+        "mattpocock-skills": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "mattpocock_skills"
+        }
+      },
+      "dot_pi/agent/packages/.chezmoiexternal.toml": {
+        "pi-distribution": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "pi_distribution_windows_x64"
+        }
+      },
+      "scoop/persist/btop/themes/.chezmoiexternal.toml": {
+        "catppuccin_mocha.theme": {
+          "type": "file",
+          "pin": "catppuccin_btop_mocha"
+        }
+      }
+    },
+    "gruvbox-dark": {
+      "AppData/Local/glow/Config/.chezmoiexternal.toml": {},
+      "AppData/Local/lazygit/.chezmoiexternal.toml": {},
+      "AppData/Local/rio/.chezmoiexternal.toml": {},
+      "AppData/Roaming/Zellij/config/plugins/.chezmoiexternal.toml": {
+        "zjstatus.wasm": {
+          "type": "file",
+          "refreshPeriod": "168h",
+          "pin": "zjstatus"
+        }
+      },
+      "AppData/Roaming/alacritty/.chezmoiexternal.toml": {
+        "themes/gruvbox-dark.toml": {
+          "type": "file",
+          "pin": "alacritty_gruvbox_dark"
+        }
+      },
+      "AppData/Roaming/yazi/config/flavors/.chezmoiexternal.toml": {
+        "gruvbox-dark.yazi/flavor.toml": {
+          "type": "file",
+          "pin": "yazi_gruvbox_dark_flavor"
+        },
+        "gruvbox-dark.yazi/tmtheme.xml": {
+          "type": "file",
+          "pin": "yazi_gruvbox_dark_tmtheme"
+        }
+      },
+      "AppData/Roaming/yazi/config/plugins/.chezmoiexternal.toml": {
+        "full-border.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_full_border"
+        },
+        "git.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_git_main"
+        },
+        "git.yazi/types.lua": {
+          "type": "file",
+          "pin": "yazi_git_types"
+        },
+        "mediainfo.yazi": {
+          "type": "archive",
+          "stripComponents": 1,
+          "include": [
+            "*.lua"
+          ],
+          "pin": "yazi_mediainfo"
+        },
+        "ouch.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_ouch"
+        },
+        "piper.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_piper"
+        },
+        "smart-enter.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_smart_enter"
+        },
+        "torrent-preview.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_torrent_preview"
+        },
+        "vcs-files.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_vcs_files"
+        },
+        "yatline.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_yatline"
+        },
+        "yatline-gruvbox.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_yatline_gruvbox"
+        }
+      },
+      "dot_config/bat/.chezmoiexternal.toml": {},
+      "dot_config/delta/.chezmoiexternal.toml": {
+        "catppuccin.gitconfig": {
+          "type": "file",
+          "pin": "catppuccin_delta"
+        }
+      },
+      "dot_config/fzf/.chezmoiexternal.toml": {},
+      "dot_local/share/llm-agents/plugins/.chezmoiexternal.toml": {
+        "superpowers": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "superpowers"
+        },
+        "mattpocock-skills": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "mattpocock_skills"
+        }
+      },
+      "dot_pi/agent/packages/.chezmoiexternal.toml": {
+        "pi-distribution": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "pi_distribution_windows_x64"
+        }
+      },
+      "scoop/persist/btop/themes/.chezmoiexternal.toml": {}
+    },
+    "everforest-dark": {
+      "AppData/Local/glow/Config/.chezmoiexternal.toml": {},
+      "AppData/Local/lazygit/.chezmoiexternal.toml": {},
+      "AppData/Local/rio/.chezmoiexternal.toml": {},
+      "AppData/Roaming/Zellij/config/plugins/.chezmoiexternal.toml": {
+        "zjstatus.wasm": {
+          "type": "file",
+          "refreshPeriod": "168h",
+          "pin": "zjstatus"
+        }
+      },
+      "AppData/Roaming/alacritty/.chezmoiexternal.toml": {
+        "themes/everforest-dark.toml": {
+          "type": "file",
+          "pin": "alacritty_everforest_dark_medium"
+        }
+      },
+      "AppData/Roaming/yazi/config/flavors/.chezmoiexternal.toml": {
+        "everforest-dark.yazi/flavor.toml": {
+          "type": "file",
+          "pin": "yazi_everforest_medium_flavor"
+        },
+        "everforest-dark.yazi/tmtheme.xml": {
+          "type": "file",
+          "pin": "yazi_everforest_medium_tmtheme"
+        }
+      },
+      "AppData/Roaming/yazi/config/plugins/.chezmoiexternal.toml": {
+        "full-border.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_full_border"
+        },
+        "git.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_git_main"
+        },
+        "git.yazi/types.lua": {
+          "type": "file",
+          "pin": "yazi_git_types"
+        },
+        "mediainfo.yazi": {
+          "type": "archive",
+          "stripComponents": 1,
+          "include": [
+            "*.lua"
+          ],
+          "pin": "yazi_mediainfo"
+        },
+        "ouch.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_ouch"
+        },
+        "piper.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_piper"
+        },
+        "smart-enter.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_smart_enter"
+        },
+        "torrent-preview.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_torrent_preview"
+        },
+        "vcs-files.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_vcs_files"
+        },
+        "yatline.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_yatline"
+        }
+      },
+      "dot_config/bat/.chezmoiexternal.toml": {},
+      "dot_config/delta/.chezmoiexternal.toml": {
+        "catppuccin.gitconfig": {
+          "type": "file",
+          "pin": "catppuccin_delta"
+        }
+      },
+      "dot_config/fzf/.chezmoiexternal.toml": {},
+      "dot_local/share/llm-agents/plugins/.chezmoiexternal.toml": {
+        "superpowers": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "superpowers"
+        },
+        "mattpocock-skills": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "mattpocock_skills"
+        }
+      },
+      "dot_pi/agent/packages/.chezmoiexternal.toml": {
+        "pi-distribution": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "pi_distribution_windows_x64"
+        }
+      },
+      "scoop/persist/btop/themes/.chezmoiexternal.toml": {}
+    },
+    "unknown-theme": {
+      "AppData/Local/glow/Config/.chezmoiexternal.toml": {},
+      "AppData/Local/lazygit/.chezmoiexternal.toml": {},
+      "AppData/Local/rio/.chezmoiexternal.toml": {},
+      "AppData/Roaming/Zellij/config/plugins/.chezmoiexternal.toml": {
+        "zjstatus.wasm": {
+          "type": "file",
+          "refreshPeriod": "168h",
+          "pin": "zjstatus"
+        }
+      },
+      "AppData/Roaming/alacritty/.chezmoiexternal.toml": {},
+      "AppData/Roaming/yazi/config/flavors/.chezmoiexternal.toml": {},
+      "AppData/Roaming/yazi/config/plugins/.chezmoiexternal.toml": {
+        "full-border.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_full_border"
+        },
+        "git.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_git_main"
+        },
+        "git.yazi/types.lua": {
+          "type": "file",
+          "pin": "yazi_git_types"
+        },
+        "mediainfo.yazi": {
+          "type": "archive",
+          "stripComponents": 1,
+          "include": [
+            "*.lua"
+          ],
+          "pin": "yazi_mediainfo"
+        },
+        "ouch.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_ouch"
+        },
+        "piper.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_piper"
+        },
+        "smart-enter.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_smart_enter"
+        },
+        "torrent-preview.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_torrent_preview"
+        },
+        "vcs-files.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_vcs_files"
+        },
+        "yatline.yazi/main.lua": {
+          "type": "file",
+          "pin": "yazi_yatline"
+        }
+      },
+      "dot_config/bat/.chezmoiexternal.toml": {},
+      "dot_config/delta/.chezmoiexternal.toml": {
+        "catppuccin.gitconfig": {
+          "type": "file",
+          "pin": "catppuccin_delta"
+        }
+      },
+      "dot_config/fzf/.chezmoiexternal.toml": {},
+      "dot_local/share/llm-agents/plugins/.chezmoiexternal.toml": {
+        "superpowers": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "superpowers"
+        },
+        "mattpocock-skills": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "mattpocock_skills"
+        }
+      },
+      "dot_pi/agent/packages/.chezmoiexternal.toml": {
+        "pi-distribution": {
+          "type": "archive",
+          "stripComponents": 1,
+          "exact": true,
+          "pin": "pi_distribution_windows_x64"
+        }
+      },
+      "scoop/persist/btop/themes/.chezmoiexternal.toml": {}
+    }
+  },
+  "pi_by_platform": {
+    "windows/amd64": {
+      "pi-distribution": {
+        "type": "archive",
+        "stripComponents": 1,
+        "exact": true,
+        "pin": "pi_distribution_windows_x64"
+      }
+    },
+    "windows/arm64": {
+      "pi-distribution": {
+        "type": "archive",
+        "stripComponents": 1,
+        "exact": true,
+        "pin": "pi_distribution_windows_arm64"
+      }
+    },
+    "linux/amd64": {},
+    "linux/386": {},
+    "darwin/arm64": {}
+  },
+  "pin_binding_note": "Exact legacy URL/SHA/type/target/options parity passed before binding each payload to its normalized pin ID. Pin values now follow .chezmoidata.toml; deployment layout stays frozen."
+}

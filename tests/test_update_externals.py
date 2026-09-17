@@ -1,684 +1,359 @@
-import hashlib
+"""Behavioral tests for the updater's public operation, with HTTP mocked at transport."""
+
+import http.client
 import io
+import json
 import tomllib
 import unittest
+import urllib.error
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import update_externals
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-
-
-DATA = """
-[external_resources.github_releases.superpowers]
-repository = "obra/superpowers"
-tag = "6.1.0"
-sha256 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-""".lstrip()
-
-EMPTY_DATA = """
-[external_resources.github_releases.superpowers]
-repository = "obra/superpowers"
-tag = ""
-sha256 = ""
-""".lstrip()
-
-TWO_PIN_DATA = DATA + """
-
-[external_resources.github_releases.other]
-repository = "example/other"
-tag = "1.0.0"
-sha256 = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-"""
-
-ASSET_DATA = """
-[external_resources.github_release_assets.pi_distribution]
-repository = "ningw42/pi-distribution"
-tag = "v1.0.0"
-
-[external_resources.github_release_assets.pi_distribution.assets.windows_x64]
-name = "pi-distribution-{tag}-windows-x64.tgz"
-sha256 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-
-[external_resources.github_release_assets.pi_distribution.assets.windows_arm64]
-name = "pi-distribution-{tag}-windows-arm64.tgz"
-sha256 = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-""".lstrip()
-
-STATIC_ASSET_DATA = """
-[external_resources.github_release_assets.zjstatus]
-repository = "dj95/zjstatus"
-tag = "v0.23.0"
-
-[external_resources.github_release_assets.zjstatus.assets.wasm]
-name = "zjstatus.wasm"
-sha256 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-""".lstrip()
-
-EXTERNAL_DATA = """
-["resource.txt"]
-type = "file"
-url = "https://example.test/resource.txt"
-checksum.sha256 = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-""".lstrip()
-
-
-class ExternalChecksumParsingTests(unittest.TestCase):
-    def test_extracts_pair_with_options_between_url_and_checksum(self):
-        content = EXTERNAL_DATA.replace(
-            "checksum.sha256", '    stripComponents = 1\nchecksum.sha256'
-        )
-
-        for line_ending in ("\n", "\r\n"):
-            with self.subTest(line_ending=repr(line_ending)):
-                pairs = update_externals.extract_url_checksum_pairs(
-                    content.replace("\n", line_ending)
-                )
-
-                self.assertEqual(len(pairs), 1)
-                self.assertEqual(
-                    pairs[0][:2],
-                    ("https://example.test/resource.txt", "c" * 64),
-                )
-
-
-class RepositoryGithubReleaseConfigurationTests(unittest.TestCase):
-    def test_repository_declares_mattpocock_skills_release_pin(self):
-        content = (REPO_ROOT / ".chezmoidata.toml").read_text(encoding="utf-8")
-        pins = {
-            pin.name: pin
-            for pin in update_externals.extract_github_release_pins(content)
-        }
-
-        pin = pins["mattpocock_skills"]
-        self.assertEqual(pin.repository, "mattpocock/skills")
-        self.assertTrue(pin.tag)
-        self.assertRegex(pin.sha256, r"^[0-9a-f]{64}$")
-
-    def test_repository_declares_pi_distribution_release_assets(self):
-        content = (REPO_ROOT / ".chezmoidata.toml").read_text(encoding="utf-8")
-        pins = {
-            pin.name: pin
-            for pin in update_externals.extract_github_release_asset_pins(content)
-        }
-
-        pin = pins["pi_distribution"]
-        self.assertEqual(pin.repository, "ningw42/pi-distribution")
-        self.assertTrue(pin.tag)
-        self.assertEqual(
-            {asset.name for asset in pin.assets},
-            {"windows_x64", "windows_arm64"},
-        )
-        for asset in pin.assets:
-            self.assertIn("{tag}", asset.filename)
-            self.assertRegex(asset.sha256, r"^[0-9a-f]{64}$")
-
-    def test_repository_declares_zjstatus_release_asset(self):
-        content = (REPO_ROOT / ".chezmoidata.toml").read_text(encoding="utf-8")
-        pins = {
-            pin.name: pin
-            for pin in update_externals.extract_github_release_asset_pins(content)
-        }
-
-        pin = pins["zjstatus"]
-        self.assertEqual(pin.repository, "dj95/zjstatus")
-        self.assertTrue(pin.tag)
-        self.assertEqual(len(pin.assets), 1)
-        self.assertEqual(pin.assets[0].filename, "zjstatus.wasm")
-        self.assertRegex(pin.assets[0].sha256, r"^[0-9a-f]{64}$")
-
-
-class GithubReleasePinParsingTests(unittest.TestCase):
-    def test_extracts_github_release_pin(self):
-        pins = update_externals.extract_github_release_pins(DATA)
-
-        self.assertEqual(len(pins), 1)
-        self.assertEqual(pins[0].name, "superpowers")
-        self.assertEqual(pins[0].repository, "obra/superpowers")
-        self.assertEqual(pins[0].tag, "6.1.0")
-
-    def test_accepts_fully_empty_pin_for_first_refresh(self):
-        pin = update_externals.extract_github_release_pins(EMPTY_DATA)[0]
-
-        self.assertEqual(pin.tag, "")
-        self.assertEqual(pin.sha256, "")
-
-    def test_extracts_pin_from_crlf_metadata(self):
-        pin = update_externals.extract_github_release_pins(
-            DATA.replace("\n", "\r\n")
-        )[0]
-
-        self.assertEqual(pin.repository, "obra/superpowers")
-        self.assertEqual(pin.tag, "6.1.0")
-
-    def test_ignores_keys_outside_github_release_sections(self):
-        content = """
-[unrelated]
-repository = "obra/superpowers"
-tag = "6.1.0"
-sha256 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-""".lstrip()
-
-        self.assertEqual(update_externals.extract_github_release_pins(content), [])
-
-    def test_rejects_empty_repository(self):
-        invalid = DATA.replace("obra/superpowers", "")
-
-        with self.assertRaises(ValueError):
-            update_externals.extract_github_release_pins(invalid)
-
-    def test_rejects_invalid_checksum(self):
-        invalid = DATA.replace("a" * 64, "not-a-checksum")
-
-        with self.assertRaises(ValueError):
-            update_externals.extract_github_release_pins(invalid)
-
-
-class GithubReleaseAssetPinParsingTests(unittest.TestCase):
-    def test_extracts_release_asset_pin(self):
-        pin = update_externals.extract_github_release_asset_pins(ASSET_DATA)[0]
-
-        self.assertEqual(pin.name, "pi_distribution")
-        self.assertEqual(pin.repository, "ningw42/pi-distribution")
-        self.assertEqual(pin.tag, "v1.0.0")
-        self.assertEqual(
-            [(asset.name, asset.filename) for asset in pin.assets],
-            [
-                ("windows_x64", "pi-distribution-{tag}-windows-x64.tgz"),
-                ("windows_arm64", "pi-distribution-{tag}-windows-arm64.tgz"),
-            ],
-        )
-
-    def test_accepts_release_asset_with_static_filename(self):
-        pin = update_externals.extract_github_release_asset_pins(STATIC_ASSET_DATA)[0]
-
-        self.assertEqual(pin.repository, "dj95/zjstatus")
-        self.assertEqual(pin.assets[0].filename, "zjstatus.wasm")
-
-    def test_rejects_asset_name_with_multiple_tag_placeholders(self):
-        invalid = ASSET_DATA.replace(
-            "pi-distribution-{tag}-windows-x64.tgz",
-            "pi-distribution-{tag}-{tag}-windows-x64.tgz",
-        )
-
-        with self.assertRaises(ValueError):
-            update_externals.extract_github_release_asset_pins(invalid)
-
-    def test_rejects_half_initialized_asset_pin(self):
-        invalid = ASSET_DATA.replace("a" * 64, "")
-
-        with self.assertRaises(ValueError):
-            update_externals.extract_github_release_asset_pins(invalid)
-
-
-class GithubReleaseLookupTests(unittest.TestCase):
-    def test_fetch_sha256_hashes_response_in_fixed_size_chunks(self):
-        class ChunkedResponse:
-            def __init__(self):
-                self.chunks = iter((b"abc", b"def", b""))
-                self.read_sizes = []
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *args):
-                return False
-
-            def read(self, size=-1):
-                if size < 0:
-                    raise AssertionError("unbounded read attempted")
-                self.read_sizes.append(size)
-                return next(self.chunks)
-
-        response = ChunkedResponse()
-        with patch.object(
-            update_externals.urllib.request, "urlopen", return_value=response
-        ):
-            try:
-                digest = update_externals.fetch_sha256(
-                    "https://example.test/archive"
-                )
-            except AssertionError as error:
-                self.fail(str(error))
-
-        self.assertEqual(digest, hashlib.sha256(b"abcdef").hexdigest())
-        self.assertTrue(response.read_sizes)
-        self.assertEqual(len(set(response.read_sizes)), 1)
-        self.assertGreater(response.read_sizes[0], 0)
-
-    def test_fetches_latest_release_from_github_api(self):
-        response = MagicMock()
-        response.__enter__.return_value.read.return_value = b'{"tag_name":"6.1.1"}'
-
-        with patch.object(
-            update_externals.urllib.request, "urlopen", return_value=response
-        ) as urlopen:
-            release = update_externals.fetch_latest_release(
-                "obra/superpowers", timeout=12
-            )
-
-        self.assertEqual(release, {"tag_name": "6.1.1"})
-        request = urlopen.call_args.args[0]
-        self.assertEqual(
-            request.full_url,
-            "https://api.github.com/repos/obra/superpowers/releases/latest",
-        )
-        self.assertEqual(request.get_header("Accept"), "application/vnd.github+json")
-        self.assertEqual(
-            request.get_header("User-agent"), "chezmoi-update-externals"
-        )
-        self.assertEqual(urlopen.call_args.kwargs["timeout"], 12)
-
-    def test_fetch_latest_release_catches_invalid_url(self):
-        with patch.object(
-            update_externals.urllib.request,
-            "Request",
-            side_effect=ValueError("invalid URL"),
-        ), redirect_stderr(io.StringIO()):
-            release = update_externals.fetch_latest_release("invalid\nrepository")
-
-        self.assertIsNone(release)
-
-    def test_build_update_returns_none_without_latest_release(self):
-        with patch.object(update_externals, "fetch_latest_release", return_value=None):
-            self.assertIsNone(
-                update_externals.build_github_release_update("obra/superpowers")
-            )
-
-    def test_archive_url_quotes_entire_tag(self):
-        self.assertEqual(
-            update_externals.github_archive_url(
-                "obra/superpowers", "release/6.1.1"
-            ),
-            "https://github.com/obra/superpowers/archive/refs/tags/"
-            "release%2F6.1.1.tar.gz",
-        )
-
-    def test_build_update_hashes_latest_release_archive(self):
-        with patch.object(
-            update_externals,
-            "fetch_latest_release",
-            return_value={"tag_name": "release/6.1.1"},
-        ), patch.object(
-            update_externals, "fetch_sha256", return_value="b" * 64
-        ) as fetch_sha256:
-            result = update_externals.build_github_release_update(
-                "obra/superpowers"
-            )
-
-        self.assertEqual(result, ("release/6.1.1", "b" * 64))
-        fetch_sha256.assert_called_once_with(
-            "https://github.com/obra/superpowers/archive/refs/tags/"
-            "release%2F6.1.1.tar.gz"
-        )
-
-    def test_build_asset_update_uses_release_asset_digests(self):
-        release = {
-            "tag_name": "v1.1.0",
-            "assets": [
-                {
-                    "name": "pi-distribution-v1.1.0-windows-x64.tgz",
-                    "digest": f"sha256:{'c' * 64}",
-                },
-                {
-                    "name": "pi-distribution-v1.1.0-windows-arm64.tgz",
-                    "digest": f"sha256:{'d' * 64}",
-                },
-            ],
-        }
-        with patch.object(
-            update_externals, "fetch_latest_release", return_value=release
-        ):
-            result = update_externals.build_github_release_asset_update(
-                "ningw42/pi-distribution",
-                (
-                    "pi-distribution-{tag}-windows-x64.tgz",
-                    "pi-distribution-{tag}-windows-arm64.tgz",
-                ),
-            )
-
-        self.assertEqual(result, ("v1.1.0", ("c" * 64, "d" * 64)))
-
-    def test_build_asset_update_rejects_missing_asset(self):
-        release = {"tag_name": "v1.1.0", "assets": []}
-        with patch.object(
-            update_externals, "fetch_latest_release", return_value=release
-        ), redirect_stderr(io.StringIO()):
-            result = update_externals.build_github_release_asset_update(
-                "ningw42/pi-distribution",
-                ("pi-distribution-{tag}-windows-x64.tgz",),
-            )
-
-        self.assertIsNone(result)
-
-    def test_build_asset_update_rejects_malformed_digest(self):
-        release = {
-            "tag_name": "v1.1.0",
-            "assets": [
-                {
-                    "name": "pi-distribution-v1.1.0-windows-x64.tgz",
-                    "digest": "sha256:not-a-digest",
-                }
-            ],
-        }
-        with patch.object(
-            update_externals, "fetch_latest_release", return_value=release
-        ), redirect_stderr(io.StringIO()):
-            result = update_externals.build_github_release_asset_update(
-                "ningw42/pi-distribution",
-                ("pi-distribution-{tag}-windows-x64.tgz",),
-            )
-
-        self.assertIsNone(result)
-
-
-class GithubReleaseMetadataUpdateTests(unittest.TestCase):
-    def write_metadata(self, directory, content=DATA):
-        path = Path(directory) / ".chezmoidata.toml"
-        path.write_bytes(content.encode("utf-8"))
-        return path
-
-    def test_updates_metadata_after_pin_resolves_and_verifies(self):
-        with TemporaryDirectory() as directory:
-            path = self.write_metadata(directory)
-            with patch.object(
-                update_externals,
-                "build_github_release_update",
-                return_value=("6.1.1", "b" * 64),
-            ), redirect_stdout(io.StringIO()):
-                result = update_externals.update_github_release_metadata(path)
-
-            self.assertEqual(result, (1, 0))
-            self.assertEqual(
-                path.read_bytes(),
-                DATA.replace("6.1.0", "6.1.1")
-                .replace("a" * 64, "b" * 64)
-                .encode("utf-8"),
-            )
-
-    def test_escapes_and_round_trips_updated_tag(self):
-        with TemporaryDirectory() as directory:
-            path = self.write_metadata(directory)
-            with patch.object(
-                update_externals,
-                "build_github_release_update",
-                return_value=('release"1', "b" * 64),
-            ), redirect_stdout(io.StringIO()):
-                result = update_externals.update_github_release_metadata(path)
-
-            self.assertEqual(result, (1, 0))
-            content = path.read_text(encoding="utf-8")
-            parsed = tomllib.loads(content)
-            self.assertEqual(
-                parsed["external_resources"]["github_releases"]["superpowers"][
-                    "tag"
+HASH_ABC = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+FIXED_DATA = f'''[external_resources.pins.theme]
+url = "https://example.test/theme"
+sha256 = "{'a' * 64}"
+'''
+SOURCE_DATA = f'''[external_resources.pins.skills]
+url = "https://github.com/example/skills/archive/refs/tags/v1.tar.gz"
+sha256 = "{'a' * 64}"
+[external_resources.pins.skills.update]
+type = "github_release"
+repository = "example/skills"
+tag = "v1"
+'''
+
+ASSET_DATA = f'''[external_resources.pins.bundle_x64]
+url = "https://github.com/example/bundle/releases/download/v1/bundle-v1-x64.tgz"
+sha256 = "{'a' * 64}"
+[external_resources.pins.bundle_x64.update]
+type = "github_release"
+repository = "example/bundle"
+tag = "v1"
+asset = "bundle-{{tag}}-x64.tgz"
+
+[external_resources.pins.bundle_arm64]
+url = "https://github.com/example/bundle/releases/download/v1/bundle-v1-arm64.tgz"
+sha256 = "{'b' * 64}"
+[external_resources.pins.bundle_arm64.update]
+type = "github_release"
+repository = "example/bundle"
+tag = "v1"
+asset = "bundle-{{tag}}-arm64.tgz"
+'''
+
+
+class UpdateExternalsTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.root = Path(self.directory.name)
+        self.path = self.root / ".chezmoidata.toml"
+        self.path.write_text(FIXED_DATA, encoding="utf-8")
+
+    def run_update(self, responses, *arguments):
+        """Exercise CLI behavior; only the real HTTP transport is substituted."""
+        def respond(request, **kwargs):
+            url = getattr(request, "full_url", request)
+            if url not in responses:
+                raise AssertionError(f"Unexpected network request: {url}")
+            response = responses[url]
+            if callable(response):
+                response = response()
+            if isinstance(response, Exception):
+                raise response
+            if isinstance(response, dict):
+                response = json.dumps(response).encode("utf-8")
+            return response if hasattr(response, "read") else io.BytesIO(response)
+
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with patch("urllib.request.urlopen", side_effect=respond), \
+                redirect_stdout(stdout), redirect_stderr(stderr):
+            status = update_externals.main(list(arguments), repo_root=self.root)
+        return status, stdout.getvalue(), stderr.getvalue()
+
+    def read_pins(self):
+        return tomllib.loads(self.path.read_text(encoding="utf-8"))["external_resources"]["pins"]
+
+    def test_configured_url_updates_only_structured_pin_data(self):
+        manifest = self.root / "nested" / ".chezmoiexternal.toml.tmpl"
+        manifest.parent.mkdir()
+        original_manifest = b'url = "https://not-scanned.test/file"\nchecksum.sha256 = "' + b"f" * 64 + b'"\n'
+        manifest.write_bytes(original_manifest)
+
+        status, stdout, stderr = self.run_update({"https://example.test/theme": b"abc"})
+
+        self.assertEqual(status, 1, stderr)
+        self.assertEqual(self.read_pins()["theme"], {
+            "url": "https://example.test/theme", "sha256": HASH_ABC,
+        })
+        self.assertEqual(manifest.read_bytes(), original_manifest)
+        self.assertIn("Checked: 1", stdout)
+
+    def test_source_release_updates_resolved_url_hash_and_tag_together(self):
+        self.path.write_text(SOURCE_DATA, encoding="utf-8")
+        archive_url = "https://github.com/example/skills/archive/refs/tags/release%2F2.tar.gz"
+        status, stdout, stderr = self.run_update({
+            "https://api.github.com/repos/example/skills/releases/latest": {"tag_name": "release/2"},
+            archive_url: b"abc",
+        })
+        self.assertEqual(status, 1, stderr)
+        pin = self.read_pins()["skills"]
+        self.assertEqual(pin["url"], archive_url)
+        self.assertEqual(pin["sha256"], HASH_ABC)
+        self.assertEqual(pin["update"]["tag"], "release/2")
+
+    def test_release_assets_share_one_release_and_use_api_digests_without_downloads(self):
+        self.path.write_text(ASSET_DATA, encoding="utf-8")
+        releases = iter([
+            {"tag_name": "v2", "assets": [
+                {"name": "bundle-v2-x64.tgz", "digest": "sha256:" + "C" * 64},
+                {"name": "bundle-v2-arm64.tgz", "digest": "sha256:" + "d" * 64},
+            ]},
+            {"tag_name": "v3", "assets": []},
+        ])
+        status, stdout, stderr = self.run_update({
+            "https://api.github.com/repos/example/bundle/releases/latest": lambda: next(releases),
+        })
+        self.assertEqual(status, 1, stderr)
+        pins = self.read_pins()
+        for arch, digest in [("x64", "c" * 64), ("arm64", "d" * 64)]:
+            self.assertEqual(pins[f"bundle_{arch}"]["url"],
+                             f"https://github.com/example/bundle/releases/download/v2/bundle-v2-{arch}.tgz")
+            self.assertEqual(pins[f"bundle_{arch}"]["sha256"], digest)
+            self.assertEqual(pins[f"bundle_{arch}"]["update"]["tag"], "v2")
+
+    def test_missing_asset_prevents_every_pin_change(self):
+        original = (FIXED_DATA + "\n" + ASSET_DATA).replace("\n", "\r\n").encode()
+        self.path.write_bytes(original)
+        status, stdout, stderr = self.run_update({
+            "https://example.test/theme": b"abc",
+            "https://api.github.com/repos/example/bundle/releases/latest": {
+                "tag_name": "v2", "assets": [
+                    {"name": "bundle-v2-x64.tgz", "digest": "sha256:" + "c" * 64},
                 ],
-                'release"1',
-            )
-            self.assertEqual(
-                update_externals.extract_github_release_pins(content)[0].tag,
-                'release"1',
-            )
+            },
+        })
+        self.assertEqual(status, 2)
+        self.assertEqual(self.path.read_bytes(), original)
+        self.assertIn("bundle_arm64", stderr)
+        self.assertNotIn("[UPDATE]", stdout)
+        self.assertIn("Updated: 0", stdout)
+        self.assertEqual(list(self.root.iterdir()), [self.path])
 
-    def test_first_refresh_populates_empty_tag_and_checksum(self):
-        with TemporaryDirectory() as directory:
-            path = self.write_metadata(directory, EMPTY_DATA)
-            with patch.object(
-                update_externals,
-                "build_github_release_update",
-                return_value=("6.1.1", "b" * 64),
-            ), redirect_stdout(io.StringIO()):
-                result = update_externals.update_github_release_metadata(path)
+    def test_invalid_release_metadata_never_writes_pins_or_downloads_assets(self):
+        bad_releases = [b"not-json", b"[]", {}, {"tag_name": 2}, {"tag_name": ""},
+                        {"tag_name": "v2"}, {"tag_name": "v2", "assets": {}}]
+        for digest in [None, "", "c" * 64, "sha256:short", "sha512:" + "c" * 64, 42]:
+            bad_releases.append({"tag_name": "v2", "assets": [
+                {"name": "bundle-v2-x64.tgz", "digest": digest},
+                {"name": "bundle-v2-arm64.tgz", "digest": "sha256:" + "d" * 64},
+            ]})
+        bad_releases.append({"tag_name": "v2", "assets": [
+            {"name": "bundle-v2-x64.tgz", "digest": "sha256:" + "c" * 64},
+            {"name": "bundle-v2-x64.tgz", "digest": "sha256:" + "d" * 64},
+        ]})
+        for release in bad_releases:
+            with self.subTest(release=release):
+                self.path.write_text(ASSET_DATA, encoding="utf-8")
+                original = self.path.read_bytes()
+                status, stdout, stderr = self.run_update({
+                    "https://api.github.com/repos/example/bundle/releases/latest": release,
+                })
+                self.assertEqual(status, 2)
+                self.assertEqual(self.path.read_bytes(), original)
+                self.assertIn("[ERROR]", stderr)
+                self.assertNotIn("[UPDATE]", stdout)
 
-            self.assertEqual(result, (1, 0))
-            self.assertIn(b'tag = "6.1.1"', path.read_bytes())
-            self.assertIn(f'sha256 = "{"b" * 64}"'.encode(), path.read_bytes())
+    def test_invalid_pin_data_fails_before_any_network_or_writes(self):
+        invalid = [
+            "[broken", "", "[external_resources.github_releases.legacy]\ntag = 'v1'\n",
+            "[external_resources]\npins = []\n",
+            FIXED_DATA.replace('url = "https://example.test/theme"', 'url = 42'),
+            FIXED_DATA.replace("https://example.test/theme", "file:///tmp/local"),
+            FIXED_DATA.replace("a" * 64, "invalid"),
+            FIXED_DATA.replace('sha256 = "' + "a" * 64 + '"', 'checksum = "' + "a" * 64 + '"'),
+            FIXED_DATA + '[external_resources.pins.theme.update]\n',
+            SOURCE_DATA.replace('type = "github_release"', 'type = "unknown"'),
+            SOURCE_DATA.replace('repository = "example/skills"', 'repository = "../skills"'),
+            SOURCE_DATA.replace('tag = "v1"', 'tag = "v2"'),
+            ASSET_DATA.replace('asset = "bundle-{tag}-x64.tgz"', 'asset = "bundle-{tag}-{tag}.tgz"'),
+            ASSET_DATA.replace('asset = "bundle-{tag}-x64.tgz"', 'asset = ""'),
+        ]
+        for content in invalid:
+            with self.subTest(content=content):
+                self.path.write_text(content, encoding="utf-8")
+                original = self.path.read_bytes()
+                status, stdout, stderr = self.run_update({})
+                self.assertEqual(status, 2)
+                self.assertEqual(self.path.read_bytes(), original)
+                self.assertIn("[ERROR]", stderr)
 
-    def test_archive_failure_leaves_original_bytes(self):
-        with TemporaryDirectory() as directory:
-            path = self.write_metadata(directory)
-            original = path.read_bytes()
-            with patch.object(
-                update_externals,
-                "build_github_release_update",
-                return_value=None,
-            ), redirect_stderr(io.StringIO()):
-                result = update_externals.update_github_release_metadata(path)
+    def test_dry_run_reports_candidates_without_changing_even_formatting(self):
+        original = b"# preserve me\r\n" + FIXED_DATA.replace("\n", "\r\n").encode()
+        self.path.write_bytes(original)
+        status, stdout, stderr = self.run_update({"https://example.test/theme": b"abc"}, "--dry-run")
+        self.assertEqual(status, 1, stderr)
+        self.assertEqual(self.path.read_bytes(), original)
+        self.assertIn("Updated: 1", stdout)
+        self.assertIn("a" * 64, stdout)
+        self.assertIn(HASH_ABC, stdout)
+        self.assertIn("dry-run", stdout)
 
-            self.assertEqual(result, (0, 1))
-            self.assertEqual(path.read_bytes(), original)
+    def test_unchanged_pins_do_not_rewrite_the_document(self):
+        original = ("# preserve me\n" + FIXED_DATA.replace("a" * 64, HASH_ABC)).encode()
+        for arguments in [(), ("--dry-run",)]:
+            with self.subTest(arguments=arguments):
+                self.path.write_bytes(original)
+                status, stdout, stderr = self.run_update({"https://example.test/theme": b"abc"}, *arguments)
+                self.assertEqual(status, 0, stderr)
+                self.assertEqual(self.path.read_bytes(), original)
 
-    def test_failure_on_second_pin_leaves_original_bytes(self):
-        with TemporaryDirectory() as directory:
-            path = self.write_metadata(directory, TWO_PIN_DATA)
-            original = path.read_bytes()
-            output = io.StringIO()
-            with patch.object(
-                update_externals,
-                "build_github_release_update",
-                side_effect=[("6.1.1", "b" * 64), None],
-            ), redirect_stdout(output), redirect_stderr(io.StringIO()):
-                result = update_externals.update_github_release_metadata(path)
+    def test_network_failure_leaves_original_bytes(self):
+        for error in [
+            urllib.error.URLError("unreachable"), TimeoutError("timeout"),
+            http.client.IncompleteRead(b"partial", 20), http.client.BadStatusLine("invalid HTTP"),
+        ]:
+            with self.subTest(error=error):
+                original = self.path.read_bytes()
+                status, stdout, stderr = self.run_update({"https://example.test/theme": error})
+                self.assertEqual(status, 2)
+                self.assertEqual(self.path.read_bytes(), original)
+                self.assertIn(str(error), stderr)
 
-            self.assertEqual(result, (0, 1))
-            self.assertEqual(path.read_bytes(), original)
-            self.assertNotIn("[UPDATE]", output.getvalue())
+    def test_atomic_replace_failure_keeps_data_and_cleans_temporary_file(self):
+        original = self.path.read_bytes()
+        with patch("os.replace", side_effect=PermissionError("replace denied")):
+            status, stdout, stderr = self.run_update({"https://example.test/theme": b"abc"})
+        self.assertEqual(status, 2)
+        self.assertEqual(self.path.read_bytes(), original)
+        self.assertEqual(list(self.root.iterdir()), [self.path])
+        self.assertIn("replace denied", stderr)
+        self.assertNotIn("[UPDATE]", stdout)
 
-    def test_dry_run_reports_update_without_changing_bytes(self):
-        with TemporaryDirectory() as directory:
-            path = self.write_metadata(directory)
-            original = path.read_bytes()
-            output = io.StringIO()
-            with patch.object(
-                update_externals,
-                "build_github_release_update",
-                return_value=("6.1.1", "b" * 64),
-            ), redirect_stdout(output):
-                result = update_externals.update_github_release_metadata(
-                    path, dry_run=True
-                )
+    def test_concurrent_edit_is_not_overwritten(self):
+        edited = self.path.read_bytes() + b"# edited while the download was in progress\n"
+        def download():
+            self.path.write_bytes(edited)
+            return b"abc"
+        status, stdout, stderr = self.run_update({"https://example.test/theme": download})
+        self.assertEqual(status, 2)
+        self.assertEqual(self.path.read_bytes(), edited)
+        self.assertIn("changed", stderr)
+        self.assertNotIn("[UPDATE]", stdout)
 
-            self.assertEqual(result, (1, 0))
-            self.assertEqual(path.read_bytes(), original)
-            report = output.getvalue()
-            self.assertIn("6.1.0", report)
-            self.assertIn("6.1.1", report)
-            self.assertIn("a" * 64, report)
-            self.assertIn("b" * 64, report)
+    def test_fully_empty_release_pin_can_be_initialized(self):
+        self.path.write_text(SOURCE_DATA.replace(
+            "https://github.com/example/skills/archive/refs/tags/v1.tar.gz", ""
+        ).replace("a" * 64, "").replace('tag = "v1"', 'tag = ""'), encoding="utf-8")
+        status, stdout, stderr = self.run_update({
+            "https://api.github.com/repos/example/skills/releases/latest": {"tag_name": "v2"},
+            "https://github.com/example/skills/archive/refs/tags/v2.tar.gz": b"abc",
+        })
+        self.assertEqual(status, 1, stderr)
+        self.assertEqual(self.read_pins()["skills"]["sha256"], HASH_ABC)
+        self.assertEqual(self.read_pins()["skills"]["update"]["tag"], "v2")
 
-    def test_half_initialized_metadata_raises_without_changing_bytes(self):
-        half_initialized = EMPTY_DATA.replace('tag = ""', 'tag = "6.1.0"')
-        with TemporaryDirectory() as directory:
-            path = self.write_metadata(directory, half_initialized)
-            original = path.read_bytes()
+    def test_canonical_write_preserves_unrelated_toml_values(self):
+        content = '''title = "unrelated \\"text\\""
+extra = { "odd.key" = ["text", true, 2, 3.5], day = 2026-01-02, clock = 03:04:05, when = 2026-01-02T03:04:05Z, links = [{ name = "one" }] }
+''' + FIXED_DATA
+        original = tomllib.loads(content)
+        self.path.write_text(content, encoding="utf-8")
+        status, stdout, stderr = self.run_update({"https://example.test/theme": b"abc"})
+        self.assertEqual(status, 1, stderr)
+        result = tomllib.loads(self.path.read_text(encoding="utf-8"))
+        self.assertEqual(result["extra"], original["extra"])
+        self.assertEqual(result["title"], original["title"])
+        self.assertEqual(result["external_resources"]["pins"]["theme"]["sha256"], HASH_ABC)
 
-            with self.assertRaises(ValueError):
-                update_externals.update_github_release_metadata(path)
+    def test_canonical_write_round_trips_unicode_and_escaped_control_characters(self):
+        content = '"标签😀" = "文字😀\\u007f"\n' + FIXED_DATA
+        self.path.write_text(content, encoding="utf-8")
+        status, stdout, stderr = self.run_update({"https://example.test/theme": b"abc"})
+        self.assertEqual(status, 1, stderr)
+        self.assertEqual(tomllib.loads(self.path.read_text(encoding="utf-8"))["标签😀"], "文字😀\x7f")
 
-            self.assertEqual(path.read_bytes(), original)
+    def test_static_asset_name_and_tag_are_path_escaped(self):
+        content = ASSET_DATA.split("[external_resources.pins.bundle_arm64]")[0]
+        content = content.replace("bundle-v1-x64.tgz", "status%20bar.wasm")
+        content = content.replace("bundle-{tag}-x64.tgz", "status bar.wasm")
+        self.path.write_text(content, encoding="utf-8")
+        status, stdout, stderr = self.run_update({
+            "https://api.github.com/repos/example/bundle/releases/latest": {
+                "tag_name": 'v"2', "assets": [
+                    {"name": "status bar.wasm", "digest": "sha256:" + "c" * 64},
+                ],
+            },
+        })
+        self.assertEqual(status, 1, stderr)
+        pin = self.read_pins()["bundle_x64"]
+        self.assertEqual(pin["url"], "https://github.com/example/bundle/releases/download/v%222/status%20bar.wasm")
+        self.assertEqual(pin["update"]["tag"], 'v"2')
+        self.assertEqual(pin["update"]["asset"], "status bar.wasm")
 
-    def test_updates_release_asset_metadata_atomically(self):
-        with TemporaryDirectory() as directory:
-            path = self.write_metadata(directory, DATA + "\n" + ASSET_DATA)
-            with patch.object(
-                update_externals,
-                "build_github_release_update",
-                return_value=("6.1.0", "a" * 64),
-            ), patch.object(
-                update_externals,
-                "build_github_release_asset_update",
-                return_value=("v1.1.0", ("c" * 64, "d" * 64)),
-            ), redirect_stdout(io.StringIO()):
-                result = update_externals.update_github_release_metadata(path)
+    def test_same_release_tag_still_rehashes_its_source_archive(self):
+        self.path.write_text(SOURCE_DATA, encoding="utf-8")
+        status, stdout, stderr = self.run_update({
+            "https://api.github.com/repos/example/skills/releases/latest": {"tag_name": "v1"},
+            "https://github.com/example/skills/archive/refs/tags/v1.tar.gz": b"abc",
+        })
+        self.assertEqual(status, 1, stderr)
+        self.assertEqual(self.read_pins()["skills"]["sha256"], HASH_ABC)
+        self.assertEqual(self.read_pins()["skills"]["update"]["tag"], "v1")
 
-            self.assertEqual(result, (1, 0))
-            content = path.read_text(encoding="utf-8")
-            self.assertIn('tag = "v1.1.0"', content)
-            self.assertIn(f'sha256 = "{"c" * 64}"', content)
-            self.assertIn(f'sha256 = "{"d" * 64}"', content)
+    def test_artifact_download_is_hashed_in_bounded_chunks(self):
+        class ChunkedResponse(io.BytesIO):
+            def read(self, size=-1):
+                if size <= 0:
+                    raise AssertionError("Unbounded artifact read")
+                return super().read(min(size, 1))
+        status, stdout, stderr = self.run_update({"https://example.test/theme": ChunkedResponse(b"abc")})
+        self.assertEqual(status, 1, stderr)
+        self.assertEqual(self.read_pins()["theme"]["sha256"], HASH_ABC)
 
-    def test_updates_static_release_asset_metadata(self):
-        with TemporaryDirectory() as directory:
-            path = self.write_metadata(directory, STATIC_ASSET_DATA)
-            with patch.object(
-                update_externals,
-                "build_github_release_asset_update",
-                return_value=("v0.25.0", ("b" * 64,)),
-            ), redirect_stdout(io.StringIO()):
-                result = update_externals.update_github_release_metadata(path)
+    def test_missing_or_unreadable_data_is_a_reported_error(self):
+        self.path.unlink()
+        status, stdout, stderr = self.run_update({})
+        self.assertEqual(status, 2)
+        self.assertIn("[ERROR]", stderr)
+        self.path.write_bytes(FIXED_DATA.encode())
+        with patch.object(Path, "read_bytes", side_effect=PermissionError("read denied")):
+            status, stdout, stderr = self.run_update({})
+        self.assertEqual(status, 2)
+        self.assertIn("read denied", stderr)
+        self.assertEqual(self.path.read_bytes(), FIXED_DATA.encode())
 
-            self.assertEqual(result, (1, 0))
-            content = path.read_text(encoding="utf-8")
-            self.assertIn('tag = "v0.25.0"', content)
-            self.assertIn(f'sha256 = "{"b" * 64}"', content)
+    def test_later_invalid_pin_is_rejected_before_fetching_any_earlier_pin(self):
+        content = FIXED_DATA + "\n" + SOURCE_DATA.replace('tag = "v1"', 'tag = ""')
+        self.path.write_text(content, encoding="utf-8")
+        status, stdout, stderr = self.run_update({})
+        self.assertEqual(status, 2)
+        self.assertIn("skills", stderr)
+        self.assertEqual(self.path.read_text(encoding="utf-8"), content)
 
-    def test_wrong_release_asset_count_leaves_metadata_unchanged(self):
-        with TemporaryDirectory() as directory:
-            path = self.write_metadata(directory, DATA + "\n" + ASSET_DATA)
-            original = path.read_bytes()
-            with patch.object(
-                update_externals,
-                "build_github_release_update",
-                return_value=("6.1.0", "a" * 64),
-            ), patch.object(
-                update_externals,
-                "build_github_release_asset_update",
-                return_value=("v1.1.0", ("c" * 64,)),
-            ), redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
-                result = update_externals.update_github_release_metadata(path)
-
-            self.assertEqual(result, (0, 1))
-            self.assertEqual(path.read_bytes(), original)
-
-    def test_release_asset_failure_leaves_source_pin_unchanged(self):
-        with TemporaryDirectory() as directory:
-            path = self.write_metadata(directory, DATA + "\n" + ASSET_DATA)
-            original = path.read_bytes()
-            with patch.object(
-                update_externals,
-                "build_github_release_update",
-                return_value=("6.1.1", "c" * 64),
-            ), patch.object(
-                update_externals,
-                "build_github_release_asset_update",
-                return_value=None,
-            ), redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
-                result = update_externals.update_github_release_metadata(path)
-
-            self.assertEqual(result, (0, 1))
-            self.assertEqual(path.read_bytes(), original)
-
-
-class MainExitStatusTests(unittest.TestCase):
-    def run_main(self, metadata_result, argv=None):
-        with TemporaryDirectory() as directory, patch.object(
-            update_externals,
-            "find_external_files",
-            return_value=[],
-        ), patch.object(
-            update_externals,
-            "update_github_release_metadata",
-            return_value=metadata_result,
-        ), patch("builtins.print"):
-            return update_externals.main(argv or [], Path(directory))
-
-    def test_returns_zero_when_metadata_is_unchanged(self):
-        self.assertEqual(self.run_main((0, 0)), 0)
-
-    def test_returns_one_when_metadata_changes(self):
-        self.assertEqual(self.run_main((1, 0)), 1)
-
-    def test_returns_one_for_dry_run_metadata_changes(self):
-        self.assertEqual(self.run_main((1, 0), ["--dry-run"]), 1)
-
-    def test_returns_two_when_metadata_has_errors(self):
-        self.assertEqual(self.run_main((0, 1)), 2)
-
-    def test_metadata_read_failure_is_reported_as_exit_two(self):
-        with TemporaryDirectory() as directory:
-            root = Path(directory)
-            path = root / ".chezmoidata.toml"
-            path.write_bytes(DATA.encode("utf-8"))
-            original = path.read_bytes()
-            output = io.StringIO()
-            with patch.object(
-                Path, "read_bytes", side_effect=PermissionError("read denied")
-            ), patch.object(
-                update_externals, "find_external_files", return_value=[]
-            ), redirect_stdout(io.StringIO()), redirect_stderr(output):
-                try:
-                    result = update_externals.main([], root)
-                except OSError as error:
-                    self.fail(f"metadata read error escaped main: {error}")
-
-            self.assertEqual(result, 2)
-            self.assertIn("read denied", output.getvalue())
-            self.assertEqual(path.read_bytes(), original)
-
-    def test_metadata_write_failure_is_reported_without_changing_bytes(self):
-        with TemporaryDirectory() as directory:
-            root = Path(directory)
-            path = root / ".chezmoidata.toml"
-            path.write_bytes(DATA.encode("utf-8"))
-            original = path.read_bytes()
-            output = io.StringIO()
-            with patch.object(
-                update_externals,
-                "build_github_release_update",
-                return_value=("6.1.1", "b" * 64),
-            ), patch.object(
-                Path, "write_bytes", side_effect=PermissionError("write denied")
-            ), patch.object(
-                update_externals, "find_external_files", return_value=[]
-            ), redirect_stdout(io.StringIO()), redirect_stderr(output):
-                try:
-                    result = update_externals.main([], root)
-                except OSError as error:
-                    self.fail(f"metadata write error escaped main: {error}")
-
-            self.assertEqual(result, 2)
-            self.assertIn("write denied", output.getvalue())
-            self.assertEqual(path.read_bytes(), original)
-            self.assertEqual(list(root.iterdir()), [path])
-
-    def test_combines_metadata_and_external_checksum_updates(self):
-        with TemporaryDirectory() as directory:
-            root = Path(directory)
-            metadata_path = root / ".chezmoidata.toml"
-            metadata_path.write_bytes(DATA.encode("utf-8"))
-            external_path = root / "nested" / ".chezmoiexternal.toml"
-            external_path.parent.mkdir()
-            external_path.write_bytes(EXTERNAL_DATA.encode("utf-8"))
-            output = io.StringIO()
-
-            with patch.object(
-                update_externals,
-                "build_github_release_update",
-                return_value=("6.1.1", "b" * 64),
-            ), patch.object(
-                update_externals, "fetch_sha256", return_value="d" * 64
-            ), patch.object(update_externals.time, "sleep"), redirect_stdout(
-                output
-            ):
-                result = update_externals.main([], root)
-
-            self.assertEqual(result, 1)
-            self.assertIn(b'tag = "6.1.1"', metadata_path.read_bytes())
-            self.assertIn(
-                f'sha256 = "{"b" * 64}"'.encode(), metadata_path.read_bytes()
-            )
-            external_bytes = external_path.read_bytes()
-            self.assertIn(
-                b'url = "https://example.test/resource.txt"', external_bytes
-            )
-            self.assertIn(
-                f'checksum.sha256 = "{"d" * 64}"'.encode(), external_bytes
-            )
-            self.assertIn("Checked: 1  Updated: 2  Errors: 0", output.getvalue())
+    def test_truncated_content_length_never_becomes_an_accepted_pin(self):
+        class Socket:
+            def makefile(self, *args):
+                return io.BytesIO(b"HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\nabc")
+        def response():
+            result = http.client.HTTPResponse(Socket())
+            result.begin()
+            return result
+        original = self.path.read_bytes()
+        for arguments in [(), ("--dry-run",)]:
+            with self.subTest(arguments=arguments):
+                self.path.write_bytes(original)
+                status, stdout, stderr = self.run_update({"https://example.test/theme": response}, *arguments)
+                self.assertEqual(status, 2)
+                self.assertEqual(self.path.read_bytes(), original)
+                self.assertIn("Content-Length", stderr)
+                self.assertNotIn("[UPDATE]", stdout)
 
 
 if __name__ == "__main__":

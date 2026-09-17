@@ -66,8 +66,18 @@ python -m unittest discover -s tests      # test the updater
 python dot_config/statusline/statusline.py test
 ```
 
-`update_externals.py` refreshes both checksum-pinned external files and the
-GitHub release pins in `.chezmoidata.toml`. Literal external URLs are only
-re-hashed at their configured location; an external that should track the
-latest GitHub release must render its tag and checksum from a release pin in
-`.chezmoidata.toml`.
+All direct external pins live under `external_resources.pins` in
+`.chezmoidata.toml`. The nested manifests select pins and declare target paths
+and file/archive options; they do not contain their own URLs or checksums.
+
+`update_externals.py` refreshes this structured data only. Pins without an
+`update` recipe are re-hashed at their configured URL; `github_release` recipes
+resolve the latest tag and source archive or named asset. All candidates must
+succeed before one atomic write. Successful changes use canonical TOML formatting
+(values are preserved, comments/formatting are not); no-op and dry-run checks
+leave the original bytes untouched. `--dry-run` still makes network requests.
+Exit codes are `0` unchanged, `1` changed/would change, and `2` failed.
+
+The tests cover the updater with mocked HTTP and compare real chezmoi-rendered
+manifests against a pre-refactor deployment baseline. Rendering tests use isolated
+temporary config/state and skip explicitly if chezmoi is unavailable.

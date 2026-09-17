@@ -1,15 +1,13 @@
-{{ $superpowers := .external_resources.github_releases.superpowers -}}
 ["superpowers"]
     type = "archive"
-    url = "https://github.com/{{ $superpowers.repository }}/archive/refs/tags/{{ $superpowers.tag | urlquery }}.tar.gz"
+    url = "{{ .external_resources.pins.superpowers.url }}"
     stripComponents = 1
     exact = true
-    checksum.sha256 = "{{ $superpowers.sha256 }}"
+    checksum.sha256 = "{{ .external_resources.pins.superpowers.sha256 }}"
 
-{{ $mattpocockSkills := .external_resources.github_releases.mattpocock_skills -}}
 ["mattpocock-skills"]
     type = "archive"
-    url = "https://github.com/{{ $mattpocockSkills.repository }}/archive/refs/tags/{{ $mattpocockSkills.tag | urlquery }}.tar.gz"
+    url = "{{ .external_resources.pins.mattpocock_skills.url }}"
     stripComponents = 1
     exact = true
-    checksum.sha256 = "{{ $mattpocockSkills.sha256 }}"
+    checksum.sha256 = "{{ .external_resources.pins.mattpocock_skills.sha256 }}"

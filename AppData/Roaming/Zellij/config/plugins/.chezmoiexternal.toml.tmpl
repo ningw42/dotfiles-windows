@@ -1,11 +1,8 @@
-{{- $pin := .external_resources.github_release_assets.zjstatus -}}
-{{- $asset := $pin.assets.wasm -}}
-{{- $filename := $asset.name | replace "{tag}" $pin.tag -}}
 # zjstatus — zellij status-bar WASM plugin, referenced via file: in
 # layouts/default.kdl. Its latest GitHub release and checksum are refreshed by
 # `python update_externals.py` through the pin in .chezmoidata.toml.
 ["zjstatus.wasm"]
     type = "file"
-    url = "https://github.com/{{ $pin.repository }}/releases/download/{{ $pin.tag | urlquery }}/{{ $filename | urlquery }}"
-    checksum.sha256 = "{{ $asset.sha256 }}"
+    url = "{{ .external_resources.pins.zjstatus.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.zjstatus.sha256 }}"
     refreshPeriod = "168h"

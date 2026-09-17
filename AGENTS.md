@@ -93,10 +93,12 @@ python update_externals.py --dry-run
 python update_externals.py
 ```
 
-The updater checks every `.chezmoiexternal.toml*` and refreshes GitHub release
-source-archive and release-asset pins in `.chezmoidata.toml`. Exit codes are `0`
-for unchanged, `1` for updated (or changes found in dry-run), and `2` for errors.
-Inspect upstream changes before accepting a new checksum.
+All direct pins live under `external_resources.pins` in `.chezmoidata.toml` as
+resolved `url`/`sha256` pairs; optional `update` recipes select GitHub releases.
+Manifests only select pins and declare placement/extraction. The updater edits
+structured pin data only, with an all-or-nothing atomic write and canonical TOML
+formatting. Exit codes are `0` unchanged, `1` updated/would update, and `2` errors;
+dry-run still uses the network. Inspect upstream changes before accepting pins.
 
 ### Secrets
 

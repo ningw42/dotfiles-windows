@@ -1,29 +1,254 @@
-[external_resources.github_releases.superpowers]
-repository = "obra/superpowers"
-tag = "v6.3.0"
-sha256 = "2933703111f44dd1ae0234372cd2a924afb372a682fe3d9acdb6497231213fcb"
+# Resolved external pins and their update recipes.
+# update_externals.py refreshes this data and writes canonical TOML.
 
-[external_resources.github_releases.mattpocock_skills]
-repository = "mattpocock/skills"
-tag = "v1.2.3"
+[external_resources.pins.alacritty_everforest_dark_medium]
+url = "https://raw.githubusercontent.com/alacritty/alacritty-theme/master/themes/everforest_dark_medium.toml"
+sha256 = "0b6f445b955a8d3972136e47ead1a83ba4985b553e69f6bb9ef293bbf2e5ad27"
+
+[external_resources.pins.alacritty_gruvbox_dark]
+url = "https://raw.githubusercontent.com/alacritty/alacritty-theme/master/themes/gruvbox_dark.toml"
+sha256 = "85da5eac732cb89ba0a1d334232b9e255e901f4978d3e5eb5512a71d14116ea7"
+
+[external_resources.pins.catppuccin_alacritty_frappe]
+url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-frappe.toml"
+sha256 = "bac9843f0f984f03928342369564527382aedd1d9f6b49273a2f3bf99e28124f"
+
+[external_resources.pins.catppuccin_alacritty_latte]
+url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-latte.toml"
+sha256 = "add4020af6910d8baa02bb765f6e12f631c38c092689815a2549d5acbdca3418"
+
+[external_resources.pins.catppuccin_alacritty_macchiato]
+url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-macchiato.toml"
+sha256 = "fd06f991f47937a99331c2fa97aa9476c1b7db0a64a44487bb9aa35f7188507c"
+
+[external_resources.pins.catppuccin_alacritty_mocha]
+url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-mocha.toml"
+sha256 = "949cef17c3ec50420b82c70b22e3aa2ea0a5d27dfcc13284192bd5284b5db2c5"
+
+[external_resources.pins.catppuccin_bat_frappe]
+url = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Frappe.tmTheme"
+sha256 = "3446d8a3cfb9eb559bc65a3894e6ae8f3579030fac6130c4f96ff524f3e2784f"
+
+[external_resources.pins.catppuccin_bat_latte]
+url = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Latte.tmTheme"
+sha256 = "a2ddb65bfcf7328802ee4770d1e34ef4093a20fd5c300be3138c99f8a45ed5cb"
+
+[external_resources.pins.catppuccin_bat_macchiato]
+url = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Macchiato.tmTheme"
+sha256 = "110090f655b970e569d82fb3780c161769b59ba234c290d0039c1e8c49bb5a06"
+
+[external_resources.pins.catppuccin_bat_mocha]
+url = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Mocha.tmTheme"
+sha256 = "395566f08ceb301b936b91c077690ef94f7aeb651b121553f201c99c2bd4aa77"
+
+[external_resources.pins.catppuccin_btop_frappe]
+url = "https://raw.githubusercontent.com/catppuccin/btop/main/themes/catppuccin_frappe.theme"
+sha256 = "1689b67c1c6ce2f4985a0047fad6535acecf7872c21963785fa749868a01a2c9"
+
+[external_resources.pins.catppuccin_btop_latte]
+url = "https://raw.githubusercontent.com/catppuccin/btop/main/themes/catppuccin_latte.theme"
+sha256 = "90e963ead5ee083a1359dcb694d9784c1bfe41ec2e0d486d3b04f0d9bdb9173b"
+
+[external_resources.pins.catppuccin_btop_macchiato]
+url = "https://raw.githubusercontent.com/catppuccin/btop/main/themes/catppuccin_macchiato.theme"
+sha256 = "f8b18ccb217bd4ebc184806a91d49a12cb312b9cf37d8ba23322653a78ac8850"
+
+[external_resources.pins.catppuccin_btop_mocha]
+url = "https://raw.githubusercontent.com/catppuccin/btop/main/themes/catppuccin_mocha.theme"
+sha256 = "4c7469ab9bda282c1ff606aca37c9c0b84cd0cb66d041e4e7e1fed39791f4644"
+
+[external_resources.pins.catppuccin_delta]
+url = "https://raw.githubusercontent.com/catppuccin/delta/main/catppuccin.gitconfig"
+sha256 = "f0580ada6b1e3767b718b25116a2ababec314474a12d1a796c917ef93d63b455"
+
+[external_resources.pins.catppuccin_fzf_frappe]
+url = "https://raw.githubusercontent.com/catppuccin/fzf/main/themes/catppuccin-fzf-frappe.ps1"
+sha256 = "68ec278c06e7006d53cea47ba3cb8168f8005a8ce0aba87f2f47b5534825ac31"
+
+[external_resources.pins.catppuccin_fzf_latte]
+url = "https://raw.githubusercontent.com/catppuccin/fzf/main/themes/catppuccin-fzf-latte.ps1"
+sha256 = "328d6b91fa74ec44065cdf600eed5b3cd154b3919c6cbf6a9adf8a4b0527eb51"
+
+[external_resources.pins.catppuccin_fzf_macchiato]
+url = "https://raw.githubusercontent.com/catppuccin/fzf/main/themes/catppuccin-fzf-macchiato.ps1"
+sha256 = "6357e8087807ab7ee04f110bf5ecc53299f59cefbdbf9c7e8615fa0402d9c3d5"
+
+[external_resources.pins.catppuccin_fzf_mocha]
+url = "https://raw.githubusercontent.com/catppuccin/fzf/main/themes/catppuccin-fzf-mocha.ps1"
+sha256 = "ac0bb4d1f8f5acda3d08f5d739eee82b93d41b5bef99c3f02288ea5b56eb14ad"
+
+[external_resources.pins.catppuccin_glamour_frappe]
+url = "https://raw.githubusercontent.com/catppuccin/glamour/main/themes/catppuccin-frappe.json"
+sha256 = "03c41d15703f4ba4b69a2b0962f550be41547750ba09be821dbb08cf3e1f861d"
+
+[external_resources.pins.catppuccin_glamour_latte]
+url = "https://raw.githubusercontent.com/catppuccin/glamour/main/themes/catppuccin-latte.json"
+sha256 = "9f03b09de084d92c40bf4c40daa25729f92aac16b0b9cb4c788ef49c59eb7ed7"
+
+[external_resources.pins.catppuccin_glamour_macchiato]
+url = "https://raw.githubusercontent.com/catppuccin/glamour/main/themes/catppuccin-macchiato.json"
+sha256 = "0ed70dd1ce65628dce47825d5b64329fee12200b2a6eb4c71c0639e0d914e70c"
+
+[external_resources.pins.catppuccin_glamour_mocha]
+url = "https://raw.githubusercontent.com/catppuccin/glamour/main/themes/catppuccin-mocha.json"
+sha256 = "e11c510590cedaf260f331d1c45a75ef6353f3a07ca1317b7cc01d0745f9c396"
+
+[external_resources.pins.catppuccin_lazygit_frappe_blue]
+url = "https://raw.githubusercontent.com/catppuccin/lazygit/main/themes-mergable/frappe/blue.yml"
+sha256 = "7b76fad5c2dafc0d743e8210b604ce9b6fbc9d234b8f57017cea2ed505d67224"
+
+[external_resources.pins.catppuccin_lazygit_latte_blue]
+url = "https://raw.githubusercontent.com/catppuccin/lazygit/main/themes-mergable/latte/blue.yml"
+sha256 = "00ca9f3ecb9199945076e4001bdd1a9dcd950d16ecf29c3eea9ca1c8d7b589b8"
+
+[external_resources.pins.catppuccin_lazygit_macchiato_blue]
+url = "https://raw.githubusercontent.com/catppuccin/lazygit/main/themes-mergable/macchiato/blue.yml"
+sha256 = "5fea9abc0f089ec9925c1265f7f75ba4b194d0f642b027e2190ac7a9dc6a2763"
+
+[external_resources.pins.catppuccin_lazygit_mocha_blue]
+url = "https://raw.githubusercontent.com/catppuccin/lazygit/main/themes-mergable/mocha/blue.yml"
+sha256 = "651ef6210ebb18b4f3a0974458e67b93cf60039a9852aaff3269a8c97e670ca9"
+
+[external_resources.pins.catppuccin_rio_frappe]
+url = "https://raw.githubusercontent.com/ningw42/rio/feat/update-color-schema/themes/catppuccin-frappe.toml"
+sha256 = "5c0d52a4550c5a85ed59bcf536c9004a68227590ec2ba1919403645c09998c5c"
+
+[external_resources.pins.catppuccin_rio_latte]
+url = "https://raw.githubusercontent.com/ningw42/rio/feat/update-color-schema/themes/catppuccin-latte.toml"
+sha256 = "a678682d7ca5af69b767b6cc94a575c0aac17918e1072a4f13837aeb01e45911"
+
+[external_resources.pins.catppuccin_rio_macchiato]
+url = "https://raw.githubusercontent.com/ningw42/rio/feat/update-color-schema/themes/catppuccin-macchiato.toml"
+sha256 = "3a7d7598563fee8692d3a27dee795331c7679ae10beeb31565db32a0ab41ab06"
+
+[external_resources.pins.catppuccin_rio_mocha]
+url = "https://raw.githubusercontent.com/ningw42/rio/feat/update-color-schema/themes/catppuccin-mocha.toml"
+sha256 = "6969d0af6a1722081cd7f08086295bed5107300b81a4349430161dc5ef0aa753"
+
+[external_resources.pins.catppuccin_yazi_frappe_blue]
+url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/frappe/catppuccin-frappe-blue.toml"
+sha256 = "6efe36b7349bf2c0edddc4e579a2dd9eeb7be28ecd6611e801409b0231e34418"
+
+[external_resources.pins.catppuccin_yazi_latte_blue]
+url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/latte/catppuccin-latte-blue.toml"
+sha256 = "4ebc97278e7039957ab362a74a3cf1ec04ce523f00f9f3401d638835c860606d"
+
+[external_resources.pins.catppuccin_yazi_macchiato_blue]
+url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/macchiato/catppuccin-macchiato-blue.toml"
+sha256 = "ed2b38313095d982ae683cde702ba49e18aecf59d821c8425ac50aa87b584985"
+
+[external_resources.pins.catppuccin_yazi_mocha_blue]
+url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/mocha/catppuccin-mocha-blue.toml"
+sha256 = "0d1f380aff156934ee1c1aeb2c1e5505b21a8cd892c206f9838fc0621bab18e9"
+
+[external_resources.pins.mattpocock_skills]
+url = "https://github.com/mattpocock/skills/archive/refs/tags/v1.2.3.tar.gz"
 sha256 = "238fac54d0f53d3e2d0501c1b38c9c0e4e9bc26f6b057b53a7328ea15d43b66f"
 
-[external_resources.github_release_assets.pi_distribution]
-repository = "ningw42/pi-distribution"
-tag = "v26.09.16"
+[external_resources.pins.mattpocock_skills.update]
+type = "github_release"
+repository = "mattpocock/skills"
+tag = "v1.2.3"
 
-[external_resources.github_release_assets.pi_distribution.assets.windows_x64]
-name = "pi-distribution-{tag}-windows-x64.tgz"
-sha256 = "7485ecfc19ca55bdc89a1d079c712994e9193d0a6b7df6343d60b6bbd7e27ecf"
-
-[external_resources.github_release_assets.pi_distribution.assets.windows_arm64]
-name = "pi-distribution-{tag}-windows-arm64.tgz"
+[external_resources.pins.pi_distribution_windows_arm64]
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.09.16/pi-distribution-v26.09.16-windows-arm64.tgz"
 sha256 = "c61e46fa4094da14f0513f3300e09f9227a9876bc4a70e92a411967b66d70142"
 
-[external_resources.github_release_assets.zjstatus]
+[external_resources.pins.pi_distribution_windows_arm64.update]
+type = "github_release"
+repository = "ningw42/pi-distribution"
+tag = "v26.09.16"
+asset = "pi-distribution-{tag}-windows-arm64.tgz"
+
+[external_resources.pins.pi_distribution_windows_x64]
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.09.16/pi-distribution-v26.09.16-windows-x64.tgz"
+sha256 = "7485ecfc19ca55bdc89a1d079c712994e9193d0a6b7df6343d60b6bbd7e27ecf"
+
+[external_resources.pins.pi_distribution_windows_x64.update]
+type = "github_release"
+repository = "ningw42/pi-distribution"
+tag = "v26.09.16"
+asset = "pi-distribution-{tag}-windows-x64.tgz"
+
+[external_resources.pins.superpowers]
+url = "https://github.com/obra/superpowers/archive/refs/tags/v6.3.0.tar.gz"
+sha256 = "2933703111f44dd1ae0234372cd2a924afb372a682fe3d9acdb6497231213fcb"
+
+[external_resources.pins.superpowers.update]
+type = "github_release"
+repository = "obra/superpowers"
+tag = "v6.3.0"
+
+[external_resources.pins.yazi_everforest_medium_flavor]
+url = "https://raw.githubusercontent.com/Chromium-3-Oxide/everforest-medium.yazi/main/flavor.toml"
+sha256 = "73016614f30f12537be950b3ed9c3da369117780526fe5400cf19d13e59ce5f3"
+
+[external_resources.pins.yazi_everforest_medium_tmtheme]
+url = "https://raw.githubusercontent.com/Chromium-3-Oxide/everforest-medium.yazi/main/tmtheme.xml"
+sha256 = "ade1ff57064dd81fedfeb2df44730d93fedf48752dfe7da803473ce3d0846471"
+
+[external_resources.pins.yazi_full_border]
+url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/full-border.yazi/main.lua"
+sha256 = "08b950c4eea9d85787f28dff186728747114ed92bac9ee5e82e82c955c711cde"
+
+[external_resources.pins.yazi_git_main]
+url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/git.yazi/main.lua"
+sha256 = "945895aa22cc4b3066d8663cbb7bd57707225d93cf2525aefbe18158aa3798c3"
+
+[external_resources.pins.yazi_git_types]
+url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/git.yazi/types.lua"
+sha256 = "b6c2a0592a3206b8d7b9338f3b41828cf100b3662f248d8c99d273d314283186"
+
+[external_resources.pins.yazi_gruvbox_dark_flavor]
+url = "https://raw.githubusercontent.com/bennyyip/gruvbox-dark.yazi/main/flavor.toml"
+sha256 = "f0097295f307002be2465d7ea251c8c1d038ac7a720784013407d7b22f25e9c7"
+
+[external_resources.pins.yazi_gruvbox_dark_tmtheme]
+url = "https://raw.githubusercontent.com/bennyyip/gruvbox-dark.yazi/main/tmtheme.xml"
+sha256 = "7947f50a0f32f9fb0052b9d6e206857dff18ac877f736f0d2a866a97ff0df50b"
+
+[external_resources.pins.yazi_mediainfo]
+url = "https://github.com/boydaihungst/mediainfo.yazi/archive/refs/heads/master.zip"
+sha256 = "4948adaec04289e7ad25677e81d2e29696cf6b745e62a8c442145e4b1913c202"
+
+[external_resources.pins.yazi_ouch]
+url = "https://raw.githubusercontent.com/ndtoan96/ouch.yazi/main/main.lua"
+sha256 = "9522a863b0064b595bfa156f4dafb5f083f7280db2f2dd2ea499194fa55da359"
+
+[external_resources.pins.yazi_piper]
+url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/piper.yazi/main.lua"
+sha256 = "7b8cb4012ee0f5a09a8691b0cc39f899278dd70666213a31b0a647170e31c5a1"
+
+[external_resources.pins.yazi_smart_enter]
+url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/smart-enter.yazi/main.lua"
+sha256 = "5def5b84dd01cd5bb59357a3162f77dfc38be5433e36bbb9df6260917f786e5a"
+
+[external_resources.pins.yazi_torrent_preview]
+url = "https://raw.githubusercontent.com/kirasok/torrent-preview.yazi/main/main.lua"
+sha256 = "1b151709d364500ebbc71fae719b714748d55201d1171953646c9ffb14d73e89"
+
+[external_resources.pins.yazi_vcs_files]
+url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/vcs-files.yazi/main.lua"
+sha256 = "40b3a929788bc4dbf3ce4943dcdadff913c41be984ca3cee30962e0f4ddd5795"
+
+[external_resources.pins.yazi_yatline]
+url = "https://raw.githubusercontent.com/imsi32/yatline.yazi/main/main.lua"
+sha256 = "bd62cdb273e070deeb4e7f378c8c1f793436c8f74bb04979584677b9b2dfa4da"
+
+[external_resources.pins.yazi_yatline_catppuccin]
+url = "https://raw.githubusercontent.com/imsi32/yatline-catppuccin.yazi/main/main.lua"
+sha256 = "1a17e0e7593d5ceee5008047ca2688778593b7dc014ebf98524e37c172fc9739"
+
+[external_resources.pins.yazi_yatline_gruvbox]
+url = "https://raw.githubusercontent.com/imsi32/yatline-gruvbox.yazi/main/main.lua"
+sha256 = "45443d8a04fc5a43672741862e490d5fac39df073467ce13eaf229a99ff64cd6"
+
+[external_resources.pins.zjstatus]
+url = "https://github.com/dj95/zjstatus/releases/download/v0.25.0/zjstatus.wasm"
+sha256 = "282ceab219e56e1908c9fac33907241fe6c3e1ef7d85faab3e5f438cef87b8fe"
+
+[external_resources.pins.zjstatus.update]
+type = "github_release"
 repository = "dj95/zjstatus"
 tag = "v0.25.0"
-
-[external_resources.github_release_assets.zjstatus.assets.wasm]
-name = "zjstatus.wasm"
-sha256 = "282ceab219e56e1908c9fac33907241fe6c3e1ef7d85faab3e5f438cef87b8fe"
+asset = "zjstatus.wasm"

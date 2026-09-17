@@ -5,21 +5,21 @@
 {{ if eq .colorscheme "catppuccin-latte" }}
 ["catppuccin_latte.theme"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/btop/main/themes/catppuccin_latte.theme"
-    checksum.sha256 = "90e963ead5ee083a1359dcb694d9784c1bfe41ec2e0d486d3b04f0d9bdb9173b"
+    url = "{{ .external_resources.pins.catppuccin_btop_latte.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_btop_latte.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-frappe" }}
 ["catppuccin_frappe.theme"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/btop/main/themes/catppuccin_frappe.theme"
-    checksum.sha256 = "1689b67c1c6ce2f4985a0047fad6535acecf7872c21963785fa749868a01a2c9"
+    url = "{{ .external_resources.pins.catppuccin_btop_frappe.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_btop_frappe.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-macchiato" }}
 ["catppuccin_macchiato.theme"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/btop/main/themes/catppuccin_macchiato.theme"
-    checksum.sha256 = "f8b18ccb217bd4ebc184806a91d49a12cb312b9cf37d8ba23322653a78ac8850"
+    url = "{{ .external_resources.pins.catppuccin_btop_macchiato.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_btop_macchiato.sha256 }}"
 {{ else if eq .colorscheme "catppuccin-mocha" }}
 ["catppuccin_mocha.theme"]
     type = "file"
-    url = "https://raw.githubusercontent.com/catppuccin/btop/main/themes/catppuccin_mocha.theme"
-    checksum.sha256 = "4c7469ab9bda282c1ff606aca37c9c0b84cd0cb66d041e4e7e1fed39791f4644"
+    url = "{{ .external_resources.pins.catppuccin_btop_mocha.url }}"
+    checksum.sha256 = "{{ .external_resources.pins.catppuccin_btop_mocha.sha256 }}"
 {{ end }}
