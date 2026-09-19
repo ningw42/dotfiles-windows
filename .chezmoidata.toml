@@ -151,33 +151,33 @@ repository = "mattpocock/skills"
 tag = "v1.2.3"
 
 [external_resources.pins.pi_distribution_windows_arm64]
-url = "https://github.com/ningw42/pi-distribution/releases/download/v26.09.16/pi-distribution-v26.09.16-windows-arm64.tgz"
-sha256 = "c61e46fa4094da14f0513f3300e09f9227a9876bc4a70e92a411967b66d70142"
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.09.18/pi-distribution-v26.09.18-windows-arm64.tgz"
+sha256 = "c104eb731106047d716e22c58de108a17650f5615b47ccb900dc2355913cac85"
 
 [external_resources.pins.pi_distribution_windows_arm64.update]
 type = "github_release"
 repository = "ningw42/pi-distribution"
-tag = "v26.09.16"
+tag = "v26.09.18"
 asset = "pi-distribution-{tag}-windows-arm64.tgz"
 
 [external_resources.pins.pi_distribution_windows_x64]
-url = "https://github.com/ningw42/pi-distribution/releases/download/v26.09.16/pi-distribution-v26.09.16-windows-x64.tgz"
-sha256 = "7485ecfc19ca55bdc89a1d079c712994e9193d0a6b7df6343d60b6bbd7e27ecf"
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.09.18/pi-distribution-v26.09.18-windows-x64.tgz"
+sha256 = "435c1654af66a89732acf1ebc781d4a021b29f2e6dafdeee351cce5e9c4d2614"
 
 [external_resources.pins.pi_distribution_windows_x64.update]
 type = "github_release"
 repository = "ningw42/pi-distribution"
-tag = "v26.09.16"
+tag = "v26.09.18"
 asset = "pi-distribution-{tag}-windows-x64.tgz"
 
 [external_resources.pins.superpowers]
-url = "https://github.com/obra/superpowers/archive/refs/tags/v6.3.0.tar.gz"
-sha256 = "2933703111f44dd1ae0234372cd2a924afb372a682fe3d9acdb6497231213fcb"
+url = "https://github.com/obra/superpowers/archive/refs/tags/v6.4.1.tar.gz"
+sha256 = "68719cba868f04218953d88c1f036e232ced6edd8d72f5570bbc4b79cdaf7b10"
 
 [external_resources.pins.superpowers.update]
 type = "github_release"
 repository = "obra/superpowers"
-tag = "v6.3.0"
+tag = "v6.4.1"
 
 [external_resources.pins.yazi_everforest_medium_flavor]
 url = "https://raw.githubusercontent.com/Chromium-3-Oxide/everforest-medium.yazi/main/flavor.toml"
@@ -193,7 +193,7 @@ sha256 = "08b950c4eea9d85787f28dff186728747114ed92bac9ee5e82e82c955c711cde"
 
 [external_resources.pins.yazi_git_main]
 url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/git.yazi/main.lua"
-sha256 = "945895aa22cc4b3066d8663cbb7bd57707225d93cf2525aefbe18158aa3798c3"
+sha256 = "da7bb904295aa11795fbfac1f72a96ff041ade50ddef9c7f6dd3463550141024"
 
 [external_resources.pins.yazi_git_types]
 url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/git.yazi/types.lua"
@@ -217,7 +217,7 @@ sha256 = "9522a863b0064b595bfa156f4dafb5f083f7280db2f2dd2ea499194fa55da359"
 
 [external_resources.pins.yazi_piper]
 url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/piper.yazi/main.lua"
-sha256 = "7b8cb4012ee0f5a09a8691b0cc39f899278dd70666213a31b0a647170e31c5a1"
+sha256 = "4bb1a91a4a9aa0019e7a9bf05aa7ea7070add9d6f42590e1ec7875de978077fc"
 
 [external_resources.pins.yazi_smart_enter]
 url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/smart-enter.yazi/main.lua"
@@ -229,7 +229,7 @@ sha256 = "1b151709d364500ebbc71fae719b714748d55201d1171953646c9ffb14d73e89"
 
 [external_resources.pins.yazi_vcs_files]
 url = "https://raw.githubusercontent.com/yazi-rs/plugins/main/vcs-files.yazi/main.lua"
-sha256 = "40b3a929788bc4dbf3ce4943dcdadff913c41be984ca3cee30962e0f4ddd5795"
+sha256 = "d1fb62b0e569610345834e51d671afd0cb55abff119c335effa34b1a50b74bc3"
 
 [external_resources.pins.yazi_yatline]
 url = "https://raw.githubusercontent.com/imsi32/yatline.yazi/main/main.lua"
