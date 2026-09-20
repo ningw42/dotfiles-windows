@@ -44,6 +44,10 @@
 # external under ~/.pi/agent/packages.
 .pi/agent/git/github.com/ningw42/pi-distribution
 
+# pi-cc-extensions v0.9 renamed its fixed-path configuration. Remove the legacy
+# target now that dot_pi/agent/pi-cc-extensions.json owns the canonical path.
+.pi/agent/claude-code-style.json
+
 # Stale gruvbox-dark leftovers from when these were static sources. They are now
 # provided by colorscheme-conditional externals, so only remove them when
 # gruvbox-dark is NOT the active colorscheme (otherwise we would fight the

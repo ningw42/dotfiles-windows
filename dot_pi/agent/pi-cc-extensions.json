@@ -1,6 +1,7 @@
 {
   "diffIndicatorMode": "bars",
   "diffViewMode": "auto",
+  "enableCustomFooter": false,
   "enableSessionReference": false,
   "mode": "on",
   "previewLines": 0
