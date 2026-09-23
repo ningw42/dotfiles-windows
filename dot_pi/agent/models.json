@@ -110,7 +110,7 @@
       "baseUrl": "https://copilotd.ningw.net/openai/v1",
       "models": [
         {
-          "contextWindow": 1050000,
+          "contextWindow": 1000000,
           "cost": {
             "cacheRead": 0.02,
             "cacheWrite": 0.25,
@@ -126,13 +126,13 @@
               }
             ]
           },
-          "id": "gpt-5.6-luna",
+          "id": "gpt-6-luna",
           "input": [
             "text",
             "image"
           ],
           "maxTokens": 128000,
-          "name": "GPT-5.6 Luna",
+          "name": "GPT-6 Luna",
           "reasoning": true,
           "thinkingLevelMap": {
             "max": "max",
@@ -174,29 +174,29 @@
           }
         },
         {
-          "contextWindow": 1050000,
+          "contextWindow": 1000000,
           "cost": {
-            "cacheRead": 0.2,
-            "cacheWrite": 2.5,
-            "input": 2,
-            "output": 12,
+            "cacheRead": 0.4,
+            "cacheWrite": 5,
+            "input": 4,
+            "output": 20,
             "tiers": [
               {
-                "cacheRead": 0.4,
-                "cacheWrite": 5,
-                "input": 4,
+                "cacheRead": 0.8,
+                "cacheWrite": 10,
+                "input": 8,
                 "inputTokensAbove": 272000,
-                "output": 18
+                "output": 30
               }
             ]
           },
-          "id": "gpt-5.6-terra",
+          "id": "gpt-6-sol",
           "input": [
             "text",
             "image"
           ],
           "maxTokens": 128000,
-          "name": "GPT-5.6 Terra",
+          "name": "GPT-6 Sol",
           "reasoning": true,
           "thinkingLevelMap": {
             "max": "max",
