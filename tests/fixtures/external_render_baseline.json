@@ -127,6 +127,12 @@
           "pin": "mattpocock_skills"
         }
       },
+      "dot_local/share/llm-agents/skills/.chezmoiexternal.toml": {
+        "show-me/SKILL.md": {
+          "type": "file",
+          "pin": "humanlayer_show_me"
+        }
+      },
       "dot_pi/agent/packages/.chezmoiexternal.toml": {
         "pi-distribution": {
           "type": "archive",
@@ -264,6 +270,12 @@
           "stripComponents": 1,
           "exact": true,
           "pin": "mattpocock_skills"
+        }
+      },
+      "dot_local/share/llm-agents/skills/.chezmoiexternal.toml": {
+        "show-me/SKILL.md": {
+          "type": "file",
+          "pin": "humanlayer_show_me"
         }
       },
       "dot_pi/agent/packages/.chezmoiexternal.toml": {
@@ -405,6 +417,12 @@
           "pin": "mattpocock_skills"
         }
       },
+      "dot_local/share/llm-agents/skills/.chezmoiexternal.toml": {
+        "show-me/SKILL.md": {
+          "type": "file",
+          "pin": "humanlayer_show_me"
+        }
+      },
       "dot_pi/agent/packages/.chezmoiexternal.toml": {
         "pi-distribution": {
           "type": "archive",
@@ -544,6 +562,12 @@
           "pin": "mattpocock_skills"
         }
       },
+      "dot_local/share/llm-agents/skills/.chezmoiexternal.toml": {
+        "show-me/SKILL.md": {
+          "type": "file",
+          "pin": "humanlayer_show_me"
+        }
+      },
       "dot_pi/agent/packages/.chezmoiexternal.toml": {
         "pi-distribution": {
           "type": "archive",
@@ -658,6 +682,12 @@
           "pin": "mattpocock_skills"
         }
       },
+      "dot_local/share/llm-agents/skills/.chezmoiexternal.toml": {
+        "show-me/SKILL.md": {
+          "type": "file",
+          "pin": "humanlayer_show_me"
+        }
+      },
       "dot_pi/agent/packages/.chezmoiexternal.toml": {
         "pi-distribution": {
           "type": "archive",
@@ -763,6 +793,12 @@
           "pin": "mattpocock_skills"
         }
       },
+      "dot_local/share/llm-agents/skills/.chezmoiexternal.toml": {
+        "show-me/SKILL.md": {
+          "type": "file",
+          "pin": "humanlayer_show_me"
+        }
+      },
       "dot_pi/agent/packages/.chezmoiexternal.toml": {
         "pi-distribution": {
           "type": "archive",
@@ -852,6 +888,12 @@
           "stripComponents": 1,
           "exact": true,
           "pin": "mattpocock_skills"
+        }
+      },
+      "dot_local/share/llm-agents/skills/.chezmoiexternal.toml": {
+        "show-me/SKILL.md": {
+          "type": "file",
+          "pin": "humanlayer_show_me"
         }
       },
       "dot_pi/agent/packages/.chezmoiexternal.toml": {

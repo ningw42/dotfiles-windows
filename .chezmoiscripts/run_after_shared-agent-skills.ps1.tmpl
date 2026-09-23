@@ -1,5 +1,6 @@
 param(
     [string]$MattpocockSkillsRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.local/share/llm-agents/plugins/mattpocock-skills',
+    [string]$StandaloneSkillsRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.local/share/llm-agents/skills',
     [string]$SharedSkillsRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.agents/skills'
 )
 
@@ -104,15 +105,46 @@ function Get-MattSkillInventory([string]$Root) {
     return @($inventory | Sort-Object Name)
 }
 
+function Get-StandaloneSkillInventory([string]$Root, [string[]]$Names) {
+    $inventory = @()
+    foreach ($name in $Names) {
+        if ($name -notmatch '^[a-z0-9]+(?:-[a-z0-9]+)*$') {
+            throw "Standalone skill name '$name' is invalid."
+        }
+        $target = Normalize-AbsolutePath (Join-Path $Root $name) $Root
+        if (-not (Test-PathWithin $target $Root)) {
+            throw "Standalone skill '$name' escapes '$Root'."
+        }
+        $targetItem = Get-Item -LiteralPath $target -Force -ErrorAction SilentlyContinue
+        if (
+            $null -eq $targetItem -or
+            -not $targetItem.PSIsContainer -or
+            ($targetItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -or
+            -not (Test-Path -LiteralPath (Join-Path $target 'SKILL.md') -PathType Leaf)
+        ) {
+            throw "Standalone skill '$name' must identify a regular directory containing SKILL.md."
+        }
+        $inventory += [pscustomobject]@{
+            Collection = 'standalone-skills'
+            Name = $name
+            Target = $target
+        }
+    }
+    return @($inventory | Sort-Object Name)
+}
+
 $basePath = (Get-Location).Path
 $mattRootAbsolute = Normalize-AbsolutePath $MattpocockSkillsRoot $basePath
+$standaloneRootAbsolute = Normalize-AbsolutePath $StandaloneSkillsRoot $basePath
 $sharedSkillsRootAbsolute = Normalize-AbsolutePath $SharedSkillsRoot $basePath
 $ownedTargetRoots = @(
     Normalize-AbsolutePath (Join-Path $mattRootAbsolute 'skills') $basePath
+    $standaloneRootAbsolute
 )
 
 $desiredSkills = @(
     Get-MattSkillInventory $mattRootAbsolute
+    Get-StandaloneSkillInventory $standaloneRootAbsolute @('show-me')
 )
 $desiredByName = [Collections.Generic.Dictionary[string, object]]::new(
     [StringComparer]::OrdinalIgnoreCase

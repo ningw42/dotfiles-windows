@@ -1,9 +1,9 @@
 {
   "providers": {
-    "yylx-anthropic": {
+    "copilotd-anthropic": {
       "api": "anthropic-messages",
-      "apiKey": "$YYLX_API_KEY",
-      "baseUrl": "https://app.yylx.io",
+      "apiKey": "$COPILOTD_API_KEY",
+      "baseUrl": "https://copilotd.ningw.net/anthropic",
       "models": [
         {
           "compat": {
@@ -12,101 +12,30 @@
           },
           "contextWindow": 1000000,
           "cost": {
-            "cacheRead": 0.5,
-            "cacheWrite": 6.25,
-            "input": 5,
-            "output": 25
-          },
-          "id": "claude-opus-5",
-          "input": [
-            "text",
-            "image"
-          ],
-          "maxTokens": 128000,
-          "name": "Opus 5",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "max": "max",
-            "minimal": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "compat": {
-            "forceAdaptiveThinking": true
-          },
-          "contextWindow": 1000000,
-          "cost": {
             "cacheRead": 0.2,
-            "cacheWrite": 2.5,
-            "input": 2,
-            "output": 10
+            "cacheWrite": 5,
+            "input": 4,
+            "output": 20
           },
-          "id": "claude-sonnet-5",
+          "id": "claude-opus-5-5",
           "input": [
             "text",
             "image"
           ],
           "maxTokens": 128000,
-          "name": "Sonnet 5",
+          "name": "Opus 5.5",
           "reasoning": true,
           "thinkingLevelMap": {
             "max": "max",
             "minimal": null,
             "xhigh": "xhigh"
           }
-        },
-        {
-          "compat": {
-            "forceAdaptiveThinking": true,
-            "supportsTemperature": false
-          },
-          "contextWindow": 1000000,
-          "cost": {
-            "cacheRead": 0.25,
-            "cacheWrite": 12.5,
-            "input": 10,
-            "output": 50
-          },
-          "id": "claude-fable-5-1",
-          "input": [
-            "text",
-            "image"
-          ],
-          "maxTokens": 128000,
-          "name": "Fable 5.1",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "max": "max",
-            "minimal": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "compat": {
-            "supportsEagerToolInputStreaming": false
-          },
-          "contextWindow": 200000,
-          "cost": {
-            "cacheRead": 0.1,
-            "cacheWrite": 1.25,
-            "input": 1,
-            "output": 5
-          },
-          "id": "claude-haiku-4-5",
-          "input": [
-            "text",
-            "image"
-          ],
-          "maxTokens": 64000,
-          "name": "Haiku 4.5",
-          "reasoning": true
         }
       ]
     },
     "copilotd-openai": {
       "api": "openai-responses",
-      "apiKey": "$PI_API_KEY",
+      "apiKey": "$COPILOTD_API_KEY",
       "baseUrl": "https://copilotd.ningw.net/openai/v1",
       "models": [
         {

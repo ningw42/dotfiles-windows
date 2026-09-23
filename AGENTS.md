@@ -130,10 +130,11 @@ Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
   Superpowers and Matt Pocock skill archives. Release pins are in
   `.chezmoidata.toml`; archives are materialized by
   `dot_local/share/llm-agents/plugins/.chezmoiexternal.toml.tmpl`.
-- `.chezmoiscripts/run_after_shared-agent-skills.ps1.tmpl` publishes the
-  supported external skills under `~/.agents/skills` and refuses non-owned
-  collisions. Repo-owned human-invoked skills live directly under
-  `dot_agents/skills/`; the publisher preserves those non-owned directories.
+- `.chezmoiscripts/run_after_shared-agent-skills.ps1.tmpl` publishes curated
+  Matt Pocock skills and the standalone pinned HumanLayer `show-me` skill under
+  `~/.agents/skills`, while refusing non-owned collisions. Repo-owned
+  human-invoked skills live directly under `dot_agents/skills/`; the publisher
+  preserves those non-owned directories.
 - HerdR owns its release-matched generated hooks, plugins, OpenCode TUI glue,
   and skill. `.chezmoiscripts/run_onchange_herdr-integrations.ps1.tmpl`
   extracts them from the installed binary in an isolated profile and publishes

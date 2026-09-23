@@ -177,7 +177,7 @@ class ExternalManifestRenderingTests(unittest.TestCase):
             {f"{os_name}/{arch}" for os_name, arch in PLATFORMS},
         )
         for colorscheme in THEMES:
-            self.assertEqual(len(self.baseline["by_theme"][colorscheme]), 13)
+            self.assertEqual(len(self.baseline["by_theme"][colorscheme]), 14)
             for os_name, arch in PLATFORMS:
                 with self.subTest(colorscheme=colorscheme, os=os_name, arch=arch):
                     actual = render_manifests(

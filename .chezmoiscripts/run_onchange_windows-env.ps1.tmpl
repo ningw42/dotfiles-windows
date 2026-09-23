@@ -15,8 +15,11 @@ Remove-ItemProperty -LiteralPath "HKCU:\Environment" -Name "ANTHROPIC_AUTH_TOKEN
 # opencode
 [Environment]::SetEnvironmentVariable("OPENCODE_API_KEY", "{{ $secrets.opencode_api_key }}", "User")
 
-# pi — provider credential plus the runtime behavior supplied by nixfiles' wrapper
-[Environment]::SetEnvironmentVariable("PI_API_KEY", "{{ $secrets.pi_api_key }}", "User")
+# copilotd — shared credential for Pi's OpenAI and Anthropic routes
+[Environment]::SetEnvironmentVariable("COPILOTD_API_KEY", "{{ $secrets.pi_api_key }}", "User")
+[Environment]::SetEnvironmentVariable("PI_API_KEY", $null, "User")
+
+# pi — runtime behavior supplied by nixfiles' wrapper
 [Environment]::SetEnvironmentVariable("PI_STATUSLINE_STARSHIP", "{{ .chezmoi.homeDir | replace "\\" "/" }}/scoop/shims/starship.exe", "User")
 [Environment]::SetEnvironmentVariable("PI_SKIP_VERSION_CHECK", "1", "User")
 [Environment]::SetEnvironmentVariable("PI_TELEMETRY", "0", "User")

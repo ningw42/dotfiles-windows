@@ -30,6 +30,15 @@ try {
         Copy-Item -LiteralPath (Join-Path $subagentsRoot "src/$sourceName") -Destination $sourceDir
     }
 
+    $agentFileTogglePath = Join-Path $sourceDir 'agent-file-toggle.ts'
+    if (-not (Select-String -LiteralPath $agentFileTogglePath -SimpleMatch 'from "./custom-agents.js"' -Quiet)) {
+        throw 'pi-subagents no longer imports custom-agents.js; remove its build-only shim.'
+    }
+    $upstreamCustomAgentsPath = Join-Path $subagentsRoot 'src/custom-agents.js'
+    if (Test-Path -LiteralPath $upstreamCustomAgentsPath) {
+        throw 'pi-subagents now ships src/custom-agents.js; remove its build-only shim.'
+    }
+
     $utf8NoBom = [Text.UTF8Encoding]::new($false)
 
     # serializeAgentFile does not use parseAgentFrontmatter, but its module imports
@@ -37,7 +46,9 @@ try {
     # growing runtime dependency graph into this isolated generator.
     [IO.File]::WriteAllText(
         (Join-Path $sourceDir 'custom-agents.js'),
-        "exports.parseAgentFrontmatter = () => { throw new Error(`"parseAgentFrontmatter is unavailable in the Explore generator`"); };`n",
+        'export function parseAgentFrontmatter() {' + "`n" +
+        '  throw new Error("build-only custom-agents.js shim was unexpectedly called");' + "`n" +
+        '}' + "`n",
         $utf8NoBom
     )
     [IO.File]::WriteAllText(
@@ -47,7 +58,7 @@ try {
     )
     [IO.File]::WriteAllText(
         (Join-Path $stubDir 'index.js'),
-        "exports.getAgentDir = () => `".`";`nexports.parseFrontmatter = () => ({ frontmatter: {} });`n",
+        "exports.getAgentDir = () => `".`";`n",
         $utf8NoBom
     )
 

@@ -141,6 +141,10 @@ sha256 = "ed2b38313095d982ae683cde702ba49e18aecf59d821c8425ac50aa87b584985"
 url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/mocha/catppuccin-mocha-blue.toml"
 sha256 = "0d1f380aff156934ee1c1aeb2c1e5505b21a8cd892c206f9838fc0621bab18e9"
 
+[external_resources.pins.humanlayer_show_me]
+url = "https://raw.githubusercontent.com/humanlayer/skills/3c2629142c5d437428269b1b722b08c0b87f574d/plugins/show-me/skills/show-me/SKILL.md"
+sha256 = "bea6da70a58096730b9aeb0bae293ddf4726103a98efc9ce13c481619942a810"
+
 [external_resources.pins.mattpocock_skills]
 url = "https://github.com/mattpocock/skills/archive/refs/tags/v1.2.3.tar.gz"
 sha256 = "238fac54d0f53d3e2d0501c1b38c9c0e4e9bc26f6b057b53a7328ea15d43b66f"
