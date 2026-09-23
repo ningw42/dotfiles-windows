@@ -1,0 +1,6 @@
+interface:
+  display_name: "Simplification Review"
+  short_description: "Find contract-preserving simplifications"
+  default_prompt: "Use $simplification-review to review this scope for contract-preserving simplifications."
+policy:
+  allow_implicit_invocation: false
