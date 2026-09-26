@@ -4,8 +4,12 @@ onboarding = false
 prefix = "ctrl+b"
 goto = "prefix+g"
 new_tab = ["prefix+c", "alt+n"]
+next_agent = "alt+shift+down"
 next_tab = ["prefix+n", "alt+right"]
+next_workspace = "alt+down"
+previous_agent = "alt+shift+up"
 previous_tab = ["prefix+p", "alt+left"]
+previous_workspace = "alt+up"
 
 [[keys.command]]
 key = "prefix+alt+g"
