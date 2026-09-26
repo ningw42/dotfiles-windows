@@ -155,33 +155,33 @@ repository = "mattpocock/skills"
 tag = "v1.2.3"
 
 [external_resources.pins.pi_distribution_windows_arm64]
-url = "https://github.com/ningw42/pi-distribution/releases/download/v26.09.29/pi-distribution-v26.09.29-windows-arm64.tgz"
-sha256 = "f71eb01e24786baf969aa86548c0e5f7aad08ab8e3d304ad407ab591a744064d"
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.09.30/pi-distribution-v26.09.30-windows-arm64.tgz"
+sha256 = "d2553481cd3fead127b3d6e28f9a7a6ceff6beb537212c9ddd2d1ed42bddb791"
 
 [external_resources.pins.pi_distribution_windows_arm64.update]
 type = "github_release"
 repository = "ningw42/pi-distribution"
-tag = "v26.09.29"
+tag = "v26.09.30"
 asset = "pi-distribution-{tag}-windows-arm64.tgz"
 
 [external_resources.pins.pi_distribution_windows_x64]
-url = "https://github.com/ningw42/pi-distribution/releases/download/v26.09.29/pi-distribution-v26.09.29-windows-x64.tgz"
-sha256 = "120c74380c8a5f545c5fa2c7312b2c140867066314be3990d0a6091d7ca642c4"
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.09.30/pi-distribution-v26.09.30-windows-x64.tgz"
+sha256 = "53f4dc463b560fbba41618d03928c05b010d8cc5d6d56c2c1482d8ef3de49c71"
 
 [external_resources.pins.pi_distribution_windows_x64.update]
 type = "github_release"
 repository = "ningw42/pi-distribution"
-tag = "v26.09.29"
+tag = "v26.09.30"
 asset = "pi-distribution-{tag}-windows-x64.tgz"
 
 [external_resources.pins.superpowers]
-url = "https://github.com/obra/superpowers/archive/refs/tags/v6.4.1.tar.gz"
-sha256 = "68719cba868f04218953d88c1f036e232ced6edd8d72f5570bbc4b79cdaf7b10"
+url = "https://github.com/obra/superpowers/archive/refs/tags/v6.4.2.tar.gz"
+sha256 = "66eae02bb1549ae289a14bb23a14c119d2e7ccdaf3b5fb8b95f17db581ef0249"
 
 [external_resources.pins.superpowers.update]
 type = "github_release"
 repository = "obra/superpowers"
-tag = "v6.4.1"
+tag = "v6.4.2"
 
 [external_resources.pins.yazi_everforest_medium_flavor]
 url = "https://raw.githubusercontent.com/Chromium-3-Oxide/everforest-medium.yazi/main/flavor.toml"
