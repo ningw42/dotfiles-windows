@@ -42,6 +42,93 @@ Five colorschemes are available: Catppuccin Latte, Frappé, Macchiato, and Mocha
 plus Gruvbox Dark. Templates and checksum-pinned chezmoi externals keep themes in
 sync across applications.
 
+## Shared agent skills
+
+Chezmoi acquires immutable upstream snapshots, while `manage_skills.py` publishes
+reviewed subsets from `agent_skills.sources` in `.chezmoidata.toml`. Each source
+has a home-relative `directory`, a nonempty list of literal file or subtree
+`include` paths, and an optional `exclude` list. Paths are relative and use `/`;
+they are not globs. The explicit list is the review boundary: refreshing an
+upstream pin never adopts a newly promoted skill. Review and edit the includes
+separately when changing the published set.
+
+The publisher owns only outputs attested by
+`~/.config/claude-code-chezmoi/.skill-publisher.json`:
+
+- filtered plugins under `generated-skills/`;
+- their absolute links under `~/.agents/skills/`; and
+- the generated `.claude-plugin/marketplace.json`.
+
+Raw snapshots, repo-authored skills, HerdR's generated skill, `plugins/user-mcps`,
+and Claude's plugin registry/cache keep their existing owners. A lock serializes
+writers, and foreign or modified outputs are refused rather than adopted. Plugin
+versions are derived from selected bytes, executable bits, normalized metadata,
+and filters, so support-file changes invalidate Claude's cache while an upstream
+version field or unselected file does not. Publication never activates plugins;
+after it succeeds, use native Claude commands to refresh the `chezmoi`
+marketplace and install or update its plugins.
+
+A leftover `.skill-publisher-work` means a transaction or cleanup was interrupted.
+Preserve it and independent backups, inspect the receipt and current outputs, and
+reconcile them manually before clearing the blocker. Do not delete a receipt to
+force adoption. Caught pre-commit failures normally restore the previous state,
+but process termination is not automatically recoverable and concurrent readers
+do not receive an atomic multi-file snapshot.
+
+### Human-run deployment and legacy handoff
+
+Choose the procedure only after inspecting the deployment home:
+
+1. **Clean installation:** there are no old links, plugin archive links, or static
+   marketplace to remove. If a publisher receipt already exists, first validate
+   its schema, recorded digests, links, and marketplace. A receipt identifies
+   content rather than this repository; obtain an explicit ownership decision
+   before using it from another checkout, and stop competing applies.
+2. **Legacy installation:** close agent sessions. Back up and remove only Matt
+   shared-skill links whose targets are skills declared by the old Matt plugin
+   manifest. Remove `.agents/skills/show-me` only when it is a directory symlink
+   whose target is exactly `.local/share/llm-agents/skills/show-me` under that
+   deployment home. A regular directory, relative link, or unexpected target
+   requires inspection. Delete links themselves, never their target trees.
+3. Preserve the Matt archive, every local skill, HerdR links, and unrelated
+   entries. Copy any custom fixed marketplace entries into
+   `marketplace-base.json`, then back up and remove the old static live
+   marketplace plus only the verified `plugins/mattpocock-skills` and
+   `plugins/superpowers` directory links. Keep `plugins/user-mcps`, Claude
+   registries, and caches.
+4. Inspect and manually retire the unused Superpowers archive and old standalone
+   `show-me` backing directory. The old `SKILL.md` must hash to
+   `bea6da70a58096730b9aeb0bae293ddf4726103a98efc9ce13c481619942a810`.
+   Preserve modified or extra files for review, and never remove the whole
+   `.local/share/llm-agents/skills` parent.
+5. Explicitly select this checkout. Acquire externals without lifecycle scripts,
+   preview the publisher, and inspect the complete diff before an authorized
+   apply (replace `$source` with the checkout path):
+
+   ```powershell
+   chezmoi --source $source --refresh-externals=always apply --include=externals
+   & "$HOME/scoop/apps/python/current/python.exe" -X utf8 "$source/manage_skills.py" --home $HOME --dry-run
+   chezmoi --source $source --refresh-externals=never diff
+   # Human approval boundary:
+   chezmoi --source $source --refresh-externals=never apply
+   ```
+
+   A scripted apply that can touch Pi settings uses `--force`. The externals-only
+   apply above deliberately excludes lifecycle scripts; it is acquisition, not
+   authorization to publish or migrate.
+6. Refresh Claude through its native interface, preserving unrelated plugins:
+
+   ```powershell
+   claude plugin marketplace update chezmoi
+   claude plugin uninstall superpowers@chezmoi
+   claude plugin update mattpocock-skills@chezmoi --scope user
+   claude plugin install humanlayer@chezmoi --scope user
+   ```
+
+   Inspect and remove any older remotely installed Superpowers plugin separately
+   through Claude's CLI. Restart or reload agents after publication and cache
+   changes.
+
 ## Secrets
 
 `secrets.yaml.age` is committed; plaintext `secrets.yaml` is gitignored and must

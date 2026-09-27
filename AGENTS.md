@@ -126,15 +126,17 @@ Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
   `dot_config/mcp/readonly_mcp.json` for pi. Copilot intentionally omits GitHub.
 - `dot_config/statusline/statusline.py` serves Claude Code and Copilot via the
   `claude` and `copilot` dispatch arguments.
-- The Claude marketplace combines the local MCP plugin with symlinks to pinned
-  Superpowers and Matt Pocock skill archives. Release pins are in
-  `.chezmoidata.toml`; archives are materialized by
-  `dot_local/share/llm-agents/plugins/.chezmoiexternal.toml.tmpl`.
-- `.chezmoiscripts/run_after_shared-agent-skills.ps1.tmpl` publishes curated
-  Matt Pocock skills and the standalone pinned HumanLayer `show-me` skill under
-  `~/.agents/skills`, while refusing non-owned collisions. Repo-owned
-  human-invoked skills live directly under `dot_agents/skills/`; the publisher
-  preserves those non-owned directories.
+- Chezmoi owns raw Matt Pocock and HumanLayer snapshots selected by
+  `.chezmoidata.toml`. `manage_skills.py` owns the filtered plugin views, their
+  shared links, its receipt/lock, and the generated Claude marketplace; Claude
+  owns its runtime registry/cache. Repo-authored skills under `dot_agents/skills/`
+  and the separate HerdR integration retain their owners. The publisher never
+  adopts foreign outputs. See README's shared-skills section for selection,
+  recovery, deployment, and the human-only legacy handoff.
+- `.chezmoiscripts/run_after_shared-agent-skills.ps1.tmpl` invokes the publisher
+  with Scoop's managed Python 3.11+ after apply. Changes to skill selection,
+  publication, acquisition, or lifecycle must run `tests/test_agent_skills.py`,
+  `tests/test_external_manifests.py`, and `tests/test_update_externals.py`.
 - HerdR owns its release-matched generated hooks, plugins, OpenCode TUI glue,
   and skill. `.chezmoiscripts/run_onchange_herdr-integrations.ps1.tmpl`
   extracts them from the installed binary in an isolated profile and publishes
@@ -223,5 +225,6 @@ Run the checks relevant to the change; do not deploy merely to validate.
 | Any template/config | `chezmoi diff` |
 | External URLs or pins | `python update_externals.py --dry-run` |
 | External updater | `python -m unittest discover -s tests` |
+| Shared skill publication | `python -B -m unittest discover -s tests -p test_agent_skills.py -v` |
 | Shared status line | `python dot_config/statusline/statusline.py test` |
 | Chezmoi environment | `chezmoi doctor` |

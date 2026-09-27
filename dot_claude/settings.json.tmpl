@@ -98,9 +98,10 @@
   "skipDangerousModePermissionPrompt": true,
   "skipAutoPermissionPrompt": true,
   "enabledPlugins": {
-    "user-mcps@chezmoi": true,
-    "superpowers@chezmoi": true,
-    "mattpocock-skills@chezmoi": true
+{{- range $name, $_ := .agent_skills.sources }}
+    {{ printf "%s@chezmoi" $name | quote }}: true,
+{{- end }}
+    "user-mcps@chezmoi": true
   },
   "enableWorkflows": true,
   "skipWorkflowUsageWarning": true

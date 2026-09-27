@@ -3,8 +3,14 @@ AGENTS.md
 CLAUDE.md
 configuration.dsc.yaml
 update_externals.py
+manage_skills.py
 secrets.yaml
 secrets.yaml.age
 docs/
 tests/
+.config/claude-code-chezmoi/generated-skills/
+.config/claude-code-chezmoi/.claude-plugin/marketplace.json
+.config/claude-code-chezmoi/.skill-publisher*
 __pycache__/
+**/__pycache__/
+**/*.pyc

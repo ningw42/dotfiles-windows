@@ -1,0 +1,6 @@
+["humanlayer"]
+    type = "archive"
+    url = {{ .external_resources.pins.humanlayer_skills.url | toJson }}
+    stripComponents = 1
+    exact = true
+    checksum.sha256 = {{ .external_resources.pins.humanlayer_skills.sha256 | toJson }}

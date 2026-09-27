@@ -272,6 +272,40 @@ extra = { "odd.key" = ["text", true, 2, 3.5], day = 2026-01-02, clock = 03:04:05
         self.assertEqual(result["title"], original["title"])
         self.assertEqual(result["external_resources"]["pins"]["theme"]["sha256"], HASH_ABC)
 
+    def test_pin_refresh_preserves_agent_skill_sources_and_include_order(self):
+        source = {
+            "directory": ".local/share/llm-agents/sources/[literal]",
+            "include": [
+                "plugins/show-me/skills/show-me",
+                "LICENSE",
+                "support/[draft].md",
+            ],
+            "exclude": ["support/private"],
+        }
+        content = FIXED_DATA + '''
+[agent_skills.sources.humanlayer]
+directory = ".local/share/llm-agents/sources/[literal]"
+include = [
+  "plugins/show-me/skills/show-me",
+  "LICENSE",
+  "support/[draft].md",
+]
+exclude = ["support/private"]
+'''
+        self.path.write_text(content, encoding="utf-8")
+
+        status, stdout, stderr = self.run_update({"https://example.test/theme": b"abc"})
+
+        self.assertEqual(status, 1, stderr)
+        rendered = self.path.read_text(encoding="utf-8")
+        parsed = tomllib.loads(rendered)
+        self.assertEqual(parsed["agent_skills"]["sources"]["humanlayer"], source)
+        self.assertLess(
+            rendered.index('"plugins/show-me/skills/show-me"'),
+            rendered.index('"LICENSE"'),
+        )
+        self.assertLess(rendered.index('"LICENSE"'), rendered.index('"support/[draft].md"'))
+
     def test_canonical_write_round_trips_unicode_and_escaped_control_characters(self):
         content = '"标签😀" = "文字😀\\u007f"\n' + FIXED_DATA
         self.path.write_text(content, encoding="utf-8")

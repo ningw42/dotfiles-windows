@@ -64,6 +64,75 @@ properties:
           $allInstalled = @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
           @{ Result = if ($allInstalled) { 'Installed' } else { 'NotInstalled' } }
 
+    # Python 3.11+ is required by the shared-skill publisher and external updater.
+    - resource: PSDscResources/Script
+      id: ScoopPython
+      dependsOn:
+        - ScoopBootstrap
+      directives:
+        description: "Install Python 3.11+ via Scoop"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          $python = "$env:USERPROFILE\scoop\apps\python\current\python.exe"
+          if (-not (Test-Path -LiteralPath $python -PathType Leaf)) { return $false }
+          try {
+            $output = & $python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')" 2>$null
+            if ($LASTEXITCODE -ne 0 -or $null -eq $output) { return $false }
+            [version]$version = ($output | Select-Object -Last 1).Trim()
+            $version -ge [version]'3.11.0'
+          } catch {
+            $false
+          }
+        SetScript: |
+          $ErrorActionPreference = 'Stop'
+          $scoop = "$env:USERPROFILE\scoop\shims\scoop.cmd"
+          $python = "$env:USERPROFILE\scoop\apps\python\current\python.exe"
+          $conforming = $false
+          if (Test-Path -LiteralPath $python -PathType Leaf) {
+            try {
+              $output = & $python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')" 2>$null
+              if ($LASTEXITCODE -eq 0 -and $null -ne $output) {
+                [version]$version = ($output | Select-Object -Last 1).Trim()
+                $conforming = $version -ge [version]'3.11.0'
+              }
+            } catch {}
+          }
+          if ($conforming) { return }
+
+          if (Test-Path -LiteralPath $python -PathType Leaf) {
+            & $scoop update python
+          } else {
+            & $scoop install python
+          }
+          if ($LASTEXITCODE -ne 0) { throw "Scoop failed to install or update Python (exit $LASTEXITCODE)." }
+          if (-not (Test-Path -LiteralPath $python -PathType Leaf)) {
+            throw "Scoop did not create the managed Python executable at '$python'."
+          }
+          $output = & $python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')" 2>$null
+          if ($LASTEXITCODE -ne 0 -or $null -eq $output) {
+            throw 'Managed Python failed version verification after Scoop completed.'
+          }
+          [version]$version = ($output | Select-Object -Last 1).Trim()
+          if ($version -lt [version]'3.11.0') {
+            throw "Managed Python $version is older than required version 3.11.0."
+          }
+        GetScript: |
+          $python = "$env:USERPROFILE\scoop\apps\python\current\python.exe"
+          if (-not (Test-Path -LiteralPath $python -PathType Leaf)) {
+            return @{ Result = 'NotInstalled' }
+          }
+          try {
+            $output = & $python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')" 2>$null
+            if ($LASTEXITCODE -ne 0 -or $null -eq $output) {
+              return @{ Result = 'InstalledButUnusable' }
+            }
+            [version]$version = ($output | Select-Object -Last 1).Trim()
+            @{ Result = if ($version -ge [version]'3.11.0') { "Installed $version" } else { "Outdated $version" } }
+          } catch {
+            @{ Result = 'InstalledButUnusable' }
+          }
+
     # Neovim and its build/runtime dependencies
     - resource: PSDscResources/Script
       id: ScoopNeovimDeps

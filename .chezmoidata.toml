@@ -141,9 +141,9 @@ sha256 = "ed2b38313095d982ae683cde702ba49e18aecf59d821c8425ac50aa87b584985"
 url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/mocha/catppuccin-mocha-blue.toml"
 sha256 = "0d1f380aff156934ee1c1aeb2c1e5505b21a8cd892c206f9838fc0621bab18e9"
 
-[external_resources.pins.humanlayer_show_me]
-url = "https://raw.githubusercontent.com/humanlayer/skills/3c2629142c5d437428269b1b722b08c0b87f574d/plugins/show-me/skills/show-me/SKILL.md"
-sha256 = "bea6da70a58096730b9aeb0bae293ddf4726103a98efc9ce13c481619942a810"
+[external_resources.pins.humanlayer_skills]
+url = "https://github.com/humanlayer/skills/archive/3c2629142c5d437428269b1b722b08c0b87f574d.tar.gz"
+sha256 = "9366a25c3e7072fe30ed1ebedf71b0df2f1a229592f03ee29f0a82de38227bcf"
 
 [external_resources.pins.mattpocock_skills]
 url = "https://github.com/mattpocock/skills/archive/refs/tags/v1.2.3.tar.gz"
@@ -173,15 +173,6 @@ type = "github_release"
 repository = "ningw42/pi-distribution"
 tag = "v26.09.30"
 asset = "pi-distribution-{tag}-windows-x64.tgz"
-
-[external_resources.pins.superpowers]
-url = "https://github.com/obra/superpowers/archive/refs/tags/v6.4.2.tar.gz"
-sha256 = "66eae02bb1549ae289a14bb23a14c119d2e7ccdaf3b5fb8b95f17db581ef0249"
-
-[external_resources.pins.superpowers.update]
-type = "github_release"
-repository = "obra/superpowers"
-tag = "v6.4.2"
 
 [external_resources.pins.yazi_everforest_medium_flavor]
 url = "https://raw.githubusercontent.com/Chromium-3-Oxide/everforest-medium.yazi/main/flavor.toml"
@@ -256,3 +247,39 @@ type = "github_release"
 repository = "dj95/zjstatus"
 tag = "v0.25.0"
 asset = "zjstatus.wasm"
+
+[agent_skills.sources.mattpocock-skills]
+directory = ".local/share/llm-agents/plugins/mattpocock-skills"
+include = [
+  ".claude-plugin/plugin.json",
+  "LICENSE",
+  "skills/engineering/ask-matt",
+  "skills/engineering/diagnosing-bugs",
+  "skills/engineering/grill-with-docs",
+  "skills/engineering/triage",
+  "skills/engineering/improve-codebase-architecture",
+  "skills/engineering/setup-matt-pocock-skills",
+  "skills/engineering/tdd",
+  "skills/engineering/to-spec",
+  "skills/engineering/to-tickets",
+  "skills/engineering/wayfinder",
+  "skills/engineering/implement",
+  "skills/engineering/prototype",
+  "skills/engineering/research",
+  "skills/engineering/domain-modeling",
+  "skills/engineering/codebase-design",
+  "skills/engineering/code-review",
+  "skills/engineering/resolving-merge-conflicts",
+  "skills/engineering/wizard",
+  "skills/productivity/grill-me",
+  "skills/productivity/grilling",
+  "skills/productivity/handoff",
+  "skills/productivity/teach",
+  "skills/productivity/to-questionnaire",
+  "skills/productivity/wait-what",
+  "skills/productivity/writing-for-agents",
+]
+
+[agent_skills.sources.humanlayer]
+directory = ".local/share/llm-agents/sources/humanlayer"
+include = ["plugins/show-me/skills/show-me", "LICENSE"]
