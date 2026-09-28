@@ -1,6 +1,14 @@
 # Resolved external pins and their update recipes.
 # update_externals.py refreshes this data and writes canonical TOML.
 
+[agent_skills.sources.humanlayer]
+directory = ".local/share/llm-agents/sources/humanlayer"
+include = ["plugins/show-me/skills/show-me", "LICENSE"]
+
+[agent_skills.sources.mattpocock-skills]
+directory = ".local/share/llm-agents/plugins/mattpocock-skills"
+include = [".claude-plugin/plugin.json", "LICENSE", "skills/engineering/ask-matt", "skills/engineering/diagnosing-bugs", "skills/engineering/grill-with-docs", "skills/engineering/triage", "skills/engineering/improve-codebase-architecture", "skills/engineering/setup-matt-pocock-skills", "skills/engineering/tdd", "skills/engineering/to-spec", "skills/engineering/to-tickets", "skills/engineering/wayfinder", "skills/engineering/implement", "skills/engineering/prototype", "skills/engineering/research", "skills/engineering/domain-modeling", "skills/engineering/codebase-design", "skills/engineering/code-review", "skills/engineering/resolving-merge-conflicts", "skills/engineering/wizard", "skills/productivity/grill-me", "skills/productivity/grilling", "skills/productivity/handoff", "skills/productivity/teach", "skills/productivity/to-questionnaire", "skills/productivity/wait-what", "skills/productivity/writing-for-agents"]
+
 [external_resources.pins.alacritty_everforest_dark_medium]
 url = "https://raw.githubusercontent.com/alacritty/alacritty-theme/master/themes/everforest_dark_medium.toml"
 sha256 = "0b6f445b955a8d3972136e47ead1a83ba4985b553e69f6bb9ef293bbf2e5ad27"
@@ -155,23 +163,23 @@ repository = "mattpocock/skills"
 tag = "v1.2.3"
 
 [external_resources.pins.pi_distribution_windows_arm64]
-url = "https://github.com/ningw42/pi-distribution/releases/download/v26.09.30/pi-distribution-v26.09.30-windows-arm64.tgz"
-sha256 = "d2553481cd3fead127b3d6e28f9a7a6ceff6beb537212c9ddd2d1ed42bddb791"
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.09.33/pi-distribution-v26.09.33-windows-arm64.tgz"
+sha256 = "3df063b8c01f17392ed6b1e1671c7265e058fedab80d164520ee624659af17f3"
 
 [external_resources.pins.pi_distribution_windows_arm64.update]
 type = "github_release"
 repository = "ningw42/pi-distribution"
-tag = "v26.09.30"
+tag = "v26.09.33"
 asset = "pi-distribution-{tag}-windows-arm64.tgz"
 
 [external_resources.pins.pi_distribution_windows_x64]
-url = "https://github.com/ningw42/pi-distribution/releases/download/v26.09.30/pi-distribution-v26.09.30-windows-x64.tgz"
-sha256 = "53f4dc463b560fbba41618d03928c05b010d8cc5d6d56c2c1482d8ef3de49c71"
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.09.33/pi-distribution-v26.09.33-windows-x64.tgz"
+sha256 = "9fcecfc73f50bdb323cfba7e95f0456f40ba0aa6514d48fbc9785cba4a4d00c6"
 
 [external_resources.pins.pi_distribution_windows_x64.update]
 type = "github_release"
 repository = "ningw42/pi-distribution"
-tag = "v26.09.30"
+tag = "v26.09.33"
 asset = "pi-distribution-{tag}-windows-x64.tgz"
 
 [external_resources.pins.yazi_everforest_medium_flavor]
@@ -247,39 +255,3 @@ type = "github_release"
 repository = "dj95/zjstatus"
 tag = "v0.25.0"
 asset = "zjstatus.wasm"
-
-[agent_skills.sources.mattpocock-skills]
-directory = ".local/share/llm-agents/plugins/mattpocock-skills"
-include = [
-  ".claude-plugin/plugin.json",
-  "LICENSE",
-  "skills/engineering/ask-matt",
-  "skills/engineering/diagnosing-bugs",
-  "skills/engineering/grill-with-docs",
-  "skills/engineering/triage",
-  "skills/engineering/improve-codebase-architecture",
-  "skills/engineering/setup-matt-pocock-skills",
-  "skills/engineering/tdd",
-  "skills/engineering/to-spec",
-  "skills/engineering/to-tickets",
-  "skills/engineering/wayfinder",
-  "skills/engineering/implement",
-  "skills/engineering/prototype",
-  "skills/engineering/research",
-  "skills/engineering/domain-modeling",
-  "skills/engineering/codebase-design",
-  "skills/engineering/code-review",
-  "skills/engineering/resolving-merge-conflicts",
-  "skills/engineering/wizard",
-  "skills/productivity/grill-me",
-  "skills/productivity/grilling",
-  "skills/productivity/handoff",
-  "skills/productivity/teach",
-  "skills/productivity/to-questionnaire",
-  "skills/productivity/wait-what",
-  "skills/productivity/writing-for-agents",
-]
-
-[agent_skills.sources.humanlayer]
-directory = ".local/share/llm-agents/sources/humanlayer"
-include = ["plugins/show-me/skills/show-me", "LICENSE"]
