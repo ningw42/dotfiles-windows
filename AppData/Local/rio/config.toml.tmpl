@@ -63,11 +63,10 @@ use-drawable-chars = true
 # only what the regular face genuinely cannot serve and leave the rest to it.
 #
 # Every range below is load-bearing, and specifically because the regular slot is
-# Retina (see the slot tables further down). Berkeley Mono ships two very
-# different cuts here: the 400-weight "ExtraCondensed" file is the Nerd-patched
-# one (10,960 glyphs), while Retina and Bold are plain 455-glyph cuts. So Retina
-# has no icons at all -- what looks like belt-and-braces on an unpatched build is
-# the only thing supplying them.
+# Retina (see the slot tables further down). The plain Berkeley cuts have only
+# 455 glyphs, while the separate "BerkeleyMono Nerd Font" family contains the
+# icons. So Retina has no icons at all -- what looks like belt-and-braces on an
+# unpatched build is the only thing supplying them.
 #
 # Letting rio fall back automatically is not a real option here. Windows has no
 # fontconfig equivalent in rio's dep tree, so sugarloaf/src/font/windows.rs walks
@@ -79,20 +78,24 @@ use-drawable-chars = true
 # Range::contains, so every end below is one past the last glyph covered.
 symbol-map = [
     # Private Use Areas -- Nerd Fonts icons (Powerline, Devicons, Codicons, Font
-    # Awesome, Octicons in the BMP; Material Design in plane 15). The standalone
-    # symbols font is metrics-matched to the ExtraCondensed width, 0.4878 against
-    # Berkeley's 0.4880 em advance, so the cell grid is unaffected.
-    { start = "E000", end = "F900", font-family = "Symbols Nerd Font Berkeley Mono" },
-    { start = "F0000", end = "FFFFE", font-family = "Symbols Nerd Font Berkeley Mono" },
+    # Awesome, Octicons in the BMP; Material Design in plane 15). Use the patched
+    # Berkeley face rather than "Symbols Nerd Font Berkeley Mono". Both match the
+    # 0.488 em cell width and the patched face covers all 10,624 mapped symbols,
+    # but the standalone font reports a 0.390 em ascent against Retina's 0.956.
+    # Rio 0.5.28 positions each mapped run from its own ascent, lifting those
+    # icons by 21 physical pixels at 200% scale; the patched face's vertical
+    # metrics match Retina and keep every run on the primary baseline.
+    { start = "E000", end = "F900", font-family = "BerkeleyMono Nerd Font" },
+    { start = "F0000", end = "FFFFE", font-family = "BerkeleyMono Nerd Font" },
     # The Nerd Fonts glyphs that sit outside the PUA. Retina lacks all 14, and
     # U+276C-2771 in particular are the powerline-extra separators a starship
     # prompt draws, so omitting these is immediately visible.
-    { start = "23FB", end = "23FF", font-family = "Symbols Nerd Font Berkeley Mono" }, # IEC power
-    { start = "2630", end = "2631", font-family = "Symbols Nerd Font Berkeley Mono" }, # trigram
-    { start = "2665", end = "2666", font-family = "Symbols Nerd Font Berkeley Mono" }, # heart
-    { start = "26A1", end = "26A2", font-family = "Symbols Nerd Font Berkeley Mono" }, # high voltage
-    { start = "276C", end = "2772", font-family = "Symbols Nerd Font Berkeley Mono" }, # powerline-extra
-    { start = "2B58", end = "2B59", font-family = "Symbols Nerd Font Berkeley Mono" }, # heavy circle
+    { start = "23FB", end = "23FF", font-family = "BerkeleyMono Nerd Font" }, # IEC power
+    { start = "2630", end = "2631", font-family = "BerkeleyMono Nerd Font" }, # trigram
+    { start = "2665", end = "2666", font-family = "BerkeleyMono Nerd Font" }, # heart
+    { start = "26A1", end = "26A2", font-family = "BerkeleyMono Nerd Font" }, # high voltage
+    { start = "276C", end = "2772", font-family = "BerkeleyMono Nerd Font" }, # powerline-extra
+    { start = "2B58", end = "2B59", font-family = "BerkeleyMono Nerd Font" }, # heavy circle
     # CJK -- Berkeley Mono has zero glyphs in any of these ranges, in either cut.
     # The first span runs radicals through Unified Ideographs; kana, bopomofo,
     # Hangul jamo, strokes, enclosed forms and Ext A sit inside it. Sarasa
