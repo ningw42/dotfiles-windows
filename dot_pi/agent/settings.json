@@ -1,5 +1,5 @@
 {
-  "defaultModel": "gpt-5.6-sol-fast",
+  "defaultModel": "gpt-6.1-sol",
   "defaultProvider": "copilotd-openai",
   "defaultThinkingLevel": "xhigh",
   "defaultTools": [
@@ -12,9 +12,8 @@
   "enabledModels": [
     "copilotd-openai/gpt-6-luna:xhigh",
     "copilotd-openai/gpt-5.6-sol-fast:xhigh",
-    "copilotd-openai/gpt-6-sol:xhigh",
-    "copilotd-openai/gpt-6-astra:xhigh",
-    "copilotd-anthropic/claude-opus-5-5:xhigh"
+    "copilotd-openai/gpt-6.1-sol:xhigh",
+    "copilotd-openai/gpt-6-astra:xhigh"
   ],
   "hideThinkingBlock": true,
   "httpIdleTimeoutMs": 600000,

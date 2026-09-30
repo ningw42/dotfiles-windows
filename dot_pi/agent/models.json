@@ -1,38 +1,5 @@
 {
   "providers": {
-    "copilotd-anthropic": {
-      "api": "anthropic-messages",
-      "apiKey": "$COPILOTD_API_KEY",
-      "baseUrl": "https://copilotd.ningw.net/anthropic",
-      "models": [
-        {
-          "compat": {
-            "forceAdaptiveThinking": true,
-            "supportsTemperature": false
-          },
-          "contextWindow": 1000000,
-          "cost": {
-            "cacheRead": 0.2,
-            "cacheWrite": 5,
-            "input": 4,
-            "output": 20
-          },
-          "id": "claude-opus-5-5",
-          "input": [
-            "text",
-            "image"
-          ],
-          "maxTokens": 128000,
-          "name": "Opus 5.5",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "max": "max",
-            "minimal": null,
-            "xhigh": "xhigh"
-          }
-        }
-      ]
-    },
     "copilotd-openai": {
       "api": "openai-responses",
       "apiKey": "$COPILOTD_API_KEY",
@@ -41,17 +8,17 @@
         {
           "contextWindow": 1000000,
           "cost": {
-            "cacheRead": 0.02,
-            "cacheWrite": 0.25,
-            "input": 0.2,
-            "output": 1.2,
+            "cacheRead": 0.01,
+            "cacheWrite": 0.125,
+            "input": 0.1,
+            "output": 0.5,
             "tiers": [
               {
-                "cacheRead": 0.04,
-                "cacheWrite": 0.5,
-                "input": 0.4,
+                "cacheRead": 0.02,
+                "cacheWrite": 0.25,
+                "input": 0.2,
                 "inputTokensAbove": 272000,
-                "output": 1.8
+                "output": 0.75
               }
             ]
           },
@@ -103,29 +70,29 @@
           }
         },
         {
-          "contextWindow": 1000000,
+          "contextWindow": 1050000,
           "cost": {
-            "cacheRead": 0.4,
-            "cacheWrite": 5,
-            "input": 4,
-            "output": 20,
+            "cacheRead": 0.1,
+            "cacheWrite": 2.5,
+            "input": 2,
+            "output": 10,
             "tiers": [
               {
-                "cacheRead": 0.8,
-                "cacheWrite": 10,
-                "input": 8,
+                "cacheRead": 0.2,
+                "cacheWrite": 5,
+                "input": 4,
                 "inputTokensAbove": 272000,
-                "output": 30
+                "output": 15
               }
             ]
           },
-          "id": "gpt-6-sol",
+          "id": "gpt-6.1-sol",
           "input": [
             "text",
             "image"
           ],
           "maxTokens": 128000,
-          "name": "GPT-6 Sol",
+          "name": "GPT-6.1 Sol",
           "reasoning": true,
           "thinkingLevelMap": {
             "max": "max",
@@ -173,4 +140,3 @@
     }
   }
 }
-
