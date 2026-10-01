@@ -67,7 +67,7 @@
                 "weight": 375,
                 "size": 14
             },
-            "padding": "4",
+            "padding": "4, 0",
             "scrollbarState": "hidden"
         },
         "list": 
