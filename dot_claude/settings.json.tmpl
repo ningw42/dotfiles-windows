@@ -1,12 +1,5 @@
 {
-  "apiKeyHelper": "pwsh -NoLogo -NoProfile -NonInteractive -Command \"[Console]::Out.Write([Environment]::GetEnvironmentVariable('YYLX_API_KEY'))\"",
   "env": {
-    "ANTHROPIC_BASE_URL": "{{ .claude_code_base_url }}",
-    "ANTHROPIC_MODEL": "claude-opus-5[1m]",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-5[1m]",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-5[1m]",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4-5",
-    "ANTHROPIC_DEFAULT_FABLE_MODEL": "claude-fable-5-1[1m]",
     "CLAUDE_CODE_USE_POWERSHELL_TOOL": "1",
     "DISABLE_TELEMETRY": "1",
     "DISABLE_AUTOUPDATER": "1",
@@ -94,7 +87,11 @@
       }
     }
   },
-  "effortLevel": "xhigh",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "xhigh"
+    }
+  },
   "skipDangerousModePermissionPrompt": true,
   "skipAutoPermissionPrompt": true,
   "enabledPlugins": {

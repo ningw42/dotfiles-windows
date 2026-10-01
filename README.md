@@ -23,7 +23,7 @@ chezmoi apply
 ```
 
 The first initialization prompts for the colorscheme, password manager, Git
-identity, and LLM providers. The answers are stored in the generated
+identity, and Codex provider. The answers are stored in the generated
 `~/.config/chezmoi/chezmoi.toml`; `.chezmoi.toml.tmpl` defines the available
 choices.
 
@@ -32,7 +32,7 @@ choices.
 - **Shell and developer tools:** PowerShell, Git, SSH, Neovim, Yazi, fzf,
   starship, bat, delta, lazygit, gitui, eza, bottom, btop, and related tools.
 - **Terminals:** Windows Terminal, WezTerm, Rio, Alacritty, Zellij, and HerdR.
-- **Coding agents:** Claude Code, Codex, Copilot CLI, OpenCode, and pi, plus
+- **Coding agents:** Claude Code, Codex, Copilot CLI, OpenCode 2, and pi, plus
   shared MCP/skills infrastructure, release-matched HerdR integrations, and a
   Claude/Copilot status line.
 - **Bootstrap:** `configuration.dsc.yaml` installs Scoop packages, WinGet apps,

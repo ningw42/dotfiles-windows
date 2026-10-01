@@ -40,6 +40,9 @@
 # cross-machine purge of any already-deployed copy.
 .copilot/copilot-instructions.md
 
+# OpenCode 2 uses cli.json; HerdR's generated V1 tui.jsonc registration is stale.
+.config/opencode/tui.jsonc
+
 # pi-distribution moved from Pi's git package store to a checksum-pinned chezmoi
 # external under ~/.pi/agent/packages.
 .pi/agent/git/github.com/ningw42/pi-distribution

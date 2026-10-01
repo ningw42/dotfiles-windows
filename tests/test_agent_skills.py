@@ -2329,8 +2329,6 @@ class TemplateRenderingIntegrationTests(unittest.TestCase):
                                 "git_username": "Fixture User",
                                 "git_useremail": "fixture@example.test",
                                 "git_signingkey": "FIXTURE",
-                                "claude_code_provider": "yylx",
-                                "claude_code_base_url": "https://app.yylx.io",
                                 "agent_skills": {"sources": copy.deepcopy(registry)},
                             }
                             case_root = parent / "isolated-render"
@@ -2344,11 +2342,22 @@ class TemplateRenderingIntegrationTests(unittest.TestCase):
                                 "user-mcps@chezmoi": True,
                             }
                             self.assertEqual(settings["enabledPlugins"], expected_plugins)
+                            self.assertNotIn("apiKeyHelper", settings)
+                            for key in (
+                                "ANTHROPIC_BASE_URL",
+                                "ANTHROPIC_MODEL",
+                                "ANTHROPIC_DEFAULT_OPUS_MODEL",
+                                "ANTHROPIC_DEFAULT_SONNET_MODEL",
+                                "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+                                "ANTHROPIC_DEFAULT_FABLE_MODEL",
+                            ):
+                                self.assertNotIn(key, settings["env"])
                             self.assertEqual(
-                                settings["env"]["ANTHROPIC_BASE_URL"],
-                                "https://app.yylx.io",
+                                settings["modelSettings"]["claude-opus-5-5"][
+                                    "effortLevel"
+                                ],
+                                "xhigh",
                             )
-                            self.assertIn("YYLX_API_KEY", settings["apiKeyHelper"])
                             comparison = copy.deepcopy(settings)
                             comparison.pop("enabledPlugins")
                             if settings_without_plugins is None:
@@ -2382,8 +2391,6 @@ class RenderedWrapperExecutionTests(unittest.TestCase):
             "git_username": "Fixture User",
             "git_useremail": "fixture@example.test",
             "git_signingkey": "FIXTURE",
-            "claude_code_provider": "yylx",
-            "claude_code_base_url": "https://app.yylx.io",
             "agent_skills": {"sources": {"example": {}}},
         }
         rendered, self.source, self.destination = render_claude_and_wrapper(self.root, data)

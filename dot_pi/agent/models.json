@@ -102,9 +102,6 @@
           }
         },
         {
-          "compat": {
-            "supportsTemperature": false
-          },
           "contextWindow": 1050000,
           "cost": {
             "cacheRead": 1,
@@ -134,6 +131,64 @@
             "minimal": null,
             "off": null,
             "xhigh": "xhigh"
+          }
+        }
+      ]
+    },
+    "deepseek-responses": {
+      "api": "openai-responses",
+      "apiKey": "$DEEPSEEK_API_KEY",
+      "baseUrl": "https://api.deepseek.com",
+      "models": [
+        {
+          "compat": {
+            "supportsDeveloperRole": false
+          },
+          "contextWindow": 1048576,
+          "cost": {
+            "cacheRead": 0.006,
+            "cacheWrite": 0,
+            "input": 0.3,
+            "output": 1.2
+          },
+          "id": "deepseek-flash",
+          "input": [
+            "text",
+            "image"
+          ],
+          "maxTokens": 393216,
+          "name": "DeepSeek Flash",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "max": "max",
+            "medium": null,
+            "minimal": null,
+            "off": "none"
+          }
+        },
+        {
+          "compat": {
+            "supportsDeveloperRole": false
+          },
+          "contextWindow": 1048576,
+          "cost": {
+            "cacheRead": 0.044,
+            "cacheWrite": 0,
+            "input": 1.32,
+            "output": 3.96
+          },
+          "id": "deepseek-v4-pro",
+          "input": [
+            "text"
+          ],
+          "maxTokens": 393216,
+          "name": "DeepSeek V4 Pro",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "max": "max",
+            "medium": null,
+            "minimal": null,
+            "off": "none"
           }
         }
       ]

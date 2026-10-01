@@ -4,10 +4,6 @@
 {{- $codex_provider_choices := list "litellm" "router-maestro" "copilot-proxy" "copilotd" -}}
 {{- $codex_provider := promptChoiceOnce . "codex_provider" "LLM provider for Codex" $codex_provider_choices -}}
 
-{{/* YYLX is the sole Anthropic provider; keep its identity and derived base URL authoritative here. */}}
-{{- $claude_code_provider := "yylx" -}}
-{{- $claude_code_base_url := "https://app.yylx.io" -}}
-
 {{- $password_manager_choices := list "1password" "bitwarden" -}}
 {{- $password_manager := promptChoiceOnce . "password_manager" "password manager in use" $password_manager_choices -}}
 
@@ -27,8 +23,6 @@ encryption = "age"
   git_username = {{ $git_username | quote }}
   git_useremail = {{ $git_useremail | quote }}
   codex_provider = {{ $codex_provider | quote }}
-  claude_code_provider = {{ $claude_code_provider | quote }}
-  claude_code_base_url = {{ $claude_code_base_url | quote }}
   git_signingkey = {{ $git_signingkey | quote }}
 
 [diff]

@@ -3,17 +3,16 @@
   "defaultProvider": "copilotd-openai",
   "defaultThinkingLevel": "xhigh",
   "defaultTools": [
-    "read",
-    "bash",
-    "powershell",
-    "edit",
-    "write"
+    "+powershell",
+    "+codemode"
   ],
   "enabledModels": [
     "copilotd-openai/gpt-6-luna:xhigh",
     "copilotd-openai/gpt-5.6-sol-fast:xhigh",
     "copilotd-openai/gpt-6.1-sol:xhigh",
-    "copilotd-openai/gpt-6-astra:xhigh"
+    "copilotd-openai/gpt-6-astra:xhigh",
+    "deepseek-responses/deepseek-flash:high",
+    "deepseek-responses/deepseek-v4-pro:high"
   ],
   "hideThinkingBlock": true,
   "httpIdleTimeoutMs": 600000,

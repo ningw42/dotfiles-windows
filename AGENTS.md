@@ -121,9 +121,10 @@ Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
 `dot_config/statusline/`.
 
 - Keep shared MCP server definitions aligned in `dot_codex/config.toml.tmpl`,
-  `dot_copilot/mcp-config.json`, `dot_config/opencode/opencode.json`,
-  `dot_config/claude-code-chezmoi/plugins/user-mcps/dot_mcp.json`, and
-  `dot_config/mcp/readonly_mcp.json` for pi. Copilot intentionally omits GitHub.
+  `dot_copilot/mcp-config.json`, `dot_config/opencode/opencode.json.tmpl`,
+  `dot_config/claude-code-chezmoi/plugins/user-mcps/dot_mcp.json`, and pi's
+  `dot_config/mcp/readonly_mcp.json` plus `dot_pi/agent/readonly_mcp.json`.
+  Copilot intentionally omits GitHub.
 - `dot_config/statusline/statusline.py` serves Claude Code and Copilot via the
   `claude` and `copilot` dispatch arguments.
 - Chezmoi owns raw Matt Pocock and HumanLayer snapshots selected by
@@ -159,6 +160,8 @@ copies.
   `.chezmoiremove`.
 - Copilot uses its generated `~/.copilot/hooks/rtk-rewrite.json`; the script
   deletes the redundant generated instruction file.
+- OpenCode 2 uses the repo-owned `dot_config/opencode/plugins/rtk.js` compatibility
+  adapter, which delegates all rewrite policy to the RTK executable on `PATH`.
 - Do not add pi to the RTK script. `pi-distribution` owns pi's RTK extension.
 
 ### pi ownership
@@ -182,12 +185,13 @@ The PowerShell profile and persistent Windows environment set
 telemetry to reproduce the nixfiles wrapper.
 
 The global pi-subagents and pi-tasks defaults live in
-`dot_pi/agent/{subagents.json,tasks-config.json}`. The global `Explore` override
-is generated after every apply by
-`.chezmoiscripts/run_after_pi-subagents-explore.ps1.tmpl` from the installed,
-pinned pi-subagents sources; it deliberately removes the upstream model pin so
-Explore inherits the parent model. Do not edit or add
-`~/.pi/agent/agents/Explore.md` as a chezmoi source.
+`dot_pi/agent/{subagents.json,tasks-config.json}`. Built-in agent overrides are
+generated after every apply by
+`.chezmoiscripts/run_after_pi-subagents-agents.ps1.tmpl` from the installed,
+pinned pi-subagents sources: `Explore` uses GPT-5.6 Sol Fast, `Plan` uses GPT-6
+Astra, and `general-purpose` has no pin so callers or the parent choose its
+model. Keep all three as generated deployed files; do not add
+`dot_pi/agent/agents/*.md` sources.
 
 Pi also rewrites `settings.json` at runtime (for package/theme/version state), so
 interactive apply may ask whether to overwrite it. This is expected: overwrite

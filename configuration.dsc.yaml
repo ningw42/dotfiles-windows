@@ -39,6 +39,24 @@ properties:
           $buckets = & "$env:USERPROFILE\scoop\shims\scoop.cmd" bucket list 2>&1 | Out-String
           @{ Result = if ($buckets -match 'extras') { 'Installed' } else { 'NotInstalled' } }
 
+    # Add versions bucket (needed for OpenCode 2)
+    - resource: PSDscResources/Script
+      id: ScoopBucketVersions
+      dependsOn:
+        - ScoopBootstrap
+      directives:
+        description: Add Scoop versions bucket
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          $buckets = & "$env:USERPROFILE\scoop\shims\scoop.cmd" bucket list 2>&1 | Out-String
+          $buckets -match 'versions'
+        SetScript: |
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" bucket add versions
+        GetScript: |
+          $buckets = & "$env:USERPROFILE\scoop\shims\scoop.cmd" bucket list 2>&1 | Out-String
+          @{ Result = if ($buckets -match 'versions') { 'Installed' } else { 'NotInstalled' } }
+
     # ============================================================
     # Scoop CLI Tools
     # ============================================================
@@ -331,23 +349,35 @@ properties:
         GetScript: |
           @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\herdr\current") { 'Installed' } else { 'NotInstalled' } }
 
-    # opencode (AI coding agent) — config lives at dot_config/opencode/opencode.json
-    # and registers router-maestro + litellm providers plus brave-search /
-    # context7 / github MCP servers, matching the nixfiles llm-agents module.
+    # OpenCode 2 — opencode.json registers copilotd + DeepSeek models and the
+    # shared MCP servers; HerdR's generated V2 plugin registration is composed
+    # into cli.json by run_onchange_herdr-integrations.ps1.tmpl.
     - resource: PSDscResources/Script
       id: ScoopOpencode
       dependsOn:
-        - ScoopBootstrap
+        - ScoopBucketVersions
       directives:
-        description: "Install opencode AI coding agent via Scoop"
+        description: "Install OpenCode 2 via Scoop"
         allowPrerelease: true
       settings:
         TestScript: |
-          Test-Path "$env:USERPROFILE\scoop\apps\opencode\current"
+          $apps = "$env:USERPROFILE\scoop\apps"
+          (Test-Path "$apps\opencode2\current") -and -not (Test-Path "$apps\opencode\current")
         SetScript: |
-          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install opencode
+          $scoop = "$env:USERPROFILE\scoop\shims\scoop.cmd"
+          $apps = "$env:USERPROFILE\scoop\apps"
+          if (Test-Path "$apps\opencode\current") {
+            & $scoop uninstall opencode
+            if ($LASTEXITCODE -ne 0) { throw "Failed to uninstall the incompatible OpenCode 1 package." }
+          }
+          if (-not (Test-Path "$apps\opencode2\current")) {
+            & $scoop install versions/opencode2
+            if ($LASTEXITCODE -ne 0) { throw "Failed to install OpenCode 2 from the Scoop versions bucket." }
+          }
         GetScript: |
-          @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\opencode\current") { 'Installed' } else { 'NotInstalled' } }
+          $apps = "$env:USERPROFILE\scoop\apps"
+          $installed = (Test-Path "$apps\opencode2\current") -and -not (Test-Path "$apps\opencode\current")
+          @{ Result = if ($installed) { 'Installed' } else { 'NotInstalled' } }
 
     # GitHub Copilot CLI — config lives at dot_copilot/ (settings.json: statusline
     # + native-footer disables; mcp-config.json: brave/context7/exa). The RTK

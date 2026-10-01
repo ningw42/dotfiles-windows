@@ -1,0 +1,366 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "copilotd-openai/gpt-6.1-sol",
+  "plugins": [
+    "-opencode.config.compatibility"
+  ],
+  "skills": [
+    "{{ .chezmoi.homeDir | replace "\\" "/" }}/.agents/skills",
+    ".agents/skills"
+  ],
+  "enabled_providers": [
+    "copilotd-openai",
+    "deepseek-messages"
+  ],
+  "mcp": {
+    "brave-search": {
+      "enabled": true,
+      "type": "remote",
+      "url": "https://brave-search-mcp.ningw.net/mcp"
+    },
+    "context7": {
+      "enabled": true,
+      "headers": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      },
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "exa": {
+      "enabled": true,
+      "type": "remote",
+      "url": "https://mcp.exa.ai/mcp"
+    },
+    "github": {
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer {env:GITHUB_PERSONAL_ACCESS_TOKEN}"
+      },
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/"
+    }
+  },
+  "permission": {
+    "skill": {
+      "close-code-review": "deny",
+      "develop-and-squash": "deny",
+      "develop-and-submit-pr": "deny",
+      "simplification-review": "deny",
+      "subagent-parity": "deny",
+      "traceability": "deny",
+      "unlimited-subagent-turns": "deny"
+    }
+  },
+  "provider": {
+    "copilotd-openai": {
+      "models": {
+        "gpt-6-luna": {
+          "cost": {
+            "cache_read": 0.01,
+            "input": 0.1,
+            "output": 0.5
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "GPT-6 Luna",
+          "options": {
+            "reasoningEffort": "xhigh"
+          },
+          "reasoning": true,
+          "variants": {
+            "none": {
+              "reasoningEffort": "none"
+            },
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "medium": {
+              "reasoningEffort": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh"
+            },
+            "max": {
+              "reasoningEffort": "max"
+            }
+          }
+        },
+        "gpt-5.6-sol-fast": {
+          "cost": {
+            "cache_read": 0.4,
+            "input": 4,
+            "output": 20
+          },
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "GPT-5.6 Sol",
+          "options": {
+            "reasoningEffort": "xhigh"
+          },
+          "reasoning": true,
+          "variants": {
+            "none": {
+              "reasoningEffort": "none"
+            },
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "medium": {
+              "reasoningEffort": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh"
+            },
+            "max": {
+              "reasoningEffort": "max"
+            }
+          }
+        },
+        "gpt-6.1-sol": {
+          "cost": {
+            "cache_read": 0.1,
+            "input": 2,
+            "output": 10
+          },
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "GPT-6.1 Sol",
+          "options": {
+            "reasoningEffort": "xhigh"
+          },
+          "reasoning": true,
+          "variants": {
+            "none": {
+              "reasoningEffort": "none"
+            },
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "medium": {
+              "reasoningEffort": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh"
+            },
+            "max": {
+              "reasoningEffort": "max"
+            }
+          }
+        },
+        "gpt-6-astra": {
+          "cost": {
+            "cache_read": 1,
+            "input": 10,
+            "output": 50
+          },
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "GPT-6 Astra",
+          "options": {
+            "reasoningEffort": "xhigh"
+          },
+          "reasoning": true,
+          "variants": {
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "medium": {
+              "reasoningEffort": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh"
+            },
+            "max": {
+              "reasoningEffort": "max"
+            }
+          }
+        }
+      },
+      "name": "copilotd (OpenAI)",
+      "npm": "@ai-sdk/openai",
+      "options": {
+        "apiKey": "{env:COPILOTD_API_KEY}",
+        "baseURL": "https://copilotd.ningw.net/openai/v1"
+      }
+    },
+    "deepseek-messages": {
+      "models": {
+        "deepseek-flash": {
+          "cost": {
+            "cache_read": 0.006,
+            "input": 0.3,
+            "output": 1.2
+          },
+          "limit": {
+            "context": 1048576,
+            "output": 393216
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "DeepSeek Flash",
+          "options": {
+            "effort": "high",
+            "thinking": {
+              "budgetTokens": 0,
+              "type": "enabled"
+            }
+          },
+          "reasoning": true,
+          "variants": {
+            "none": {
+              "thinking": {
+                "type": "disabled"
+              }
+            },
+            "low": {
+              "effort": "low",
+              "thinking": {
+                "budgetTokens": 0,
+                "type": "enabled"
+              }
+            },
+            "high": {
+              "effort": "high",
+              "thinking": {
+                "budgetTokens": 0,
+                "type": "enabled"
+              }
+            },
+            "max": {
+              "effort": "max",
+              "thinking": {
+                "budgetTokens": 0,
+                "type": "enabled"
+              }
+            }
+          }
+        },
+        "deepseek-v4-pro": {
+          "cost": {
+            "cache_read": 0.044,
+            "input": 1.32,
+            "output": 3.96
+          },
+          "limit": {
+            "context": 1048576,
+            "output": 393216
+          },
+          "modalities": {
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "DeepSeek V4 Pro",
+          "options": {
+            "effort": "high",
+            "thinking": {
+              "budgetTokens": 0,
+              "type": "enabled"
+            }
+          },
+          "reasoning": true,
+          "variants": {
+            "none": {
+              "thinking": {
+                "type": "disabled"
+              }
+            },
+            "low": {
+              "effort": "low",
+              "thinking": {
+                "budgetTokens": 0,
+                "type": "enabled"
+              }
+            },
+            "high": {
+              "effort": "high",
+              "thinking": {
+                "budgetTokens": 0,
+                "type": "enabled"
+              }
+            },
+            "max": {
+              "effort": "max",
+              "thinking": {
+                "budgetTokens": 0,
+                "type": "enabled"
+              }
+            }
+          }
+        }
+      },
+      "name": "DeepSeek (Messages)",
+      "npm": "@ai-sdk/anthropic",
+      "options": {
+        "apiKey": "{env:DEEPSEEK_API_KEY}",
+        "baseURL": "https://api.deepseek.com/anthropic/v1"
+      }
+    }
+  }
+}

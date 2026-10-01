@@ -1,7 +1,7 @@
 {{ if eq .chezmoi.os "windows" -}}
 param(
     [string]$PiDistributionRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.pi/agent/packages/pi-distribution',
-    [string]$OutputPath = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.pi/agent/agents/Explore.md'
+    [string]$OutputDirectory = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.pi/agent/agents'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -20,7 +20,16 @@ if (-not (Test-Path -LiteralPath $node -PathType Leaf)) {
     throw "Node.js was not found at '$node'. Install the Scoop nodejs dependency before applying this source."
 }
 
-$work = Join-Path ([IO.Path]::GetTempPath()) ("chezmoi-pi-explore-{0}" -f [Guid]::NewGuid().ToString('N'))
+# Frontmatter pins outrank Agent tool model parameters. Keep the fast explorer
+# and large planner explicit while allowing general-purpose to inherit caller
+# selection or the parent model.
+$agentModels = [ordered]@{
+    Explore = 'copilotd-openai/gpt-5.6-sol-fast'
+    Plan = 'copilotd-openai/gpt-6-astra'
+    'general-purpose' = $null
+}
+
+$work = Join-Path ([IO.Path]::GetTempPath()) ("chezmoi-pi-agents-{0}" -f [Guid]::NewGuid().ToString('N'))
 try {
     $sourceDir = Join-Path $work 'src'
     $stubDir = Join-Path $work 'node_modules/@earendil-works/pi-coding-agent'
@@ -69,14 +78,21 @@ try {
 const { DEFAULT_AGENTS } = await import("./src/default-agents.ts");
 const { serializeAgentFile } = await import("./src/agent-file-toggle.ts");
 
-const builtin = DEFAULT_AGENTS.get("Explore");
-if (!builtin) throw new Error("pi-subagents has no built-in Explore agent");
+const agentModels = new Map(Object.entries(JSON.parse(process.env.AGENT_MODELS_JSON)));
+const generated = {};
+for (const [name, model] of agentModels) {
+  const builtin = DEFAULT_AGENTS.get(name);
+  if (!builtin) throw new Error(`pi-subagents has no built-in ${name} agent`);
 
-const explore = { ...builtin };
-delete explore.model;
-const serialized = serializeAgentFile(explore);
-if (/^model:/m.test(serialized)) throw new Error("Explore model pin was not removed");
-process.stdout.write(serialized);
+  const agent = { ...builtin };
+  if (model === null) delete agent.model;
+  else agent.model = model;
+  const serialized = serializeAgentFile(agent);
+  const modelLine = serialized.match(/^model: (.*)$/m)?.[1] ?? null;
+  if (modelLine !== model) throw new Error(`${name} model pin was not applied`);
+  generated[name] = serialized;
+}
+process.stdout.write(JSON.stringify(generated));
 '@,
         $utf8NoBom
     )
@@ -87,33 +103,61 @@ process.stdout.write(serialized);
     $startInfo.UseShellExecute = $false
     $startInfo.RedirectStandardOutput = $true
     $startInfo.RedirectStandardError = $true
+    $startInfo.Environment['AGENT_MODELS_JSON'] = ($agentModels | ConvertTo-Json -Compress)
     $startInfo.ArgumentList.Add('--no-warnings')
     $startInfo.ArgumentList.Add('--experimental-strip-types')
     $startInfo.ArgumentList.Add($generatorPath)
 
     $process = [Diagnostics.Process]::Start($startInfo)
-    $serialized = $process.StandardOutput.ReadToEnd()
+    $serializedJson = $process.StandardOutput.ReadToEnd()
     $stderr = $process.StandardError.ReadToEnd()
     $process.WaitForExit()
     if ($process.ExitCode -ne 0) {
-        throw "Failed to generate the Explore agent (exit $($process.ExitCode)): $stderr"
+        throw "Failed to generate pi-subagents built-ins (exit $($process.ExitCode)): $stderr"
     }
-    if ([string]::IsNullOrWhiteSpace($serialized)) {
-        throw 'The pi-subagents Explore serializer produced empty output.'
+    if ([string]::IsNullOrWhiteSpace($serializedJson)) {
+        throw 'The pi-subagents serializer produced empty output.'
     }
-    if ($serialized -match '(?m)^model:') {
-        throw 'The generated Explore agent still contains a model pin.'
+    try {
+        $generatedAgents = $serializedJson | ConvertFrom-Json
+    }
+    catch {
+        throw "The pi-subagents serializer produced invalid JSON: $($_.Exception.Message)"
+    }
+    if (@($generatedAgents.PSObject.Properties).Count -ne $agentModels.Count) {
+        throw 'The pi-subagents serializer returned an unexpected set of agents.'
     }
 
-    $outputDirectory = Split-Path -Parent $OutputPath
-    New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
-    $existing = if (Test-Path -LiteralPath $OutputPath -PathType Leaf) {
-        [IO.File]::ReadAllText($OutputPath)
-    } else {
-        $null
-    }
-    if ($existing -cne $serialized) {
-        [IO.File]::WriteAllText($OutputPath, $serialized, $utf8NoBom)
+    New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
+    foreach ($entry in $agentModels.GetEnumerator()) {
+        $property = $generatedAgents.PSObject.Properties[$entry.Key]
+        if ($null -eq $property) {
+            throw "The pi-subagents serializer omitted '$($entry.Key)'."
+        }
+        $serialized = [string]$property.Value
+        if ([string]::IsNullOrWhiteSpace($serialized)) {
+            throw "The pi-subagents serializer produced empty output for '$($entry.Key)'."
+        }
+
+        $modelMatch = [regex]::Match($serialized, '(?m)^model: (.*)$')
+        if ($null -eq $entry.Value) {
+            if ($modelMatch.Success) {
+                throw "The generated '$($entry.Key)' agent unexpectedly contains a model pin."
+            }
+        }
+        elseif (-not $modelMatch.Success -or $modelMatch.Groups[1].Value -cne $entry.Value) {
+            throw "The generated '$($entry.Key)' agent has an unexpected model pin."
+        }
+
+        $outputPath = Join-Path $OutputDirectory "$($entry.Key).md"
+        $existing = if (Test-Path -LiteralPath $outputPath -PathType Leaf) {
+            [IO.File]::ReadAllText($outputPath)
+        } else {
+            $null
+        }
+        if ($existing -cne $serialized) {
+            [IO.File]::WriteAllText($outputPath, $serialized, $utf8NoBom)
+        }
     }
 }
 finally {

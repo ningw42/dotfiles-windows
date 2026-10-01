@@ -4,20 +4,38 @@
 # Rendered secret values are embedded below, so any rotation changes the file
 # content and triggers chezmoi to re-run this script automatically.
 
-# claude — apiKeyHelper reads YYLX_API_KEY; clear fixed names that override it
-Remove-ItemProperty -LiteralPath "HKCU:\Environment" -Name "ANTHROPIC_API_KEY" -ErrorAction SilentlyContinue
-Remove-ItemProperty -LiteralPath "HKCU:\Environment" -Name "ANTHROPIC_AUTH_TOKEN" -ErrorAction SilentlyContinue
-[Environment]::SetEnvironmentVariable("YYLX_API_KEY", "{{ $secrets.yylx_api_key }}", "User")
+# claude — subscription auth must not inherit custom API routing or model pins
+foreach ($name in @(
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_AUTH_TOKEN",
+    "ANTHROPIC_BASE_URL",
+    "ANTHROPIC_MODEL",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    "ANTHROPIC_DEFAULT_FABLE_MODEL",
+    "CLAUDE_CODE_SUBAGENT_MODEL",
+    "CLAUDE_CODE_EFFORT_LEVEL",
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW",
+    "YYLX_API_KEY"
+)) {
+    [Environment]::SetEnvironmentVariable($name, $null, "User")
+}
 
-# codex
+# codex — credential for alternate LiteLLM / Router Maestro providers
 [Environment]::SetEnvironmentVariable("CODEX_API_KEY", "{{ $secrets.codex_api_key }}", "User")
 
-# opencode
-[Environment]::SetEnvironmentVariable("OPENCODE_API_KEY", "{{ $secrets.opencode_api_key }}", "User")
-
-# copilotd — shared credential for Pi's OpenAI and Anthropic routes
+# copilotd — shared credential for OpenCode, Pi, and the default Codex route
 [Environment]::SetEnvironmentVariable("COPILOTD_API_KEY", "{{ $secrets.pi_api_key }}", "User")
 [Environment]::SetEnvironmentVariable("PI_API_KEY", $null, "User")
+[Environment]::SetEnvironmentVariable("OPENCODE_API_KEY", $null, "User")
+
+# DeepSeek is optional until deepseek_api_key is added to secrets.yaml.age.
+{{ if hasKey $secrets "deepseek_api_key" -}}
+[Environment]::SetEnvironmentVariable("DEEPSEEK_API_KEY", "{{ $secrets.deepseek_api_key }}", "User")
+{{ else -}}
+[Environment]::SetEnvironmentVariable("DEEPSEEK_API_KEY", $null, "User")
+{{ end -}}
 
 # pi — runtime behavior supplied by nixfiles' wrapper
 [Environment]::SetEnvironmentVariable("PI_STATUSLINE_STARSHIP", "{{ .chezmoi.homeDir | replace "\\" "/" }}/scoop/shims/starship.exe", "User")
