@@ -2033,13 +2033,20 @@ class RepositoryDeclarationTests(unittest.TestCase):
             },
         )
         pins = self.data["external_resources"]["pins"]
+        humanlayer = pins["humanlayer_skills"]
+        self.assertEqual(set(humanlayer), {"url", "sha256", "update"})
+        recipe = humanlayer["update"]
+        self.assertEqual(set(recipe), {"type", "repository", "branch", "commit"})
         self.assertEqual(
-            pins["humanlayer_skills"],
-            {
-                "url": "https://github.com/humanlayer/skills/archive/3c2629142c5d437428269b1b722b08c0b87f574d.tar.gz",
-                "sha256": "9366a25c3e7072fe30ed1ebedf71b0df2f1a229592f03ee29f0a82de38227bcf",
-            },
+            {key: recipe[key] for key in ("type", "repository", "branch")},
+            {"type": "github_branch", "repository": "humanlayer/skills", "branch": "main"},
         )
+        self.assertRegex(recipe["commit"], r"^[0-9a-f]{40}$")
+        self.assertEqual(
+            humanlayer["url"],
+            f"https://github.com/humanlayer/skills/archive/{recipe['commit']}.tar.gz",
+        )
+        self.assertRegex(humanlayer["sha256"], r"^[0-9a-f]{64}$")
         self.assertNotIn("humanlayer_show_me", pins)
         self.assertFalse(any("superpowers" in name.casefold() for name in pins))
         self.assertEqual(

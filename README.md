@@ -159,10 +159,14 @@ and file/archive options; they do not contain their own URLs or checksums.
 
 `update_externals.py` refreshes this structured data only. Pins without an
 `update` recipe are re-hashed at their configured URL; `github_release` recipes
-resolve the latest tag and source archive or named asset. All candidates must
-succeed before one atomic write. Successful changes use canonical TOML formatting
-(values are preserved, comments/formatting are not); no-op and dry-run checks
-leave the original bytes untouched. `--dry-run` still makes network requests.
+resolve the latest tag and source archive or named asset. `github_branch` recipes
+resolve the configured branch head to a full commit SHA, then hash its immutable
+source archive. HumanLayer follows `main` this way; its resolved `commit`, URL,
+and checksum advance together without changing the reviewed skill selection.
+All candidates must succeed before one atomic write. Successful changes use
+canonical TOML formatting (values are preserved, comments/formatting are not);
+no-op and dry-run checks leave the original bytes untouched. `--dry-run` still
+makes network requests.
 Exit codes are `0` unchanged, `1` changed/would change, and `2` failed.
 
 The tests cover the updater with mocked HTTP and compare real chezmoi-rendered

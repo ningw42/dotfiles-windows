@@ -28,6 +28,17 @@ repository = "example/skills"
 tag = "v1"
 '''
 
+BRANCH_COMMIT = "1" * 40
+BRANCH_DATA = f'''[external_resources.pins.snapshot]
+url = "https://github.com/example/skills/archive/{BRANCH_COMMIT}.tar.gz"
+sha256 = "{'a' * 64}"
+[external_resources.pins.snapshot.update]
+type = "github_branch"
+repository = "example/skills"
+branch = "main"
+commit = "{BRANCH_COMMIT}"
+'''
+
 ASSET_DATA = f'''[external_resources.pins.bundle_x64]
 url = "https://github.com/example/bundle/releases/download/v1/bundle-v1-x64.tgz"
 sha256 = "{'a' * 64}"
@@ -107,6 +118,193 @@ class UpdateExternalsTests(unittest.TestCase):
         self.assertEqual(pin["url"], archive_url)
         self.assertEqual(pin["sha256"], HASH_ABC)
         self.assertEqual(pin["update"]["tag"], "release/2")
+
+    def test_branch_updates_immutable_archive_url_hash_and_commit_together(self):
+        self.path.write_text(BRANCH_DATA.replace('branch = "main"', 'branch = "skills/refresh"'),
+                             encoding="utf-8")
+        commit = "2" * 40
+        archive_url = f"https://github.com/example/skills/archive/{commit}.tar.gz"
+        status, stdout, stderr = self.run_update({
+            "https://api.github.com/repos/example/skills/branches/skills%2Frefresh": {
+                "commit": {"sha": commit},
+            },
+            archive_url: b"abc",
+        })
+        self.assertEqual(status, 1, stderr)
+        pin = self.read_pins()["snapshot"]
+        self.assertEqual(pin["url"], archive_url)
+        self.assertEqual(pin["sha256"], HASH_ABC)
+        self.assertEqual(pin["update"]["branch"], "skills/refresh")
+        self.assertEqual(pin["update"]["commit"], commit)
+        self.assertIn(f'commit: "{BRANCH_COMMIT}" -> "{commit}"', stdout)
+
+    def test_branch_pins_share_one_head_resolution_per_repository_and_branch(self):
+        self.path.write_text(
+            BRANCH_DATA + "\n" + BRANCH_DATA.replace("pins.snapshot", "pins.other"),
+            encoding="utf-8",
+        )
+        commit = "2" * 40
+        heads = iter([{"commit": {"sha": commit}}])
+        status, stdout, stderr = self.run_update({
+            "https://api.github.com/repos/example/skills/branches/main": lambda: next(heads),
+            f"https://github.com/example/skills/archive/{commit}.tar.gz": b"abc",
+        })
+        self.assertEqual(status, 1, stderr)
+        for pin in self.read_pins().values():
+            self.assertEqual(pin["update"]["commit"], commit)
+            self.assertEqual(pin["sha256"], HASH_ABC)
+
+    def test_different_branches_of_one_repository_resolve_independently(self):
+        other = BRANCH_DATA.replace("pins.snapshot", "pins.other").replace(
+            'branch = "main"', 'branch = "next"'
+        )
+        self.path.write_text(BRANCH_DATA + "\n" + other, encoding="utf-8")
+        commits = {"main": "2" * 40, "next": "3" * 40}
+        responses = {
+            f"https://api.github.com/repos/example/skills/branches/{branch}": {
+                "commit": {"sha": commit},
+            }
+            for branch, commit in commits.items()
+        }
+        responses.update({
+            f"https://github.com/example/skills/archive/{commit}.tar.gz": b"abc"
+            for commit in commits.values()
+        })
+        status, stdout, stderr = self.run_update(responses)
+        self.assertEqual(status, 1, stderr)
+        pins = self.read_pins()
+        self.assertEqual(pins["snapshot"]["update"]["commit"], commits["main"])
+        self.assertEqual(pins["other"]["update"]["commit"], commits["next"])
+
+    def test_invalid_branch_metadata_never_writes_or_downloads_an_archive(self):
+        bad_heads = [b"not-json", b"[]", {}, {"commit": None}, {"commit": []}]
+        for sha in [None, 42, "", "main", "2" * 39, "2" * 41, "g" * 40]:
+            bad_heads.append({"commit": {"sha": sha}})
+        for head in bad_heads:
+            with self.subTest(head=head):
+                self.path.write_text(FIXED_DATA + "\n" + BRANCH_DATA, encoding="utf-8")
+                original = self.path.read_bytes()
+                status, stdout, stderr = self.run_update({
+                    "https://example.test/theme": b"abc",
+                    "https://api.github.com/repos/example/skills/branches/main": head,
+                })
+                self.assertEqual(status, 2)
+                self.assertEqual(self.path.read_bytes(), original)
+                self.assertIn("snapshot", stderr)
+                self.assertNotIn("[UPDATE]", stdout)
+                self.assertEqual(list(self.root.iterdir()), [self.path])
+
+    def test_branch_sha_is_normalized_to_lowercase(self):
+        self.path.write_text(BRANCH_DATA, encoding="utf-8")
+        commit = "c" * 40
+        status, stdout, stderr = self.run_update({
+            "https://api.github.com/repos/example/skills/branches/main": {
+                "commit": {"sha": commit.upper()},
+            },
+            f"https://github.com/example/skills/archive/{commit}.tar.gz": b"abc",
+        })
+        self.assertEqual(status, 1, stderr)
+        self.assertEqual(self.read_pins()["snapshot"]["update"]["commit"], commit)
+
+    def test_branch_network_failures_prevent_every_pin_change(self):
+        commit = "2" * 40
+        head_url = "https://api.github.com/repos/example/skills/branches/main"
+        archive_url = f"https://github.com/example/skills/archive/{commit}.tar.gz"
+        for failed_url in [head_url, archive_url]:
+            with self.subTest(failed_url=failed_url):
+                self.path.write_text(FIXED_DATA + "\n" + BRANCH_DATA, encoding="utf-8")
+                original = self.path.read_bytes()
+                responses = {
+                    "https://example.test/theme": b"abc",
+                    head_url: {"commit": {"sha": commit}},
+                    archive_url: b"abc",
+                }
+                responses[failed_url] = urllib.error.URLError("unreachable")
+                status, stdout, stderr = self.run_update(responses)
+                self.assertEqual(status, 2)
+                self.assertEqual(self.path.read_bytes(), original)
+                self.assertIn("unreachable", stderr)
+                self.assertNotIn("[UPDATE]", stdout)
+
+    def test_invalid_branch_recipes_fail_before_any_network_or_writes(self):
+        invalid = [
+            BRANCH_DATA.replace('branch = "main"\n', ""),
+            BRANCH_DATA.replace('branch = "main"', 'branch = 42'),
+            BRANCH_DATA.replace('branch = "main"', 'branch = ""'),
+            BRANCH_DATA.replace('branch = "main"', 'branch = "two words"'),
+            BRANCH_DATA.replace(f'commit = "{BRANCH_COMMIT}"\n', ""),
+            BRANCH_DATA.replace(f'commit = "{BRANCH_COMMIT}"', 'commit = 42'),
+            BRANCH_DATA.replace(f'commit = "{BRANCH_COMMIT}"', 'commit = "main"'),
+            BRANCH_DATA.replace(f'commit = "{BRANCH_COMMIT}"', 'commit = ""'),
+            BRANCH_DATA.replace(f'commit = "{BRANCH_COMMIT}"', 'commit = "' + "2" * 40 + '"'),
+            BRANCH_DATA.replace(f"archive/{BRANCH_COMMIT}.tar.gz", "archive/refs/heads/main.tar.gz"),
+            BRANCH_DATA + 'asset = "snapshot.tgz"\n',
+            BRANCH_DATA + 'tag = "v1"\n',
+        ]
+        for content in invalid:
+            with self.subTest(content=content):
+                original = (FIXED_DATA + "\n" + content).encode()
+                self.path.write_bytes(original)
+                status, stdout, stderr = self.run_update({})
+                self.assertEqual(status, 2)
+                self.assertEqual(self.path.read_bytes(), original)
+                self.assertIn("snapshot", stderr)
+                self.assertIn("[ERROR]", stderr)
+
+    def test_branch_dry_run_reports_candidates_without_changing_bytes(self):
+        original = ("# preserve me\n" + BRANCH_DATA).replace("\n", "\r\n").encode()
+        self.path.write_bytes(original)
+        commit = "2" * 40
+        status, stdout, stderr = self.run_update({
+            "https://api.github.com/repos/example/skills/branches/main": {"commit": {"sha": commit}},
+            f"https://github.com/example/skills/archive/{commit}.tar.gz": b"abc",
+        }, "--dry-run")
+        self.assertEqual(status, 1, stderr)
+        self.assertEqual(self.path.read_bytes(), original)
+        self.assertIn("Updated: 1", stdout)
+        self.assertIn(commit, stdout)
+        self.assertIn("dry-run", stdout)
+
+    def test_unchanged_branch_pin_preserves_bytes_and_still_rehashes(self):
+        original = ("# preserve me\n" + BRANCH_DATA.replace("a" * 64, HASH_ABC)).encode()
+        for arguments in [(), ("--dry-run",)]:
+            with self.subTest(arguments=arguments):
+                self.path.write_bytes(original)
+                status, stdout, stderr = self.run_update({
+                    "https://api.github.com/repos/example/skills/branches/main": {
+                        "commit": {"sha": BRANCH_COMMIT},
+                    },
+                    f"https://github.com/example/skills/archive/{BRANCH_COMMIT}.tar.gz": b"abc",
+                }, *arguments)
+                self.assertEqual(status, 0, stderr)
+                self.assertEqual(self.path.read_bytes(), original)
+                self.assertIn("Updated: 0", stdout)
+
+    def test_same_branch_commit_still_updates_a_changed_archive_hash(self):
+        self.path.write_text(BRANCH_DATA, encoding="utf-8")
+        status, stdout, stderr = self.run_update({
+            "https://api.github.com/repos/example/skills/branches/main": {
+                "commit": {"sha": BRANCH_COMMIT},
+            },
+            f"https://github.com/example/skills/archive/{BRANCH_COMMIT}.tar.gz": b"abc",
+        })
+        self.assertEqual(status, 1, stderr)
+        self.assertEqual(self.read_pins()["snapshot"]["sha256"], HASH_ABC)
+
+    def test_fully_empty_branch_pin_can_be_initialized(self):
+        content = BRANCH_DATA.replace(
+            f"https://github.com/example/skills/archive/{BRANCH_COMMIT}.tar.gz", ""
+        ).replace("a" * 64, "").replace(f'commit = "{BRANCH_COMMIT}"', 'commit = ""')
+        self.path.write_text(content, encoding="utf-8")
+        commit = "2" * 40
+        status, stdout, stderr = self.run_update({
+            "https://api.github.com/repos/example/skills/branches/main": {"commit": {"sha": commit}},
+            f"https://github.com/example/skills/archive/{commit}.tar.gz": b"abc",
+        })
+        self.assertEqual(status, 1, stderr)
+        pin = self.read_pins()["snapshot"]
+        self.assertEqual(pin["update"]["commit"], commit)
+        self.assertEqual(pin["sha256"], HASH_ABC)
 
     def test_release_assets_share_one_release_and_use_api_digests_without_downloads(self):
         self.path.write_text(ASSET_DATA, encoding="utf-8")

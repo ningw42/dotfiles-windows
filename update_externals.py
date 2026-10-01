@@ -53,7 +53,9 @@ def _serialize(data):
     """Canonical TOML: preserve values, not comments, ordering or line endings."""
     sections = []
     field_order = {
-        key: i for i, key in enumerate(("url", "sha256", "type", "repository", "tag", "asset"))
+        key: i for i, key in enumerate(
+            ("url", "sha256", "type", "repository", "tag", "asset", "branch", "commit")
+        )
     }
 
     def table(values, path):
@@ -112,6 +114,10 @@ def _release_url(recipe, tag):
     return f"{base}/archive/refs/tags/{quoted_tag}.tar.gz"
 
 
+def _commit_url(recipe, commit):
+    return f"https://github.com/{recipe['repository']}/archive/{commit}.tar.gz"
+
+
 def _validate(data):
     """Validate the entire pin catalog before performing any network operation."""
     resources = data.get("external_resources")
@@ -132,15 +138,15 @@ def _validate(data):
             raise ValueError(f"{label} url and sha256 must be strings")
         if "update" in pin:
             recipe = pin["update"]
-            required = {"type", "repository", "tag"}
-            if (
-                not isinstance(recipe, dict)
-                or not required <= recipe.keys()
-                or recipe.keys() - (required | {"asset"})
+            if not isinstance(recipe, dict) or recipe.get("type") not in (
+                "github_release", "github_branch"
             ):
-                raise ValueError(f"{label} update requires type, repository, tag and optional asset")
-            if recipe["type"] != "github_release":
                 raise ValueError(f"{label} has an unsupported update type")
+            release = recipe["type"] == "github_release"
+            required = {"type", "repository"} | ({"tag"} if release else {"branch", "commit"})
+            allowed = required | ({"asset"} if release else set())
+            if not required <= recipe.keys() or recipe.keys() - allowed:
+                raise ValueError(f"{label} has invalid fields for {recipe['type']} update")
             repository = recipe["repository"]
             if (
                 not isinstance(repository, str)
@@ -148,23 +154,33 @@ def _validate(data):
                 or any(part in {".", ".."} for part in repository.split("/"))
             ):
                 raise ValueError(f"{label} repository must be owner/repo")
-            if not isinstance(recipe["tag"], str):
-                raise ValueError(f"{label} tag must be a string")
-            if "asset" in recipe:
-                asset = recipe["asset"]
-                if (
-                    not isinstance(asset, str)
-                    or not asset.strip()
-                    or asset.count("{tag}") > 1
-                    or any(c in asset.replace("{tag}", "") for c in "{}\\/")
-                ):
-                    raise ValueError(f"{label} asset must be a filename with at most one {{tag}}")
-            if recipe["tag"] == pin["url"] == pin["sha256"] == "":
+            revision_field = "tag" if release else "commit"
+            revision = recipe[revision_field]
+            if not isinstance(revision, str):
+                raise ValueError(f"{label} {revision_field} must be a string")
+            if release:
+                if "asset" in recipe:
+                    asset = recipe["asset"]
+                    if (
+                        not isinstance(asset, str)
+                        or not asset.strip()
+                        or asset.count("{tag}") > 1
+                        or any(c in asset.replace("{tag}", "") for c in "{}\\/")
+                    ):
+                        raise ValueError(f"{label} asset must be a filename with at most one {{tag}}")
+            else:
+                branch = recipe["branch"]
+                if not isinstance(branch, str) or not branch or any(c.isspace() for c in branch):
+                    raise ValueError(f"{label} branch must be a nonempty string without whitespace")
+                if revision and not re.fullmatch(r"[0-9a-fA-F]{40}", revision):
+                    raise ValueError(f"{label} commit must be a full 40-character hexadecimal SHA")
+            if revision == pin["url"] == pin["sha256"] == "":
                 continue  # Explicit first refresh; partially initialized pins remain invalid.
-            if not recipe["tag"].strip():
-                raise ValueError(f"{label} tag, URL and sha256 must be all empty or all initialized")
-            if pin["url"] != _release_url(recipe, recipe["tag"]):
-                raise ValueError(f"{label} URL disagrees with its release recipe/tag")
+            if not revision.strip():
+                raise ValueError(f"{label} {revision_field}, URL and sha256 must be all empty or all initialized")
+            expected_url = _release_url(recipe, revision) if release else _commit_url(recipe, revision)
+            if pin["url"] != expected_url:
+                raise ValueError(f"{label} URL disagrees with its update recipe/{revision_field}")
         parsed = urllib.parse.urlsplit(pin["url"])
         if (
             parsed.scheme not in {"http", "https"}
@@ -190,6 +206,21 @@ def _latest_release(repository):
     ):
         raise ValueError("Latest release must have a nonempty tag_name")
     return release
+
+
+def _branch_commit(repository, branch):
+    quoted_branch = urllib.parse.quote(branch, safe="")
+    request = urllib.request.Request(
+        f"https://api.github.com/repos/{repository}/branches/{quoted_branch}",
+        headers={"Accept": "application/vnd.github+json", "User-Agent": "chezmoi-update-externals"},
+    )
+    with urllib.request.urlopen(request, timeout=30) as response:
+        result = json.load(response)
+    commit = result.get("commit") if isinstance(result, dict) else None
+    sha = commit.get("sha") if isinstance(commit, dict) else None
+    if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-fA-F]{40}", sha):
+        raise ValueError("Branch head must have a full 40-character hexadecimal commit SHA")
+    return sha.lower()
 
 
 def _asset_digest(release, filename):
@@ -225,21 +256,30 @@ def main(argv=None, repo_root=None):
         pins = updated["external_resources"]["pins"]
         changes = []
         releases = {}
+        commits = {}
         for name, pin in pins.items():
             context = name
             checked += 1
             if recipe := pin.get("update"):
                 repository = recipe["repository"]
-                if repository not in releases:
-                    releases[repository] = _latest_release(repository)
-                release = releases[repository]
-                recipe["tag"] = release["tag_name"]
-                pin["url"] = _release_url(recipe, recipe["tag"])
-                if "asset" in recipe:
-                    filename = recipe["asset"].replace("{tag}", recipe["tag"])
-                    pin["sha256"] = _asset_digest(release, filename)
-                else:
+                if recipe["type"] == "github_branch":
+                    key = (repository, recipe["branch"])
+                    if key not in commits:
+                        commits[key] = _branch_commit(*key)
+                    recipe["commit"] = commits[key]
+                    pin["url"] = _commit_url(recipe, recipe["commit"])
                     pin["sha256"] = _hash_url(pin["url"])
+                else:
+                    if repository not in releases:
+                        releases[repository] = _latest_release(repository)
+                    release = releases[repository]
+                    recipe["tag"] = release["tag_name"]
+                    pin["url"] = _release_url(recipe, recipe["tag"])
+                    if "asset" in recipe:
+                        filename = recipe["asset"].replace("{tag}", recipe["tag"])
+                        pin["sha256"] = _asset_digest(release, filename)
+                    else:
+                        pin["sha256"] = _hash_url(pin["url"])
             else:
                 pin["sha256"] = _hash_url(pin["url"])
             if pin != data["external_resources"]["pins"][name]:
@@ -259,10 +299,11 @@ def main(argv=None, repo_root=None):
         for field in ("url", "sha256"):
             if before[field] != after[field]:
                 print(f"  {field}: {json.dumps(before[field])} -> {json.dumps(after[field])}")
-        old_tag = before.get("update", {}).get("tag")
-        new_tag = after.get("update", {}).get("tag")
-        if old_tag != new_tag:
-            print(f"  tag: {json.dumps(old_tag)} -> {json.dumps(new_tag)}")
+        for field in ("tag", "commit"):
+            old_revision = before.get("update", {}).get(field)
+            new_revision = after.get("update", {}).get(field)
+            if old_revision != new_revision:
+                print(f"  {field}: {json.dumps(old_revision)} -> {json.dumps(new_revision)}")
     print(f"Checked: {checked}  Updated: {len(changes)}  Errors: 0")
     if args.dry_run:
         print("(dry-run: pin data was not modified)")

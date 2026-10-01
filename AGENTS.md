@@ -94,7 +94,8 @@ python update_externals.py
 ```
 
 All direct pins live under `external_resources.pins` in `.chezmoidata.toml` as
-resolved `url`/`sha256` pairs; optional `update` recipes select GitHub releases.
+resolved `url`/`sha256` pairs; optional `update` recipes select GitHub releases or
+branch-head commits.
 Manifests only select pins and declare placement/extraction. The updater edits
 structured pin data only, with an all-or-nothing atomic write and canonical TOML
 formatting. Exit codes are `0` unchanged, `1` updated/would update, and `2` errors;
