@@ -78,6 +78,13 @@ sandbox = "elevated"
 goals = true
 hooks = true
 
+# Codex executes user hooks only after their normalized definitions are trusted.
+# Keep the native Windows path because Codex includes it verbatim in the hook key.
+[hooks.state.{{ printf "%s:session_start:0:0" (joinPath .chezmoi.homeDir ".codex" "hooks.json") | quote }}]
+# Computed from Codex 0.159.3's hooks/list response for the Herdr handler in
+# hooks.json. Refresh this hash if its command, timeout, event, or position changes.
+trusted_hash = "sha256:06548a65d143720b4561305061a21564fd877484854338649a2f447e27994852"
+
 [mcp_servers.brave-search]
 url = "https://brave-search-mcp.ningw.net/mcp"
 
