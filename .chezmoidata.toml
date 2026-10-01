@@ -150,14 +150,14 @@ url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/mocha/catpp
 sha256 = "0d1f380aff156934ee1c1aeb2c1e5505b21a8cd892c206f9838fc0621bab18e9"
 
 [external_resources.pins.humanlayer_skills]
-url = "https://github.com/humanlayer/skills/archive/3c2629142c5d437428269b1b722b08c0b87f574d.tar.gz"
-sha256 = "9366a25c3e7072fe30ed1ebedf71b0df2f1a229592f03ee29f0a82de38227bcf"
+url = "https://github.com/humanlayer/skills/archive/ca7c8088db69e315a8b2deea43820270457f8f3c.tar.gz"
+sha256 = "d28a8758daad4bbc95f2618224ff92535344394dea3ef1bef22ec9eaf8f6e98a"
 
 [external_resources.pins.humanlayer_skills.update]
 type = "github_branch"
 repository = "humanlayer/skills"
 branch = "main"
-commit = "3c2629142c5d437428269b1b722b08c0b87f574d"
+commit = "ca7c8088db69e315a8b2deea43820270457f8f3c"
 
 [external_resources.pins.mattpocock_skills]
 url = "https://github.com/mattpocock/skills/archive/refs/tags/v1.2.3.tar.gz"
