@@ -160,13 +160,13 @@ branch = "main"
 commit = "ca7c8088db69e315a8b2deea43820270457f8f3c"
 
 [external_resources.pins.mattpocock_skills]
-url = "https://github.com/mattpocock/skills/archive/refs/tags/v1.2.3.tar.gz"
-sha256 = "238fac54d0f53d3e2d0501c1b38c9c0e4e9bc26f6b057b53a7328ea15d43b66f"
+url = "https://github.com/mattpocock/skills/archive/refs/tags/v1.3.1.tar.gz"
+sha256 = "1847b1dab968d7dc8e87fdcad6613574557fd51301b66ba423c78d306bfa157b"
 
 [external_resources.pins.mattpocock_skills.update]
 type = "github_release"
 repository = "mattpocock/skills"
-tag = "v1.2.3"
+tag = "v1.3.1"
 
 [external_resources.pins.pi_distribution_windows_arm64]
 url = "https://github.com/ningw42/pi-distribution/releases/download/v26.10.3/pi-distribution-v26.10.3-windows-arm64.tgz"
