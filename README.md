@@ -169,6 +169,17 @@ no-op and dry-run checks leave the original bytes untouched. `--dry-run` still
 makes network requests.
 Exit codes are `0` unchanged, `1` changed/would change, and `2` failed.
 
+After updating pins, refresh chezmoi's external cache while previewing:
+
+```powershell
+chezmoi diff --refresh-externals=always
+```
+
+When an external URL stays unchanged, chezmoi can retain an older download after
+its checksum is bumped. A plain diff can then report a SHA-256 mismatch even when
+fresh upstream bytes match the pin. Refresh the cache rather than replacing the
+reviewed checksum with the stale cached content's hash. This does not deploy files.
+
 The tests cover the updater with mocked HTTP and compare real chezmoi-rendered
 manifests against a pre-refactor deployment baseline. Rendering tests use isolated
 temporary config/state and skip explicitly if chezmoi is unavailable.

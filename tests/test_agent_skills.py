@@ -26,6 +26,7 @@ import tomllib
 import unittest
 from pathlib import Path
 from unittest import mock
+from urllib.parse import quote
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -2049,14 +2050,24 @@ class RepositoryDeclarationTests(unittest.TestCase):
         self.assertRegex(humanlayer["sha256"], r"^[0-9a-f]{64}$")
         self.assertNotIn("humanlayer_show_me", pins)
         self.assertFalse(any("superpowers" in name.casefold() for name in pins))
+        # Revisions and hashes are updater-owned; preserve the source contract
+        # without freezing the release selected by a reviewed pin refresh.
+        matt = pins["mattpocock_skills"]
+        self.assertEqual(set(matt), {"url", "sha256", "update"})
+        recipe = matt["update"]
+        self.assertEqual(set(recipe), {"type", "repository", "tag"})
         self.assertEqual(
-            pins["mattpocock_skills"]["url"],
-            "https://github.com/mattpocock/skills/archive/refs/tags/v1.2.3.tar.gz",
+            {key: recipe[key] for key in ("type", "repository")},
+            {"type": "github_release", "repository": "mattpocock/skills"},
         )
+        self.assertIsInstance(recipe["tag"], str)
+        self.assertTrue(recipe["tag"].strip())
         self.assertEqual(
-            pins["mattpocock_skills"]["sha256"],
-            "238fac54d0f53d3e2d0501c1b38c9c0e4e9bc26f6b057b53a7328ea15d43b66f",
+            matt["url"],
+            "https://github.com/mattpocock/skills/archive/refs/tags/"
+            f"{quote(recipe['tag'], safe='')}.tar.gz",
         )
+        self.assertRegex(matt["sha256"], r"^[0-9a-f]{64}$")
 
     def test_obsolete_sources_are_absent_and_new_humanlayer_archive_is_exact(self):
         obsolete = [
