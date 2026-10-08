@@ -68,7 +68,6 @@ MATT_SKILL_ROOTS = [
     "skills/engineering/domain-modeling",
     "skills/engineering/codebase-design",
     "skills/engineering/code-review",
-    "skills/engineering/resolving-merge-conflicts",
     "skills/engineering/wizard",
     "skills/productivity/grill-me",
     "skills/productivity/grilling",
@@ -2025,7 +2024,7 @@ class RepositoryDeclarationTests(unittest.TestCase):
                 "include": [".claude-plugin/plugin.json", "LICENSE", *MATT_SKILL_ROOTS],
             },
         )
-        self.assertEqual(len(MATT_SKILL_ROOTS), 25)
+        self.assertEqual(len(MATT_SKILL_ROOTS), 24)
         self.assertEqual(
             sources["humanlayer"],
             {
@@ -2068,6 +2067,34 @@ class RepositoryDeclarationTests(unittest.TestCase):
             f"{quote(recipe['tag'], safe='')}.tar.gz",
         )
         self.assertRegex(matt["sha256"], r"^[0-9a-f]{64}$")
+
+    def test_repository_matt_selection_publishes_after_upstream_skill_removal(self):
+        # Independent upstream inventory: .claude-plugin/plugin.json from the
+        # checksum-verified mattpocock/skills v1.3.1 archive. Do not construct the
+        # source tree from our includes: that masks missing paths after pin bumps.
+        manifest_bytes = (
+            REPO_ROOT / "tests/fixtures/mattpocock_skills_v1.3.1_plugin.json"
+        ).read_bytes()
+        upstream = json.loads(manifest_bytes)
+        declaration = self.data["agent_skills"]["sources"]["mattpocock-skills"]
+        with tempfile.TemporaryDirectory(prefix="matt-release-selection-") as temporary:
+            home = Path(temporary)
+            root = home / declaration["directory"]
+            write_bytes(root / ".claude-plugin/plugin.json", manifest_bytes)
+            write_bytes(root / "LICENSE", b"fixture license\n")
+            for relative in upstream["skills"]:
+                write_skill(root, relative)
+            self.assertFalse((root / "skills/engineering/resolving-merge-conflicts").exists())
+            before = snapshot_entry(home)
+            report = publisher.publish(
+                home,
+                {"mattpocock-skills": declaration},
+                REPO_ROOT / "dot_config/claude-code-chezmoi/marketplace-base.json",
+                dry_run=True,
+            )
+            self.assertEqual(report.plugins, ["mattpocock-skills"])
+            self.assertIn("publish source mattpocock-skills", report.actions)
+            self.assertEqual(snapshot_entry(home), before)
 
     def test_obsolete_sources_are_absent_and_new_humanlayer_archive_is_exact(self):
         obsolete = [
