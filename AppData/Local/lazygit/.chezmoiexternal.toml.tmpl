@@ -1,21 +1,42 @@
+# TODO(removal): Remove the filter when all pinned upstream Catppuccin themes
+# use gui.theme.authorColors instead of gui.authorColors.
+# Port nixfiles' pre-install migration: lazygit 0.66 otherwise rewrites this
+# managed external at startup. Perl is already provisioned for lazygit's diff.
+{{- $authorColorsFilter := list "-0777" "-pe" `
+BEGIN { binmode STDIN; binmode STDOUT; }
+# The pinned themes put the legacy author map immediately after gui.theme.
+s{(^gui:\r?\n  theme:\r?\n(?:    [^\r\n]*\r?\n)*)(?:[ \t]*\r?\n)*  authorColors:(\r?\n)((?:    [^\r\n]*(?:\r?\n|\z))*)}{
+    my ($theme, $newline, $authors) = ($1, $2, $3);
+    $authors =~ s/^/  /mg;
+    $theme . "    authorColors:$newline" . $authors;
+}meg;
+` -}}
 {{ if eq .colorscheme "catppuccin-latte" }}
 ["catppuccin-latte-blue.yml"]
     type = "file"
     url = "{{ .external_resources.pins.catppuccin_lazygit_latte_blue.url }}"
     checksum.sha256 = "{{ .external_resources.pins.catppuccin_lazygit_latte_blue.sha256 }}"
+    filter.command = "perl"
+    filter.args = {{ $authorColorsFilter | toJson }}
 {{ else if eq .colorscheme "catppuccin-frappe" }}
 ["catppuccin-frappe-blue.yml"]
     type = "file"
     url = "{{ .external_resources.pins.catppuccin_lazygit_frappe_blue.url }}"
     checksum.sha256 = "{{ .external_resources.pins.catppuccin_lazygit_frappe_blue.sha256 }}"
+    filter.command = "perl"
+    filter.args = {{ $authorColorsFilter | toJson }}
 {{ else if eq .colorscheme "catppuccin-macchiato" }}
 ["catppuccin-macchiato-blue.yml"]
     type = "file"
     url = "{{ .external_resources.pins.catppuccin_lazygit_macchiato_blue.url }}"
     checksum.sha256 = "{{ .external_resources.pins.catppuccin_lazygit_macchiato_blue.sha256 }}"
+    filter.command = "perl"
+    filter.args = {{ $authorColorsFilter | toJson }}
 {{ else if eq .colorscheme "catppuccin-mocha" }}
 ["catppuccin-mocha-blue.yml"]
     type = "file"
     url = "{{ .external_resources.pins.catppuccin_lazygit_mocha_blue.url }}"
     checksum.sha256 = "{{ .external_resources.pins.catppuccin_lazygit_mocha_blue.sha256 }}"
+    filter.command = "perl"
+    filter.args = {{ $authorColorsFilter | toJson }}
 {{ end }}
