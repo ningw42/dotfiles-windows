@@ -123,6 +123,40 @@ class ModelCatalogTests(unittest.TestCase):
         )
 
 
+class PiRuntimeConfigTests(unittest.TestCase):
+    def test_pi_presentation_and_mcp_ownership_match_nixfiles(self):
+        settings = load_json("dot_pi/agent/settings.json")
+        self.assertEqual(settings["quietStartup"], "header")
+        self.assertEqual(settings["extensions"], ["-builtin:mcp"])
+        self.assertTrue(settings["hideThinkingBlock"])
+        self.assertTrue(settings["showCacheMissNotices"])
+        self.assertFalse(settings["showHardwareCursor"])
+        self.assertEqual(settings["tuiMode"], "fullscreen")
+        self.assertEqual(settings["markdown"], {"mermaid": "final"})
+        self.assertEqual(settings["theme"], "catppuccin-mocha")
+
+        # Preserve Windows-specific tools and the chezmoi-managed package path.
+        self.assertEqual(settings["defaultTools"], ["+powershell", "+codemode"])
+        self.assertEqual(settings["packages"], ["./packages/pi-distribution"])
+        self.assertTrue(settings["shellPath"].endswith("\\bin\\bash.exe"))
+
+    def test_pi_cc_configuration_matches_nixfiles(self):
+        self.assertEqual(
+            load_json("dot_pi/agent/pi-cc-extensions.json"),
+            {
+                "mode": "on",
+                "diffViewMode": "auto",
+                "diffIndicatorMode": "bars",
+                "expandedCardBackground": "toolPendingBg",
+                "previewLines": 0,
+                "dimThinkingText": True,
+                "showStartupHeader": False,
+                "enableCustomFooter": False,
+                "enableSessionReference": False,
+            },
+        )
+
+
 class AgentDefaultTests(unittest.TestCase):
     def test_all_supported_agent_defaults_match_nixfiles(self):
         opencode = load_opencode_config()

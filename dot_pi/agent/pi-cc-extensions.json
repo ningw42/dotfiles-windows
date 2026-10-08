@@ -1,8 +1,11 @@
 {
   "diffIndicatorMode": "bars",
   "diffViewMode": "auto",
+  "dimThinkingText": true,
   "enableCustomFooter": false,
   "enableSessionReference": false,
+  "expandedCardBackground": "toolPendingBg",
   "mode": "on",
-  "previewLines": 0
+  "previewLines": 0,
+  "showStartupHeader": false
 }
