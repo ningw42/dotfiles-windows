@@ -103,19 +103,19 @@ sha256 = "e11c510590cedaf260f331d1c45a75ef6353f3a07ca1317b7cc01d0745f9c396"
 
 [external_resources.pins.catppuccin_lazygit_frappe_blue]
 url = "https://raw.githubusercontent.com/catppuccin/lazygit/main/themes-mergable/frappe/blue.yml"
-sha256 = "7b76fad5c2dafc0d743e8210b604ce9b6fbc9d234b8f57017cea2ed505d67224"
+sha256 = "bc905f7e570f6b26773251e2caf83bbaf4ba50fc936e2b5c383d56cb02d35ada"
 
 [external_resources.pins.catppuccin_lazygit_latte_blue]
 url = "https://raw.githubusercontent.com/catppuccin/lazygit/main/themes-mergable/latte/blue.yml"
-sha256 = "00ca9f3ecb9199945076e4001bdd1a9dcd950d16ecf29c3eea9ca1c8d7b589b8"
+sha256 = "11788b4a15dc0cdf901f33dfd2f619be9659ab219994773cbc549df104a10796"
 
 [external_resources.pins.catppuccin_lazygit_macchiato_blue]
 url = "https://raw.githubusercontent.com/catppuccin/lazygit/main/themes-mergable/macchiato/blue.yml"
-sha256 = "5fea9abc0f089ec9925c1265f7f75ba4b194d0f642b027e2190ac7a9dc6a2763"
+sha256 = "bd7046052a66cc15354918d92888160697852011c076599170c24dae6f10bc9e"
 
 [external_resources.pins.catppuccin_lazygit_mocha_blue]
 url = "https://raw.githubusercontent.com/catppuccin/lazygit/main/themes-mergable/mocha/blue.yml"
-sha256 = "651ef6210ebb18b4f3a0974458e67b93cf60039a9852aaff3269a8c97e670ca9"
+sha256 = "3d274b59033504e281ce5593776765f0e62606f055500bda9e0c5d381e009169"
 
 [external_resources.pins.catppuccin_rio_frappe]
 url = "https://raw.githubusercontent.com/ningw42/rio/feat/update-color-schema/themes/catppuccin-frappe.toml"
@@ -150,14 +150,14 @@ url = "https://raw.githubusercontent.com/catppuccin/yazi/main/themes/mocha/catpp
 sha256 = "0d1f380aff156934ee1c1aeb2c1e5505b21a8cd892c206f9838fc0621bab18e9"
 
 [external_resources.pins.humanlayer_skills]
-url = "https://github.com/humanlayer/skills/archive/ca7c8088db69e315a8b2deea43820270457f8f3c.tar.gz"
-sha256 = "d28a8758daad4bbc95f2618224ff92535344394dea3ef1bef22ec9eaf8f6e98a"
+url = "https://github.com/humanlayer/skills/archive/653b6411c1f70c275a18e37673b042ff99f67ceb.tar.gz"
+sha256 = "ebd72372fb20e2b18fe5244d909677cde92d700416014dd120d2f438c819f323"
 
 [external_resources.pins.humanlayer_skills.update]
 type = "github_branch"
 repository = "humanlayer/skills"
 branch = "main"
-commit = "ca7c8088db69e315a8b2deea43820270457f8f3c"
+commit = "653b6411c1f70c275a18e37673b042ff99f67ceb"
 
 [external_resources.pins.mattpocock_skills]
 url = "https://github.com/mattpocock/skills/archive/refs/tags/v1.3.1.tar.gz"
@@ -169,23 +169,23 @@ repository = "mattpocock/skills"
 tag = "v1.3.1"
 
 [external_resources.pins.pi_distribution_windows_arm64]
-url = "https://github.com/ningw42/pi-distribution/releases/download/v26.10.8/pi-distribution-v26.10.8-windows-arm64.tgz"
-sha256 = "a35aa95bcbaa82068116fd728627ddac7c85c93d0544c25d69e8334e2359e573"
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.10.10/pi-distribution-v26.10.10-windows-arm64.tgz"
+sha256 = "0f31fd993e1b07b7a94711b181e877d621c71b5b66f346f53a58bde2fe196151"
 
 [external_resources.pins.pi_distribution_windows_arm64.update]
 type = "github_release"
 repository = "ningw42/pi-distribution"
-tag = "v26.10.8"
+tag = "v26.10.10"
 asset = "pi-distribution-{tag}-windows-arm64.tgz"
 
 [external_resources.pins.pi_distribution_windows_x64]
-url = "https://github.com/ningw42/pi-distribution/releases/download/v26.10.8/pi-distribution-v26.10.8-windows-x64.tgz"
-sha256 = "0b0cd106c63728e9eec67200e2985dd15772c7eb4188d2a88af219722e2b3515"
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.10.10/pi-distribution-v26.10.10-windows-x64.tgz"
+sha256 = "fe04bbb0fbf80674a656f33b9e838ea9214214c1632e373703a9fe5fdb48c285"
 
 [external_resources.pins.pi_distribution_windows_x64.update]
 type = "github_release"
 repository = "ningw42/pi-distribution"
-tag = "v26.10.8"
+tag = "v26.10.10"
 asset = "pi-distribution-{tag}-windows-x64.tgz"
 
 [external_resources.pins.yazi_everforest_medium_flavor]
