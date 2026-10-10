@@ -147,6 +147,7 @@ class PiRuntimeConfigTests(unittest.TestCase):
                 "mode": "on",
                 "diffViewMode": "auto",
                 "diffIndicatorMode": "bars",
+                "editDiffCollapsedLines": 0,
                 "expandedCardBackground": "toolPendingBg",
                 "previewLines": 0,
                 "dimThinkingText": True,
