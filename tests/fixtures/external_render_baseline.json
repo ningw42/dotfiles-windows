@@ -13,11 +13,7 @@
       "AppData/Local/lazygit/.chezmoiexternal.toml": {
         "catppuccin-latte-blue.yml": {
           "type": "file",
-          "pin": "catppuccin_lazygit_latte_blue",
-          "filter": {
-            "command": "perl",
-            "args": ["-0777","-pe","\nBEGIN { binmode STDIN; binmode STDOUT; }\n# The pinned themes put the legacy author map immediately after gui.theme.\ns{(^gui:\\r?\\n  theme:\\r?\\n(?:    [^\\r\\n]*\\r?\\n)*)(?:[ \\t]*\\r?\\n)*  authorColors:(\\r?\\n)((?:    [^\\r\\n]*(?:\\r?\\n|\\z))*)}{\n    my ($theme, $newline, $authors) = ($1, $2, $3);\n    $authors =~ s/^/  /mg;\n    $theme . \"    authorColors:$newline\" . $authors;\n}meg;\n"]
-          }
+          "pin": "catppuccin_lazygit_latte_blue"
         }
       },
       "AppData/Local/rio/.chezmoiexternal.toml": {
@@ -158,11 +154,7 @@
       "AppData/Local/lazygit/.chezmoiexternal.toml": {
         "catppuccin-frappe-blue.yml": {
           "type": "file",
-          "pin": "catppuccin_lazygit_frappe_blue",
-          "filter": {
-            "command": "perl",
-            "args": ["-0777","-pe","\nBEGIN { binmode STDIN; binmode STDOUT; }\n# The pinned themes put the legacy author map immediately after gui.theme.\ns{(^gui:\\r?\\n  theme:\\r?\\n(?:    [^\\r\\n]*\\r?\\n)*)(?:[ \\t]*\\r?\\n)*  authorColors:(\\r?\\n)((?:    [^\\r\\n]*(?:\\r?\\n|\\z))*)}{\n    my ($theme, $newline, $authors) = ($1, $2, $3);\n    $authors =~ s/^/  /mg;\n    $theme . \"    authorColors:$newline\" . $authors;\n}meg;\n"]
-          }
+          "pin": "catppuccin_lazygit_frappe_blue"
         }
       },
       "AppData/Local/rio/.chezmoiexternal.toml": {
@@ -303,11 +295,7 @@
       "AppData/Local/lazygit/.chezmoiexternal.toml": {
         "catppuccin-macchiato-blue.yml": {
           "type": "file",
-          "pin": "catppuccin_lazygit_macchiato_blue",
-          "filter": {
-            "command": "perl",
-            "args": ["-0777","-pe","\nBEGIN { binmode STDIN; binmode STDOUT; }\n# The pinned themes put the legacy author map immediately after gui.theme.\ns{(^gui:\\r?\\n  theme:\\r?\\n(?:    [^\\r\\n]*\\r?\\n)*)(?:[ \\t]*\\r?\\n)*  authorColors:(\\r?\\n)((?:    [^\\r\\n]*(?:\\r?\\n|\\z))*)}{\n    my ($theme, $newline, $authors) = ($1, $2, $3);\n    $authors =~ s/^/  /mg;\n    $theme . \"    authorColors:$newline\" . $authors;\n}meg;\n"]
-          }
+          "pin": "catppuccin_lazygit_macchiato_blue"
         }
       },
       "AppData/Local/rio/.chezmoiexternal.toml": {
@@ -448,11 +436,7 @@
       "AppData/Local/lazygit/.chezmoiexternal.toml": {
         "catppuccin-mocha-blue.yml": {
           "type": "file",
-          "pin": "catppuccin_lazygit_mocha_blue",
-          "filter": {
-            "command": "perl",
-            "args": ["-0777","-pe","\nBEGIN { binmode STDIN; binmode STDOUT; }\n# The pinned themes put the legacy author map immediately after gui.theme.\ns{(^gui:\\r?\\n  theme:\\r?\\n(?:    [^\\r\\n]*\\r?\\n)*)(?:[ \\t]*\\r?\\n)*  authorColors:(\\r?\\n)((?:    [^\\r\\n]*(?:\\r?\\n|\\z))*)}{\n    my ($theme, $newline, $authors) = ($1, $2, $3);\n    $authors =~ s/^/  /mg;\n    $theme . \"    authorColors:$newline\" . $authors;\n}meg;\n"]
-          }
+          "pin": "catppuccin_lazygit_mocha_blue"
         }
       },
       "AppData/Local/rio/.chezmoiexternal.toml": {

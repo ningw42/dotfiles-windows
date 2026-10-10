@@ -3,8 +3,7 @@
 The golden deployment layout was captured from commit 0608f32. Exact URL/hash
 parity passed before payloads were bound to pin IDs, so future pin updates need
 no golden refresh. Only pi-distribution varies by platform; the capture checked
-that all other declarations were identical across the platform matrix. The
-guarded lazygit author-colors filter is a reviewed post-capture addition.
+that all other declarations were identical across the platform matrix.
 Tests need chezmoi on PATH, but never Git, network access, or the user's config.
 """
 
