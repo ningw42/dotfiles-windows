@@ -38,6 +38,8 @@ foreach ($name in @(
 {{ end -}}
 
 # pi — runtime behavior supplied by nixfiles' wrapper
+# Forward copies through terminals/multiplexers even without SSH detection.
+[Environment]::SetEnvironmentVariable("PI_CLIPBOARD_OSC52", "1", "User")
 [Environment]::SetEnvironmentVariable("PI_STATUSLINE_STARSHIP", "{{ .chezmoi.homeDir | replace "\\" "/" }}/scoop/shims/starship.exe", "User")
 [Environment]::SetEnvironmentVariable("PI_SKIP_VERSION_CHECK", "1", "User")
 [Environment]::SetEnvironmentVariable("PI_TELEMETRY", "0", "User")

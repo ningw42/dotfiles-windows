@@ -56,6 +56,8 @@ Remove-Item Env:DEEPSEEK_API_KEY -ErrorAction SilentlyContinue
 {{ end -}}
 
 # pi: runtime behavior supplied by nixfiles' wrapper
+# Forward copies through terminals/multiplexers even without SSH detection.
+$Env:PI_CLIPBOARD_OSC52 = "1"
 $Env:PI_STATUSLINE_STARSHIP = "{{ .chezmoi.homeDir | replace "\\" "/" }}/scoop/shims/starship.exe"
 $Env:PI_SKIP_VERSION_CHECK = "1"
 $Env:PI_TELEMETRY = "0"

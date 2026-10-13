@@ -1,3 +1,4 @@
+import hashlib
 import json
 import unittest
 from pathlib import Path
@@ -116,6 +117,24 @@ class ModelCatalogTests(unittest.TestCase):
             ],
         )
 
+    def test_pi_provider_metadata_matches_nixfiles_snapshot(self):
+        # Full provider snapshot from nixfiles' llm-agents/tests/model-catalog.nix
+        # at df9fe9d; canonical JSON matches Nix's builtins.toJSON rendering.
+        providers = load_json("dot_pi/agent/models.json")["providers"]
+        snapshot = json.dumps(
+            providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        ).encode("utf-8")
+        self.assertEqual(
+            hashlib.sha256(snapshot).hexdigest(),
+            "8a24a91423d1eb0fa4b8c7b293dfed75b9a276f7040a698f276aa35b4a6f9a10",
+        )
+        sol = next(
+            model
+            for model in providers["copilotd-openai"]["models"]
+            if model["id"] == "gpt-6.1-sol"
+        )
+        self.assertIsNone(sol["thinkingLevelMap"]["off"])
+
     def test_native_and_adapter_pi_mcp_configs_stay_identical(self):
         self.assertEqual(
             load_json("dot_pi/agent/readonly_mcp.json"),
@@ -124,6 +143,18 @@ class ModelCatalogTests(unittest.TestCase):
 
 
 class PiRuntimeConfigTests(unittest.TestCase):
+    def test_pi_clipboard_forwarding_matches_nixfiles_wrapper(self):
+        statements = {
+            "readonly_Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl":
+                '$Env:PI_CLIPBOARD_OSC52 = "1"',
+            ".chezmoiscripts/run_onchange_windows-env.ps1.tmpl":
+                '[Environment]::SetEnvironmentVariable("PI_CLIPBOARD_OSC52", "1", "User")',
+        }
+        for path, statement in statements.items():
+            with self.subTest(path=path):
+                source = (REPO_ROOT / path).read_text(encoding="utf-8")
+                self.assertIn(statement, source)
+
     def test_pi_presentation_and_mcp_ownership_match_nixfiles(self):
         settings = load_json("dot_pi/agent/settings.json")
         self.assertEqual(settings["quietStartup"], "header")
