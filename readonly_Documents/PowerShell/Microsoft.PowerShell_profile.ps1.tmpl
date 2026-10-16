@@ -55,6 +55,11 @@ $Env:DEEPSEEK_API_KEY = "{{ $secrets.deepseek_api_key }}"
 Remove-Item Env:DEEPSEEK_API_KEY -ErrorAction SilentlyContinue
 {{ end -}}
 
+# Magpie: prefer the encrypted secret when present; otherwise keep an external key.
+{{ if hasKey $secrets "magpie_api_key" -}}
+$Env:MAGPIE_API_KEY = "{{ $secrets.magpie_api_key }}"
+{{ end -}}
+
 # pi: runtime behavior supplied by nixfiles' wrapper
 # Forward copies through terminals/multiplexers even without SSH detection.
 $Env:PI_CLIPBOARD_OSC52 = "1"

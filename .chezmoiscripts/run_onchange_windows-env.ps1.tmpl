@@ -37,6 +37,11 @@ foreach ($name in @(
 [Environment]::SetEnvironmentVariable("DEEPSEEK_API_KEY", $null, "User")
 {{ end -}}
 
+# Magpie: prefer the encrypted secret when present; otherwise keep an external key.
+{{ if hasKey $secrets "magpie_api_key" -}}
+[Environment]::SetEnvironmentVariable("MAGPIE_API_KEY", "{{ $secrets.magpie_api_key }}", "User")
+{{ end -}}
+
 # pi — runtime behavior supplied by nixfiles' wrapper
 # Forward copies through terminals/multiplexers even without SSH detection.
 [Environment]::SetEnvironmentVariable("PI_CLIPBOARD_OSC52", "1", "User")

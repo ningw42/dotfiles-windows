@@ -129,6 +129,25 @@ Choose the procedure only after inspecting the deployment home:
    through Claude's CLI. Restart or reload agents after publication and cache
    changes.
 
+## Pi
+
+`dot_pi/` mirrors the portable pi settings from `nixfiles`, including the model
+catalog, extension preferences, subagent/task defaults, and workflow routes.
+Windows keeps PowerShell enabled and uses the checksum-pinned `pi-distribution`
+external rather than Nix store paths.
+
+Magpie models use `https://magpie.ningw.net`: Responses for DeepSeek and GLM,
+and Google's native Generative AI API for Gemini. Authentication requires
+`MAGPIE_API_KEY`. Add `magpie_api_key` to `secrets.yaml.age` using the procedure
+below to publish it through both the PowerShell profile and persistent user
+environment. If that optional secret is absent, the templates preserve any
+externally supplied key; they do not copy credentials from nixfiles' SOPS store.
+Without a key, the Magpie models are configured but unavailable for inference.
+
+The NixOS Magpie server and Linux/macOS Moshi daemon/hooks are not deployed by
+this Windows configuration. Magpie remains a remote service; no local gateway
+installation is needed.
+
 ## Secrets
 
 `secrets.yaml.age` is committed; plaintext `secrets.yaml` is gitignored and must

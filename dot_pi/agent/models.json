@@ -144,7 +144,7 @@
           "compat": {
             "supportsDeveloperRole": false
           },
-          "contextWindow": 1048576,
+          "contextWindow": 1000000,
           "cost": {
             "cacheRead": 0.006,
             "cacheWrite": 0,
@@ -156,39 +156,117 @@
             "text",
             "image"
           ],
-          "maxTokens": 393216,
-          "name": "DeepSeek Flash",
+          "maxTokens": 384000,
+          "name": "DeepSeek V4.1 Flash",
           "reasoning": true,
           "thinkingLevelMap": {
             "max": "max",
             "medium": null,
             "minimal": null,
-            "off": "none"
+            "off": null
+          }
+        }
+      ]
+    },
+    "magpie-generative-ai": {
+      "api": "google-generative-ai",
+      "apiKey": "$MAGPIE_API_KEY",
+      "baseUrl": "https://magpie.ningw.net/v1beta",
+      "models": [
+        {
+          "contextWindow": 1048576,
+          "cost": {
+            "cacheRead": 0.2,
+            "cacheWrite": 0,
+            "input": 4,
+            "output": 20
+          },
+          "id": "gemini-4-argon-contributor",
+          "input": [
+            "text",
+            "image"
+          ],
+          "maxTokens": 65536,
+          "name": "Gemini 4 Argon",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "minimal": null,
+            "off": null
+          }
+        }
+      ]
+    },
+    "magpie-responses": {
+      "api": "openai-responses",
+      "apiKey": "$MAGPIE_API_KEY",
+      "baseUrl": "https://magpie.ningw.net/v1",
+      "models": [
+        {
+          "contextWindow": 1000000,
+          "cost": {
+            "cacheRead": 0.006,
+            "cacheWrite": 0,
+            "input": 0.3,
+            "output": 1.2
+          },
+          "id": "deepseek-v4.1-flash",
+          "input": [
+            "text",
+            "image"
+          ],
+          "maxTokens": 384000,
+          "name": "DeepSeek V4.1 Flash",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "max": "max",
+            "medium": null,
+            "minimal": null,
+            "off": null
           }
         },
         {
-          "compat": {
-            "supportsDeveloperRole": false
-          },
-          "contextWindow": 1048576,
+          "contextWindow": 1000000,
           "cost": {
-            "cacheRead": 0.044,
+            "cacheRead": 0.26,
             "cacheWrite": 0,
-            "input": 1.32,
-            "output": 3.96
+            "input": 1.4,
+            "output": 4.4
           },
-          "id": "deepseek-v4-pro",
+          "id": "glm-5.3",
           "input": [
             "text"
           ],
-          "maxTokens": 393216,
-          "name": "DeepSeek V4 Pro",
+          "maxTokens": 131072,
+          "name": "GLM-5.3",
           "reasoning": true,
           "thinkingLevelMap": {
             "max": "max",
             "medium": null,
             "minimal": null,
-            "off": "none"
+            "off": null
+          }
+        },
+        {
+          "contextWindow": 1000000,
+          "cost": {
+            "cacheRead": 0.03,
+            "cacheWrite": 0,
+            "input": 0.15,
+            "output": 0.5
+          },
+          "id": "glm-5.3-flash",
+          "input": [
+            "text",
+            "image"
+          ],
+          "maxTokens": 131072,
+          "name": "GLM-5.3-Flash",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "max": "max",
+            "medium": null,
+            "minimal": null,
+            "off": null
           }
         }
       ]

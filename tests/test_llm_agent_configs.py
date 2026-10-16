@@ -21,6 +21,9 @@ GPT_MODELS = [
     "gpt-6-astra",
 ]
 DEEPSEEK_MODELS = ["deepseek-flash", "deepseek-v4-pro"]
+PI_DEEPSEEK_MODELS = ["deepseek-flash"]
+MAGPIE_RESPONSE_MODELS = ["deepseek-v4.1-flash", "glm-5.3", "glm-5.3-flash"]
+MAGPIE_GEMINI_MODELS = ["gemini-4-argon-contributor"]
 HOME_TEMPLATE = '{{ .chezmoi.homeDir | replace "\\\\" "/" }}'
 
 
@@ -89,44 +92,88 @@ class ModelCatalogTests(unittest.TestCase):
         settings = load_json("dot_pi/agent/settings.json")
         providers = catalog["providers"]
 
-        self.assertEqual(set(providers), {"copilotd-openai", "deepseek-responses"})
+        self.assertEqual(
+            set(providers),
+            {"copilotd-openai", "deepseek-responses", "magpie-responses", "magpie-generative-ai"},
+        )
         self.assertEqual(
             [model["id"] for model in providers["copilotd-openai"]["models"]],
             GPT_MODELS,
         )
         self.assertEqual(
             [model["id"] for model in providers["deepseek-responses"]["models"]],
-            DEEPSEEK_MODELS,
+            PI_DEEPSEEK_MODELS,
+        )
+        self.assertEqual(
+            [model["id"] for model in providers["magpie-responses"]["models"]],
+            MAGPIE_RESPONSE_MODELS,
+        )
+        self.assertEqual(
+            [model["id"] for model in providers["magpie-generative-ai"]["models"]],
+            MAGPIE_GEMINI_MODELS,
         )
         self.assertNotIn(
             "compat", providers["copilotd-openai"]["models"][-1]
         )
         self.assertEqual(
             providers["deepseek-responses"]["models"][0]["thinkingLevelMap"],
-            {"off": "none", "minimal": None, "medium": None, "max": "max"},
+            {"off": None, "minimal": None, "medium": None, "max": "max"},
         )
         self.assertEqual(settings["defaultProvider"], "copilotd-openai")
         self.assertEqual(settings["defaultModel"], "gpt-6.1-sol")
         self.assertEqual(settings["defaultThinkingLevel"], "xhigh")
         self.assertEqual(settings["defaultTools"], ["+powershell", "+codemode"])
         self.assertEqual(
-            settings["enabledModels"][-2:],
+            settings["enabledModels"],
             [
+                *[f"copilotd-openai/{model}:xhigh" for model in GPT_MODELS],
                 "deepseek-responses/deepseek-flash:high",
-                "deepseek-responses/deepseek-v4-pro:high",
+                "magpie-responses/deepseek-v4.1-flash:high",
+                "magpie-responses/glm-5.3:max",
+                "magpie-responses/glm-5.3-flash:max",
+                "magpie-generative-ai/gemini-4-argon-contributor:medium",
             ],
+        )
+
+    def test_pi_magpie_transports_and_thinking_match_nixfiles(self):
+        providers = load_json("dot_pi/agent/models.json")["providers"]
+        for name, api, base_url in (
+            ("magpie-responses", "openai-responses", "https://magpie.ningw.net/v1"),
+            ("magpie-generative-ai", "google-generative-ai", "https://magpie.ningw.net/v1beta"),
+        ):
+            with self.subTest(provider=name):
+                provider = providers[name]
+                self.assertEqual(provider["api"], api)
+                self.assertEqual(provider["baseUrl"], base_url)
+                self.assertEqual(provider["apiKey"], "$MAGPIE_API_KEY")
+                self.assertTrue(all("compat" not in model for model in provider["models"]))
+
+        gemini = providers["magpie-generative-ai"]["models"][0]
+        self.assertEqual(gemini["thinkingLevelMap"], {"off": None, "minimal": None})
+        self.assertEqual(gemini["input"], ["text", "image"])
+        for model in providers["magpie-responses"]["models"]:
+            with self.subTest(model=model["id"]):
+                self.assertEqual(
+                    model["thinkingLevelMap"],
+                    {"off": None, "minimal": None, "medium": None, "max": "max"},
+                )
+        native_flash = providers["deepseek-responses"]["models"][0]
+        magpie_flash = providers["magpie-responses"]["models"][0]
+        self.assertEqual(
+            {key: value for key, value in native_flash.items() if key not in {"id", "compat"}},
+            {key: value for key, value in magpie_flash.items() if key != "id"},
         )
 
     def test_pi_provider_metadata_matches_nixfiles_snapshot(self):
         # Full provider snapshot from nixfiles' llm-agents/tests/model-catalog.nix
-        # at df9fe9d; canonical JSON matches Nix's builtins.toJSON rendering.
+        # at e43b7bb; canonical JSON matches Nix's builtins.toJSON rendering.
         providers = load_json("dot_pi/agent/models.json")["providers"]
         snapshot = json.dumps(
             providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
         ).encode("utf-8")
         self.assertEqual(
             hashlib.sha256(snapshot).hexdigest(),
-            "8a24a91423d1eb0fa4b8c7b293dfed75b9a276f7040a698f276aa35b4a6f9a10",
+            "70b4d590b1c6d4ec078e2510aa9d054d49998a44d8d7ef8daa2811340d6edeef",
         )
         sol = next(
             model
@@ -179,12 +226,9 @@ class PiRuntimeConfigTests(unittest.TestCase):
                 "diffViewMode": "auto",
                 "diffIndicatorMode": "bars",
                 "editDiffCollapsedLines": 0,
-                "expandedCardBackground": "toolPendingBg",
                 "previewLines": 0,
-                "dimThinkingText": True,
                 "showStartupHeader": False,
                 "enableCustomFooter": False,
-                "enableSessionReference": False,
             },
         )
 

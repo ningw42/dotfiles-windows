@@ -12,7 +12,10 @@
     "copilotd-openai/gpt-6.1-sol:xhigh",
     "copilotd-openai/gpt-6-astra:xhigh",
     "deepseek-responses/deepseek-flash:high",
-    "deepseek-responses/deepseek-v4-pro:high"
+    "magpie-responses/deepseek-v4.1-flash:high",
+    "magpie-responses/glm-5.3:max",
+    "magpie-responses/glm-5.3-flash:max",
+    "magpie-generative-ai/gemini-4-argon-contributor:medium"
   ],
   "extensions": [
     "-builtin:mcp"
