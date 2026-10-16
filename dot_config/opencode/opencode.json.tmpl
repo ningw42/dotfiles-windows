@@ -10,7 +10,7 @@
   ],
   "enabled_providers": [
     "copilotd-openai",
-    "deepseek-messages",
+    "deepseek-responses",
     "magpie-generative-ai",
     "magpie-responses"
   ],
@@ -238,7 +238,7 @@
         "baseURL": "https://copilotd.ningw.net/openai/v1"
       }
     },
-    "deepseek-messages": {
+    "deepseek-responses": {
       "models": {
         "deepseek-flash": {
           "cost": {
@@ -261,43 +261,27 @@
           },
           "name": "DeepSeek V4.1 Flash",
           "options": {
-            "effort": "high",
-            "thinking": {
-              "budgetTokens": 0,
-              "type": "enabled"
-            }
+            "reasoningEffort": "high"
           },
           "reasoning": true,
           "variants": {
             "low": {
-              "effort": "low",
-              "thinking": {
-                "budgetTokens": 0,
-                "type": "enabled"
-              }
+              "reasoningEffort": "low"
             },
             "high": {
-              "effort": "high",
-              "thinking": {
-                "budgetTokens": 0,
-                "type": "enabled"
-              }
+              "reasoningEffort": "high"
             },
             "max": {
-              "effort": "max",
-              "thinking": {
-                "budgetTokens": 0,
-                "type": "enabled"
-              }
+              "reasoningEffort": "max"
             }
           }
         }
       },
-      "name": "DeepSeek (Messages)",
-      "npm": "@ai-sdk/anthropic",
+      "name": "DeepSeek (Responses)",
+      "npm": "@ai-sdk/openai",
       "options": {
         "apiKey": "{env:DEEPSEEK_API_KEY}",
-        "baseURL": "https://api.deepseek.com/anthropic/v1"
+        "baseURL": "https://api.deepseek.com"
       }
     },
     "magpie-generative-ai": {
