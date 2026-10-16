@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "copilotd-openai/gpt-6.1-sol",
+  "model": "copilotd-responses/gpt-6.1-sol",
   "plugins": [
     "-opencode.config.compatibility"
   ],
@@ -9,7 +9,7 @@
     ".agents/skills"
   ],
   "enabled_providers": [
-    "copilotd-openai",
+    "copilotd-responses",
     "deepseek-responses",
     "magpie-generative-ai",
     "magpie-responses"
@@ -54,7 +54,7 @@
     }
   },
   "provider": {
-    "copilotd-openai": {
+    "copilotd-responses": {
       "models": {
         "gpt-6-luna": {
           "cost": {
@@ -231,7 +231,7 @@
           }
         }
       },
-      "name": "copilotd (OpenAI)",
+      "name": "copilotd (Responses)",
       "npm": "@ai-sdk/openai",
       "options": {
         "apiKey": "{env:COPILOTD_API_KEY}",

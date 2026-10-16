@@ -20,8 +20,7 @@ GPT_MODELS = [
     "gpt-6.1-sol",
     "gpt-6-astra",
 ]
-DEEPSEEK_MODELS = ["deepseek-flash", "deepseek-v4-pro"]
-PI_DEEPSEEK_MODELS = ["deepseek-flash"]
+DEEPSEEK_MODELS = ["deepseek-flash"]
 MAGPIE_RESPONSE_MODELS = ["deepseek-v4.1-flash", "glm-5.3", "glm-5.3-flash"]
 MAGPIE_GEMINI_MODELS = ["gemini-4-argon-contributor"]
 HOME_TEMPLATE = '{{ .chezmoi.homeDir | replace "\\\\" "/" }}'
@@ -41,7 +40,7 @@ def load_opencode_config():
 class ModelCatalogTests(unittest.TestCase):
     def test_opencode_catalog_and_policy_match_nixfiles_projection(self):
         config = load_opencode_config()
-        self.assertEqual(config["model"], "copilotd-openai/gpt-6.1-sol")
+        self.assertEqual(config["model"], "copilotd-responses/gpt-6.1-sol")
         self.assertEqual(
             config["plugins"], ["-opencode.config.compatibility"]
         )
@@ -51,40 +50,110 @@ class ModelCatalogTests(unittest.TestCase):
         )
         self.assertEqual(
             config["enabled_providers"],
-            ["copilotd-openai", "deepseek-messages"],
+            [
+                "copilotd-responses",
+                "deepseek-responses",
+                "magpie-generative-ai",
+                "magpie-responses",
+            ],
         )
         self.assertEqual(set(config["permission"]["skill"]), USER_SKILLS)
 
         providers = config["provider"]
-        self.assertEqual(set(providers), {"copilotd-openai", "deepseek-messages"})
         self.assertEqual(
-            list(providers["copilotd-openai"]["models"]), GPT_MODELS
-        )
-        self.assertEqual(
-            list(providers["deepseek-messages"]["models"]), DEEPSEEK_MODELS
-        )
-        self.assertEqual(
-            providers["copilotd-openai"]["options"]["apiKey"],
-            "{env:COPILOTD_API_KEY}",
-        )
-        self.assertEqual(
-            providers["deepseek-messages"]["options"],
+            set(providers),
             {
-                "apiKey": "{env:DEEPSEEK_API_KEY}",
-                "baseURL": "https://api.deepseek.com/anthropic/v1",
+                "copilotd-responses",
+                "deepseek-responses",
+                "magpie-generative-ai",
+                "magpie-responses",
             },
         )
         self.assertEqual(
-            providers["copilotd-openai"]["models"]["gpt-6.1-sol"]["limit"][
+            list(providers["copilotd-responses"]["models"]), GPT_MODELS
+        )
+        self.assertEqual(
+            list(providers["deepseek-responses"]["models"]), DEEPSEEK_MODELS
+        )
+        self.assertEqual(
+            list(providers["magpie-responses"]["models"]), MAGPIE_RESPONSE_MODELS
+        )
+        self.assertEqual(
+            list(providers["magpie-generative-ai"]["models"]), MAGPIE_GEMINI_MODELS
+        )
+        self.assertEqual(
+            providers["copilotd-responses"]["name"], "copilotd (Responses)"
+        )
+        self.assertEqual(
+            providers["copilotd-responses"]["options"]["apiKey"],
+            "{env:COPILOTD_API_KEY}",
+        )
+        self.assertEqual(
+            providers["deepseek-responses"]["options"],
+            {
+                "apiKey": "{env:DEEPSEEK_API_KEY}",
+                "baseURL": "https://api.deepseek.com",
+            },
+        )
+        self.assertEqual(
+            providers["copilotd-responses"]["models"]["gpt-6.1-sol"]["limit"][
                 "context"
             ],
             1_050_000,
         )
         self.assertEqual(
-            providers["deepseek-messages"]["models"]["deepseek-flash"][
+            providers["deepseek-responses"]["models"]["deepseek-flash"][
                 "options"
-            ]["effort"],
+            ]["reasoningEffort"],
             "high",
+        )
+        self.assertEqual(
+            providers["magpie-generative-ai"]["models"][
+                "gemini-4-argon-contributor"
+            ]["options"],
+            {
+                "thinkingConfig": {
+                    "includeThoughts": True,
+                    "thinkingLevel": "medium",
+                }
+            },
+        )
+        for name, npm, base_url in (
+            (
+                "copilotd-responses",
+                "@ai-sdk/openai",
+                "https://copilotd.ningw.net/openai/v1",
+            ),
+            (
+                "deepseek-responses",
+                "@ai-sdk/openai",
+                "https://api.deepseek.com",
+            ),
+            (
+                "magpie-responses",
+                "@ai-sdk/openai",
+                "https://magpie.ningw.net/v1",
+            ),
+            (
+                "magpie-generative-ai",
+                "@ai-sdk/google",
+                "https://magpie.ningw.net/v1beta",
+            ),
+        ):
+            with self.subTest(provider=name):
+                self.assertEqual(providers[name]["npm"], npm)
+                self.assertEqual(providers[name]["options"]["baseURL"], base_url)
+
+    def test_opencode_provider_metadata_matches_nixfiles_snapshot(self):
+        # Full provider snapshot from nixfiles' llm-agents/tests/model-catalog.nix
+        # at 6c5a265; canonical JSON matches Nix's builtins.toJSON rendering.
+        providers = load_opencode_config()["provider"]
+        snapshot = json.dumps(
+            providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        ).encode("utf-8")
+        self.assertEqual(
+            hashlib.sha256(snapshot).hexdigest(),
+            "67fd094f41d4e0fc3f0901c406ff8ee937823e3fd563ba2e809fc2673defc284",
         )
 
     def test_pi_catalog_and_cycle_defaults_match_nixfiles_projection(self):
@@ -94,15 +163,15 @@ class ModelCatalogTests(unittest.TestCase):
 
         self.assertEqual(
             set(providers),
-            {"copilotd-openai", "deepseek-responses", "magpie-responses", "magpie-generative-ai"},
+            {"copilotd-responses", "deepseek-responses", "magpie-responses", "magpie-generative-ai"},
         )
         self.assertEqual(
-            [model["id"] for model in providers["copilotd-openai"]["models"]],
+            [model["id"] for model in providers["copilotd-responses"]["models"]],
             GPT_MODELS,
         )
         self.assertEqual(
             [model["id"] for model in providers["deepseek-responses"]["models"]],
-            PI_DEEPSEEK_MODELS,
+            DEEPSEEK_MODELS,
         )
         self.assertEqual(
             [model["id"] for model in providers["magpie-responses"]["models"]],
@@ -113,20 +182,20 @@ class ModelCatalogTests(unittest.TestCase):
             MAGPIE_GEMINI_MODELS,
         )
         self.assertNotIn(
-            "compat", providers["copilotd-openai"]["models"][-1]
+            "compat", providers["copilotd-responses"]["models"][-1]
         )
         self.assertEqual(
             providers["deepseek-responses"]["models"][0]["thinkingLevelMap"],
             {"off": None, "minimal": None, "medium": None, "max": "max"},
         )
-        self.assertEqual(settings["defaultProvider"], "copilotd-openai")
+        self.assertEqual(settings["defaultProvider"], "copilotd-responses")
         self.assertEqual(settings["defaultModel"], "gpt-6.1-sol")
         self.assertEqual(settings["defaultThinkingLevel"], "xhigh")
         self.assertEqual(settings["defaultTools"], ["+powershell", "+codemode"])
         self.assertEqual(
             settings["enabledModels"],
             [
-                *[f"copilotd-openai/{model}:xhigh" for model in GPT_MODELS],
+                *[f"copilotd-responses/{model}:xhigh" for model in GPT_MODELS],
                 "deepseek-responses/deepseek-flash:high",
                 "magpie-responses/deepseek-v4.1-flash:high",
                 "magpie-responses/glm-5.3:max",
@@ -166,18 +235,18 @@ class ModelCatalogTests(unittest.TestCase):
 
     def test_pi_provider_metadata_matches_nixfiles_snapshot(self):
         # Full provider snapshot from nixfiles' llm-agents/tests/model-catalog.nix
-        # at e43b7bb; canonical JSON matches Nix's builtins.toJSON rendering.
+        # at 6c5a265; canonical JSON matches Nix's builtins.toJSON rendering.
         providers = load_json("dot_pi/agent/models.json")["providers"]
         snapshot = json.dumps(
             providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
         ).encode("utf-8")
         self.assertEqual(
             hashlib.sha256(snapshot).hexdigest(),
-            "70b4d590b1c6d4ec078e2510aa9d054d49998a44d8d7ef8daa2811340d6edeef",
+            "f467c60e6fba78dc6ddafba0e8a7185ce135ac5768c4efe576b0552c46949934",
         )
         sol = next(
             model
-            for model in providers["copilotd-openai"]["models"]
+            for model in providers["copilotd-responses"]["models"]
             if model["id"] == "gpt-6.1-sol"
         )
         self.assertIsNone(sol["thinkingLevelMap"]["off"])
@@ -253,7 +322,7 @@ class AgentDefaultTests(unittest.TestCase):
             / "readonly_Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl"
         ).read_text(encoding="utf-8")
 
-        self.assertEqual(opencode["model"], "copilotd-openai/gpt-6.1-sol")
+        self.assertEqual(opencode["model"], "copilotd-responses/gpt-6.1-sol")
         self.assertEqual(pi["defaultModel"], "gpt-6.1-sol")
         self.assertEqual(copilot["model"], "gpt-6.1-sol")
         self.assertRegex(codex, r'(?m)^model = "gpt-6\.1-sol"$')
@@ -275,11 +344,11 @@ class AgentDefaultTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertRegex(
             generator,
-            r"(?m)^\s*Explore = 'copilotd-openai/gpt-5\.6-sol-fast'$",
+            r"(?m)^\s*Explore = 'copilotd-responses/gpt-5\.6-sol-fast'$",
         )
         self.assertRegex(
             generator,
-            r"(?m)^\s*Plan = 'copilotd-openai/gpt-6-astra'$",
+            r"(?m)^\s*Plan = 'copilotd-responses/gpt-6-astra'$",
         )
         self.assertRegex(generator, r"(?m)^\s*'general-purpose' = \$null$")
 

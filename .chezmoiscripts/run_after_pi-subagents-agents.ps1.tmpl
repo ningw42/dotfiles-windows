@@ -24,8 +24,8 @@ if (-not (Test-Path -LiteralPath $node -PathType Leaf)) {
 # and large planner explicit while allowing general-purpose to inherit caller
 # selection or the parent model.
 $agentModels = [ordered]@{
-    Explore = 'copilotd-openai/gpt-5.6-sol-fast'
-    Plan = 'copilotd-openai/gpt-6-astra'
+    Explore = 'copilotd-responses/gpt-5.6-sol-fast'
+    Plan = 'copilotd-responses/gpt-6-astra'
     'general-purpose' = $null
 }
 

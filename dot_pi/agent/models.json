@@ -1,6 +1,6 @@
 {
   "providers": {
-    "copilotd-openai": {
+    "copilotd-responses": {
       "api": "openai-responses",
       "apiKey": "$COPILOTD_API_KEY",
       "baseUrl": "https://copilotd.ningw.net/openai/v1",
