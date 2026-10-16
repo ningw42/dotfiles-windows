@@ -10,7 +10,9 @@
   ],
   "enabled_providers": [
     "copilotd-openai",
-    "deepseek-messages"
+    "deepseek-messages",
+    "magpie-generative-ai",
+    "magpie-responses"
   ],
   "mcp": {
     "brave-search": {
@@ -169,9 +171,6 @@
           },
           "reasoning": true,
           "variants": {
-            "none": {
-              "reasoningEffort": "none"
-            },
             "low": {
               "reasoningEffort": "low"
             },
@@ -248,8 +247,8 @@
             "output": 1.2
           },
           "limit": {
-            "context": 1048576,
-            "output": 393216
+            "context": 1000000,
+            "output": 384000
           },
           "modalities": {
             "input": [
@@ -260,7 +259,7 @@
               "text"
             ]
           },
-          "name": "DeepSeek Flash",
+          "name": "DeepSeek V4.1 Flash",
           "options": {
             "effort": "high",
             "thinking": {
@@ -270,67 +269,6 @@
           },
           "reasoning": true,
           "variants": {
-            "none": {
-              "thinking": {
-                "type": "disabled"
-              }
-            },
-            "low": {
-              "effort": "low",
-              "thinking": {
-                "budgetTokens": 0,
-                "type": "enabled"
-              }
-            },
-            "high": {
-              "effort": "high",
-              "thinking": {
-                "budgetTokens": 0,
-                "type": "enabled"
-              }
-            },
-            "max": {
-              "effort": "max",
-              "thinking": {
-                "budgetTokens": 0,
-                "type": "enabled"
-              }
-            }
-          }
-        },
-        "deepseek-v4-pro": {
-          "cost": {
-            "cache_read": 0.044,
-            "input": 1.32,
-            "output": 3.96
-          },
-          "limit": {
-            "context": 1048576,
-            "output": 393216
-          },
-          "modalities": {
-            "input": [
-              "text"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "name": "DeepSeek V4 Pro",
-          "options": {
-            "effort": "high",
-            "thinking": {
-              "budgetTokens": 0,
-              "type": "enabled"
-            }
-          },
-          "reasoning": true,
-          "variants": {
-            "none": {
-              "thinking": {
-                "type": "disabled"
-              }
-            },
             "low": {
               "effort": "low",
               "thinking": {
@@ -360,6 +298,181 @@
       "options": {
         "apiKey": "{env:DEEPSEEK_API_KEY}",
         "baseURL": "https://api.deepseek.com/anthropic/v1"
+      }
+    },
+    "magpie-generative-ai": {
+      "models": {
+        "gemini-4-argon-contributor": {
+          "cost": {
+            "cache_read": 0.2,
+            "input": 4,
+            "output": 20
+          },
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Gemini 4 Argon",
+          "options": {
+            "thinkingConfig": {
+              "includeThoughts": true,
+              "thinkingLevel": "medium"
+            }
+          },
+          "reasoning": true,
+          "variants": {
+            "low": {
+              "thinkingConfig": {
+                "includeThoughts": true,
+                "thinkingLevel": "low"
+              }
+            },
+            "medium": {
+              "thinkingConfig": {
+                "includeThoughts": true,
+                "thinkingLevel": "medium"
+              }
+            },
+            "high": {
+              "thinkingConfig": {
+                "includeThoughts": true,
+                "thinkingLevel": "high"
+              }
+            }
+          }
+        }
+      },
+      "name": "magpie (Generative AI)",
+      "npm": "@ai-sdk/google",
+      "options": {
+        "apiKey": "{env:MAGPIE_API_KEY}",
+        "baseURL": "https://magpie.ningw.net/v1beta"
+      }
+    },
+    "magpie-responses": {
+      "models": {
+        "deepseek-v4.1-flash": {
+          "cost": {
+            "cache_read": 0.006,
+            "input": 0.3,
+            "output": 1.2
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 384000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "DeepSeek V4.1 Flash",
+          "options": {
+            "reasoningEffort": "high"
+          },
+          "reasoning": true,
+          "variants": {
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "high": {
+              "reasoningEffort": "high"
+            },
+            "max": {
+              "reasoningEffort": "max"
+            }
+          }
+        },
+        "glm-5.3": {
+          "cost": {
+            "cache_read": 0.26,
+            "input": 1.4,
+            "output": 4.4
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 131072
+          },
+          "modalities": {
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "GLM-5.3",
+          "options": {
+            "reasoningEffort": "max"
+          },
+          "reasoning": true,
+          "variants": {
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "high": {
+              "reasoningEffort": "high"
+            },
+            "max": {
+              "reasoningEffort": "max"
+            }
+          }
+        },
+        "glm-5.3-flash": {
+          "cost": {
+            "cache_read": 0.03,
+            "input": 0.15,
+            "output": 0.5
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 131072
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "GLM-5.3-Flash",
+          "options": {
+            "reasoningEffort": "max"
+          },
+          "reasoning": true,
+          "variants": {
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "high": {
+              "reasoningEffort": "high"
+            },
+            "max": {
+              "reasoningEffort": "max"
+            }
+          }
+        }
+      },
+      "name": "magpie (Responses)",
+      "npm": "@ai-sdk/openai",
+      "options": {
+        "apiKey": "{env:MAGPIE_API_KEY}",
+        "baseURL": "https://magpie.ningw.net/v1"
       }
     }
   }

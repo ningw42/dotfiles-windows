@@ -349,9 +349,9 @@ properties:
         GetScript: |
           @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\herdr\current") { 'Installed' } else { 'NotInstalled' } }
 
-    # OpenCode 2 — opencode.json registers copilotd + DeepSeek models and the
-    # shared MCP servers; HerdR's generated V2 plugin registration is composed
-    # into cli.json by run_onchange_herdr-integrations.ps1.tmpl.
+    # OpenCode 2 — opencode.json registers copilotd, DeepSeek, and Magpie models
+    # and the shared MCP servers; HerdR's generated V2 plugin registration is
+    # composed into cli.json by run_onchange_herdr-integrations.ps1.tmpl.
     - resource: PSDscResources/Script
       id: ScoopOpencode
       dependsOn:
