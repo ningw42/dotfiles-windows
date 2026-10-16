@@ -7,12 +7,19 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 POWERSHELL = shutil.which("pwsh")
+REVIEWED_VERSIONS = {
+    "pi": 9,
+    "claude": 11,
+    "codex": 10,
+    "copilot": 4,
+    "opencode": 13,
+}
 
 
-def codex_integration(version):
+def integration(integration_id, version):
     return (
         "# installed by herdr\n"
-        "# HERDR_INTEGRATION_ID=codex\n"
+        f"# HERDR_INTEGRATION_ID={integration_id}\n"
         f"# HERDR_INTEGRATION_VERSION={version}\n"
     )
 
@@ -41,62 +48,79 @@ class HerdrIntegrationGateTests(unittest.TestCase):
             template.index("function Set-TextFile(")
         ]
         self.script.write_text(
-            'param([string]$Source, [string]$Destination)\n'
+            'param([string]$Source, [string]$Destination, [string]$IntegrationId)\n'
             "$ErrorActionPreference = 'Stop'\n"
             + versions
             + publisher
             + "\nSet-HerdrIntegrationFile -Source $Source -Destination $Destination "
-            "-IntegrationId 'codex' -ExpectedVersion $expectedIntegrationVersions.codex\n",
+            "-IntegrationId $IntegrationId "
+            "-ExpectedVersion $expectedIntegrationVersions[$IntegrationId]\n",
             encoding="utf-8",
         )
 
-    def publish(self):
+    def publish(self, integration_id):
         return subprocess.run(
             [
                 POWERSHELL, "-NoLogo", "-NoProfile", "-NonInteractive",
                 "-File", str(self.script),
                 "-Source", str(self.source),
                 "-Destination", str(self.destination),
+                "-IntegrationId", integration_id,
             ],
             capture_output=True,
             text=True,
         )
 
-    def test_codex_v9_replaces_owned_v8_integration(self):
-        self.source.write_text(codex_integration(9), encoding="utf-8")
-        self.destination.write_text(codex_integration(8), encoding="utf-8")
+    def test_reviewed_versions_replace_owned_older_integrations(self):
+        for integration_id, version in REVIEWED_VERSIONS.items():
+            with self.subTest(integration=integration_id, version=version):
+                self.source.write_text(
+                    integration(integration_id, version), encoding="utf-8"
+                )
+                self.destination.write_text(
+                    integration(integration_id, version - 1), encoding="utf-8"
+                )
 
-        result = self.publish()
+                result = self.publish(integration_id)
 
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.destination.read_bytes(), self.source.read_bytes())
-        self.assertEqual(list(self.root.glob("*.tmp")), [])
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(self.destination.read_bytes(), self.source.read_bytes())
+                self.assertEqual(list(self.root.glob("*.tmp")), [])
 
-    def test_unreviewed_codex_versions_leave_destination_unchanged(self):
-        for version in (8, 10):
-            with self.subTest(version=version):
-                self.source.write_text(codex_integration(version), encoding="utf-8")
-                self.destination.write_text(codex_integration(8), encoding="utf-8")
+    def test_unreviewed_versions_leave_destination_unchanged(self):
+        for integration_id, expected in REVIEWED_VERSIONS.items():
+            for version in (expected - 1, expected + 1):
+                with self.subTest(integration=integration_id, version=version):
+                    self.source.write_text(
+                        integration(integration_id, version), encoding="utf-8"
+                    )
+                    self.destination.write_text(
+                        integration(integration_id, expected - 1), encoding="utf-8"
+                    )
+                    before = self.destination.read_bytes()
+
+                    result = self.publish(integration_id)
+
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn(
+                        f"expected v{expected}, generated v{version}", result.stderr
+                    )
+                    self.assertEqual(self.destination.read_bytes(), before)
+
+    def test_reviewed_versions_do_not_overwrite_non_herdr_files(self):
+        for integration_id, version in REVIEWED_VERSIONS.items():
+            with self.subTest(integration=integration_id, version=version):
+                self.source.write_text(
+                    integration(integration_id, version), encoding="utf-8"
+                )
+                self.destination.write_text("# user-owned hook\n", encoding="utf-8")
                 before = self.destination.read_bytes()
 
-                result = self.publish()
+                result = self.publish(integration_id)
 
                 self.assertNotEqual(result.returncode, 0)
-                self.assertIn(
-                    f"expected v9, generated v{version}", result.stderr
-                )
+                self.assertIn("Refusing to overwrite non-HerdR file", result.stderr)
                 self.assertEqual(self.destination.read_bytes(), before)
-
-    def test_codex_v9_does_not_overwrite_non_herdr_file(self):
-        self.source.write_text(codex_integration(9), encoding="utf-8")
-        self.destination.write_text("# user-owned hook\n", encoding="utf-8")
-        before = self.destination.read_bytes()
-
-        result = self.publish()
-
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Refusing to overwrite non-HerdR file", result.stderr)
-        self.assertEqual(self.destination.read_bytes(), before)
 
 
 if __name__ == "__main__":

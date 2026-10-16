@@ -20,11 +20,13 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $utf8NoBom = [Text.UTF8Encoding]::new($false)
+# Reviewed Windows hook migration: explicit UTF-8 stdin decoding; Codex drops
+# working/idle actions, matching our SessionStart-only dot_codex/hooks.json.tmpl.
 $expectedIntegrationVersions = [ordered]@{
     pi = 9
-    claude = 10
-    codex = 9
-    copilot = 3
+    claude = 11
+    codex = 10
+    copilot = 4
     opencode = 13
 }
 $expectedClaudeSessionStartMatcher = '^(startup|resume|clear|compact|fork)$'
