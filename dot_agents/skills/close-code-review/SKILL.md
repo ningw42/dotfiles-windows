@@ -10,6 +10,10 @@ Run this in the reviewer's session after review comments exist. The reviewer own
 
 Invocation authorizes Herdr for this loop. Invoke and follow the `herdr` skill before issuing Herdr commands.
 
+## Sender identity
+
+Begin every agent-authored message in this loop with `[agent:<role> herdr:<sender-id>]`, including Herdr prompts, replies, progress updates, and questions or reports to the human. Use `reviewer` or `implementer` for the role and the sender's current pane ID from live Herdr state for the ID, for example `[agent:reviewer herdr:w1:p2]`. Keep relayed human answers explicitly attributed to the human.
+
 ## 1. Establish the ledger
 
 1. Give every actionable comment a stable ID, source or review axis, code location, concern, and checkable acceptance criterion. If none exist, report the review closed and stop.
@@ -19,7 +23,7 @@ Checkpoint: every actionable comment is recorded, and one implementer is identif
 
 ## 2. Request a revision
 
-1. Send the complete open ledger and state explicitly that its findings come from a reviewer agent, not a human directive. Invite the implementer to revise and verify the code or refute any ID with concrete reasoning and code, test, standard, or spec evidence.
+1. Send the complete open ledger. In the first handoff, include the sender-identity rule above so the implementer follows it throughout the loop. Invite the implementer to revise and verify the code or refute any ID with concrete reasoning and code, test, standard, or spec evidence.
 2. When working on a feature branch, require every file-changing revision turn to end with one coherent commit before handoff. The commit records the addressed IDs and verification performed.
 3. Require the response to account for every open ID, then wait for and read the complete response through Herdr.
 4. Surface any human question from the implementer, record the answer in the ledger, and let the implementer finish the turn before re-reviewing it.
