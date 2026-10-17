@@ -11,8 +11,8 @@ USER_SKILLS = {
     "develop-and-submit-pr",
     "simplification-review",
     "subagent-parity",
+    "subagent-unlimited-turns",
     "traceability",
-    "unlimited-subagent-turns",
 }
 GPT_MODELS = [
     "gpt-6-luna",
@@ -146,14 +146,14 @@ class ModelCatalogTests(unittest.TestCase):
 
     def test_opencode_provider_metadata_matches_nixfiles_snapshot(self):
         # Full provider snapshot from nixfiles' llm-agents/tests/model-catalog.nix
-        # at 6c5a265; canonical JSON matches Nix's builtins.toJSON rendering.
+        # at 0b0ed60; canonical JSON matches Nix's builtins.toJSON rendering.
         providers = load_opencode_config()["provider"]
         snapshot = json.dumps(
             providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
         ).encode("utf-8")
         self.assertEqual(
             hashlib.sha256(snapshot).hexdigest(),
-            "67fd094f41d4e0fc3f0901c406ff8ee937823e3fd563ba2e809fc2673defc284",
+            "162ef1c963d266461e661a51f38ce417d558bddf5f2cef6e230d0dbd2606672b",
         )
 
     def test_pi_catalog_and_cycle_defaults_match_nixfiles_projection(self):
@@ -235,14 +235,14 @@ class ModelCatalogTests(unittest.TestCase):
 
     def test_pi_provider_metadata_matches_nixfiles_snapshot(self):
         # Full provider snapshot from nixfiles' llm-agents/tests/model-catalog.nix
-        # at 6c5a265; canonical JSON matches Nix's builtins.toJSON rendering.
+        # at 0b0ed60; canonical JSON matches Nix's builtins.toJSON rendering.
         providers = load_json("dot_pi/agent/models.json")["providers"]
         snapshot = json.dumps(
             providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
         ).encode("utf-8")
         self.assertEqual(
             hashlib.sha256(snapshot).hexdigest(),
-            "f467c60e6fba78dc6ddafba0e8a7185ce135ac5768c4efe576b0552c46949934",
+            "ac2e4588d97d25a7ec4e4114c6133dc005762fc8ed89070f5c477b0f6c6dfad1",
         )
         sol = next(
             model
@@ -250,6 +250,24 @@ class ModelCatalogTests(unittest.TestCase):
             if model["id"] == "gpt-6.1-sol"
         )
         self.assertIsNone(sol["thinkingLevelMap"]["off"])
+
+    def test_deepseek_flash_shared_display_rates_match_nixfiles(self):
+        pi = load_json("dot_pi/agent/models.json")["providers"]
+        opencode = load_opencode_config()["provider"]
+        for provider, model_id in (
+            ("deepseek-responses", "deepseek-flash"),
+            ("magpie-responses", "deepseek-v4.1-flash"),
+        ):
+            with self.subTest(provider=provider):
+                model = next(m for m in pi[provider]["models"] if m["id"] == model_id)
+                self.assertEqual(
+                    model["cost"],
+                    {"input": 0.15, "output": 0.6, "cacheRead": 0.003, "cacheWrite": 0},
+                )
+                self.assertEqual(
+                    opencode[provider]["models"][model_id]["cost"],
+                    {"input": 0.15, "output": 0.6, "cache_read": 0.003},
+                )
 
     def test_native_and_adapter_pi_mcp_configs_stay_identical(self):
         self.assertEqual(
@@ -296,6 +314,7 @@ class PiRuntimeConfigTests(unittest.TestCase):
                 "diffIndicatorMode": "bars",
                 "editDiffCollapsedLines": 0,
                 "previewLines": 0,
+                "scrollButtonMode": "native",
                 "showStartupHeader": False,
                 "enableCustomFooter": False,
             },
@@ -337,6 +356,24 @@ class AgentDefaultTests(unittest.TestCase):
         for name in USER_SKILLS:
             command = (command_dir / f"{name}.md.tmpl").read_text(encoding="utf-8")
             self.assertIn(f'dot_agents/skills/{name}/SKILL.md', command)
+
+    def test_subagent_unlimited_turns_rename_and_legacy_cleanup(self):
+        skill_dir = REPO_ROOT / "dot_agents/skills/subagent-unlimited-turns"
+        skill = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("name: subagent-unlimited-turns\n", skill)
+        self.assertIn("disable-model-invocation: true\n", skill)
+        metadata = (skill_dir / "agents/openai.yaml").read_text(encoding="utf-8")
+        self.assertIn('display_name: "Subagent Unlimited Turns"', metadata)
+        self.assertIn("Use $subagent-unlimited-turns", metadata)
+        self.assertIn("allow_implicit_invocation: false", metadata)
+
+        removals = (REPO_ROOT / ".chezmoiremove").read_text(encoding="utf-8").splitlines()
+        for target in (
+            ".agents/skills/unlimited-subagent-turns",
+            ".config/opencode/commands/unlimited-subagent-turns.md",
+        ):
+            with self.subTest(target=target):
+                self.assertIn(target, removals)
 
     def test_pi_builtin_agent_routes_match_nixfiles(self):
         generator = (

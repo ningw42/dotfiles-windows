@@ -51,6 +51,10 @@
 # target now that dot_pi/agent/pi-cc-extensions.json owns the canonical path.
 .pi/agent/claude-code-style.json
 
+# The human-only unlimited-turns skill and its OpenCode command were renamed.
+.agents/skills/unlimited-subagent-turns
+.config/opencode/commands/unlimited-subagent-turns.md
+
 # Stale gruvbox-dark leftovers from when these were static sources. They are now
 # provided by colorscheme-conditional externals, so only remove them when
 # gruvbox-dark is NOT the active colorscheme (otherwise we would fight the

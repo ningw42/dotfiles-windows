@@ -146,10 +146,10 @@
           },
           "contextWindow": 1000000,
           "cost": {
-            "cacheRead": 0.006,
+            "cacheRead": 0.003,
             "cacheWrite": 0,
-            "input": 0.3,
-            "output": 1.2
+            "input": 0.15,
+            "output": 0.6
           },
           "id": "deepseek-flash",
           "input": [
@@ -204,10 +204,10 @@
         {
           "contextWindow": 1000000,
           "cost": {
-            "cacheRead": 0.006,
+            "cacheRead": 0.003,
             "cacheWrite": 0,
-            "input": 0.3,
-            "output": 1.2
+            "input": 0.15,
+            "output": 0.6
           },
           "id": "deepseek-v4.1-flash",
           "input": [

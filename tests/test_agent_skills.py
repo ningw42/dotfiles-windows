@@ -100,8 +100,8 @@ REPO_SKILL_NAMES = {
     "develop-and-submit-pr",
     "simplification-review",
     "subagent-parity",
+    "subagent-unlimited-turns",
     "traceability",
-    "unlimited-subagent-turns",
 }
 
 

@@ -49,8 +49,8 @@
       "develop-and-submit-pr": "deny",
       "simplification-review": "deny",
       "subagent-parity": "deny",
-      "traceability": "deny",
-      "unlimited-subagent-turns": "deny"
+      "subagent-unlimited-turns": "deny",
+      "traceability": "deny"
     }
   },
   "provider": {
@@ -242,9 +242,9 @@
       "models": {
         "deepseek-flash": {
           "cost": {
-            "cache_read": 0.006,
-            "input": 0.3,
-            "output": 1.2
+            "cache_read": 0.003,
+            "input": 0.15,
+            "output": 0.6
           },
           "limit": {
             "context": 1000000,
@@ -346,9 +346,9 @@
       "models": {
         "deepseek-v4.1-flash": {
           "cost": {
-            "cache_read": 0.006,
-            "input": 0.3,
-            "output": 1.2
+            "cache_read": 0.003,
+            "input": 0.15,
+            "output": 0.6
           },
           "limit": {
             "context": 1000000,

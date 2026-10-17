@@ -1,10 +1,10 @@
 ---
-name: unlimited-subagent-turns
+name: subagent-unlimited-turns
 description: Allow subagents effectively unlimited turns.
 disable-model-invocation: true
 ---
 
-# Unlimited Subagent Turns
+# Subagent Unlimited Turns
 
 Spawn and resume every subagent with **effectively unlimited** turns. Omit turn-limit arguments such as `max_turns` when omission means unlimited; otherwise use the harness's documented unlimited setting. If the schema requires a number and has no unlimited value, use a large accepted ceiling (e.g. `1000000` or more) that will not realistically bind. Report unavoidable caps only when they could realistically truncate the task.
 
