@@ -164,6 +164,44 @@ age -e -r RECIPIENT_FROM_CHEZMOI_CONFIG -o secrets.yaml.age secrets.yaml
 Re-encrypt after editing. A `run_onchange_` script publishes the required values
 as persistent user environment variables for desktop applications.
 
+### Provider API keys
+
+Credentials are named by provider, not by coding harness. Both the PowerShell
+profile and persistent user environment export these optional secret fields:
+
+| Encrypted field | Environment variable | Existing clients |
+| :--- | :--- | :--- |
+| `copilotd_api_key` | `COPILOTD_API_KEY` | Codex, Pi, OpenCode |
+| `litellm_api_key` | `LITELLM_API_KEY` | Codex |
+
+A present field overrides that provider's environment key. An absent field
+preserves an externally supplied key; without either, the provider cannot
+authenticate. Unused providers need no field. Removing a field does **not** clear
+a previously published provider key: explicitly clear it in both the shell and
+user environment if retiring it. No provider falls back to a generic credential.
+DeepSeek and Magpie retain their existing optional-secret policies.
+
+There are no credential compatibility aliases. The legacy fields `codex_api_key`,
+`pi_api_key`, and `opencode_api_key` are ignored; `CODEX_API_KEY`, `PI_API_KEY`, and
+`OPENCODE_API_KEY` are unconditionally cleared in both export paths, even if those
+fields remain in the encrypted store. OpenCode uses the provider-owned
+`copilotd_api_key`, not an OpenCode-specific secret.
+
+Router Maestro and Copilot Proxy are retired: their Codex registrations and
+choices are removed, their secret fields are ignored, and `ROUTER_MAESTRO_API_KEY`
+and `COPILOT_PROXY_API_KEY` are cleared in both export paths. Do not provision
+`router_maestro_api_key` or `copilot_proxy_api_key`; remove any leftover fields
+when editing the encrypted store. A saved retired provider stops rendering with
+an instruction to use `chezmoi edit-config` to select a current provider; it does
+not silently reroute requests.
+
+Before the first apply of this migration, move the copilotd credential from
+`pi_api_key` to `copilotd_api_key` and the LiteLLM credential from `codex_api_key`
+to `litellm_api_key` if you use those providers, then remove the legacy fields.
+Do not assume that harness-named credentials are interchangeable or overwrite
+a provider key without checking its intended service. Re-encrypt the store and
+privately review `chezmoi diff` before applying; no key rotation is required.
+
 ## Maintenance
 
 ```powershell

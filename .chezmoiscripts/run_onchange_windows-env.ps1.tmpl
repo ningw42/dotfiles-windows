@@ -22,13 +22,23 @@ foreach ($name in @(
     [Environment]::SetEnvironmentVariable($name, $null, "User")
 }
 
-# codex — credential for alternate LiteLLM / Router Maestro providers
-[Environment]::SetEnvironmentVariable("CODEX_API_KEY", "{{ $secrets.codex_api_key }}", "User")
-
-# copilotd — shared credential for OpenCode, Pi, and the default Codex route
-[Environment]::SetEnvironmentVariable("COPILOTD_API_KEY", "{{ $secrets.pi_api_key }}", "User")
+# Provider-owned credentials; copilotd is shared by Codex, Pi, and OpenCode.
+# Missing fields preserve external keys (unused providers need no secret).
+# Legacy harness-named fields are ignored; no credential aliases or fallbacks.
+{{ range $field, $variable := dict
+    "copilotd_api_key" "COPILOTD_API_KEY"
+    "litellm_api_key" "LITELLM_API_KEY"
+-}}
+{{ if hasKey $secrets $field -}}
+[Environment]::SetEnvironmentVariable("{{ $variable }}", '{{ index $secrets $field | replace "'" "''" }}', "User")
+{{ end -}}
+{{ end -}}
+# Retired harness names and removed providers must not leave stale credentials.
+[Environment]::SetEnvironmentVariable("CODEX_API_KEY", $null, "User")
 [Environment]::SetEnvironmentVariable("PI_API_KEY", $null, "User")
 [Environment]::SetEnvironmentVariable("OPENCODE_API_KEY", $null, "User")
+[Environment]::SetEnvironmentVariable("ROUTER_MAESTRO_API_KEY", $null, "User")
+[Environment]::SetEnvironmentVariable("COPILOT_PROXY_API_KEY", $null, "User")
 
 # DeepSeek is optional until deepseek_api_key is added to secrets.yaml.age.
 {{ if hasKey $secrets "deepseek_api_key" -}}

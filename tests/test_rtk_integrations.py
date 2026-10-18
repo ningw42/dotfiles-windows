@@ -97,7 +97,7 @@ class CodexRtkConfigTests(unittest.TestCase):
             self.assertEqual(settings["model_provider"], "copilotd")
             self.assertEqual(
                 settings["model_providers"]["copilotd"]["auth"]["args"][-1],
-                "[Console]::Out.Write($env:CODEX_API_KEY)",
+                "[Console]::Out.Write($env:COPILOTD_API_KEY)",
             )
 
 

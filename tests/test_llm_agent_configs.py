@@ -1,10 +1,17 @@
 import hashlib
 import json
+import os
+import shutil
+import subprocess
+import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+CHEZMOI = shutil.which("chezmoi")
+POWERSHELL = shutil.which("pwsh")
 USER_SKILLS = {
     "close-code-review",
     "develop-and-squash",
@@ -35,6 +42,149 @@ def load_opencode_config():
         encoding="utf-8"
     )
     return json.loads(source.replace(HOME_TEMPLATE, "C:/Users/fixture"))
+
+
+@unittest.skipUnless(CHEZMOI, "chezmoi is required for real template rendering")
+class CodexProviderRoutingTests(unittest.TestCase):
+    def render_config(self, provider="copilotd", *, path="dot_codex/config.toml.tmpl", expected_error=None):
+        with tempfile.TemporaryDirectory(prefix="codex-provider-render-") as temporary:
+            root = Path(temporary)
+            home = root / "home"
+            home.mkdir()
+            source = root / "source"
+            source.mkdir()
+            config = root / "chezmoi.toml"
+            data = {
+                "codex_provider": provider,
+                "colorscheme": "catppuccin-mocha",
+                "password_manager": "bitwarden",
+                "git_username": "Fixture User",
+                "git_useremail": "fixture@example.test",
+                "git_signingkey": "FIXTURE",
+            }
+            config.write_text(
+                "[data]\n" + "".join(f"{key} = {json.dumps(value)}\n" for key, value in data.items()),
+                encoding="utf-8",
+            )
+            template = (REPO_ROOT / path).read_text(encoding="utf-8")
+            initializing = path == ".chezmoi.toml.tmpl"
+            if initializing:
+                # promptChoiceOnce exists only during init, not execute-template.
+                # Init is confined to the fixture and never uses --apply.
+                (source / path).write_text(template, encoding="utf-8")
+                command = [CHEZMOI, "init"]
+            else:
+                command = [CHEZMOI, "execute-template", "--override-data", json.dumps({
+                    "chezmoi": {"homeDir": str(home)},
+                })]
+            result = subprocess.run(
+                [
+                    *command, "--config", str(config),
+                    "--source", str(source), "--destination", str(home),
+                    "--persistent-state", str(root / "state.boltdb"),
+                    "--cache", str(root / "cache"), "--no-tty", "--no-pager",
+                    "--refresh-externals=never",
+                ],
+                input=None if initializing else template,
+                capture_output=True, text=True, encoding="utf-8", timeout=30,
+                env={
+                    key: value for key, value in os.environ.items()
+                    if not key.upper().startswith("CHEZMOI_")
+                },
+                cwd=root,
+            )
+            if expected_error:
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(expected_error, result.stderr)
+                self.assertIn("chezmoi edit-config", result.stderr)
+                return None
+            self.assertEqual(result.returncode, 0, result.stderr)
+            return tomllib.loads(config.read_text(encoding="utf-8") if initializing else result.stdout)
+
+    def test_providers_use_specific_keys_without_changing_auth_mechanisms(self):
+        providers = self.render_config()["model_providers"]
+        self.assertEqual(set(providers), {"agent-maestro", "litellm", "copilotd"})
+        self.assertEqual(providers["litellm"]["env_key"], "LITELLM_API_KEY")
+        self.assertNotIn("auth", providers["litellm"])
+        self.assertNotIn("env_key", providers["copilotd"])
+        self.assertEqual(providers["copilotd"]["auth"], {
+            "command": "pwsh",
+            "args": ["-NoProfile", "-NonInteractive", "-Command",
+                     "[Console]::Out.Write($env:COPILOTD_API_KEY)"],
+            "timeout_ms": 5000,
+            "refresh_interval_ms": 0,
+        })
+        self.assertNotIn("env_key", providers["agent-maestro"])
+        self.assertNotIn("auth", providers["agent-maestro"])
+
+    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture auth commands")
+    def test_auth_lookup_uses_distinct_fixture_keys_and_never_falls_back(self):
+        providers = self.render_config()["model_providers"]
+        fixtures = {
+            "COPILOTD_API_KEY": "fixture-copilotd-key",
+            "LITELLM_API_KEY": "fixture-litellm-key",
+            "ROUTER_MAESTRO_API_KEY": "fixture-router-maestro-key",
+            "COPILOT_PROXY_API_KEY": "fixture-copilot-proxy-key",
+            "CODEX_API_KEY": "fixture-legacy-codex-key",
+            "PI_API_KEY": "fixture-retired-pi-key",
+            "OPENCODE_API_KEY": "fixture-retired-opencode-key",
+        }
+        # Auth commands print credentials: never let one inherit a real key.
+        clean_env = {
+            key: value for key, value in os.environ.items()
+            if not key.upper().endswith("_API_KEY")
+        }
+        for name, variable, expected in (
+            ("copilotd", "COPILOTD_API_KEY", "fixture-copilotd-key"),
+            ("litellm", "LITELLM_API_KEY", "fixture-litellm-key"),
+        ):
+            for present in (True, False):
+                with self.subTest(provider=name, present=present):
+                    env = {**clean_env, **fixtures}
+                    if not present:
+                        del env[variable]
+                    provider = providers[name]
+                    if "auth" in provider:
+                        auth = provider["auth"]
+                        result = subprocess.run(
+                            [POWERSHELL, *auth["args"]], env=env,
+                            capture_output=True, text=True, encoding="utf-8", timeout=10,
+                        )
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        actual = result.stdout
+                    else:
+                        actual = env.get(provider["env_key"], "")
+                    self.assertEqual(actual, expected if present else "")
+
+    def test_saved_provider_selection_and_endpoints_are_unchanged(self):
+        for selected in ("litellm", "copilotd"):
+            with self.subTest(selected=selected):
+                config = self.render_config(selected)
+                self.assertEqual(config["model_provider"], selected)
+                providers = config["model_providers"]
+                for name, url in (
+                    ("agent-maestro", "http://localhost:23333/api/openai/v1/"),
+                    ("litellm", "https://litellm.ningw.net/openai/v1/"),
+                    ("copilotd", "https://copilotd.ningw.net/openai/v1"),
+                ):
+                    self.assertEqual(providers[name]["base_url"], url)
+                    self.assertEqual(providers[name]["wire_api"], "responses")
+                    self.assertEqual(providers[name]["stream_idle_timeout_ms"], 600000)
+                self.assertTrue(providers["copilotd"]["supports_websockets"])
+
+    def test_retired_saved_provider_requires_explicit_reselection(self):
+        for path in ("dot_codex/config.toml.tmpl", ".chezmoi.toml.tmpl"):
+            for retired in ("router-maestro", "copilot-proxy"):
+                with self.subTest(path=path, retired=retired):
+                    self.render_config(retired, path=path, expected_error="retired")
+
+    def test_init_choices_and_saved_active_providers_exclude_retired_providers(self):
+        source = (REPO_ROOT / ".chezmoi.toml.tmpl").read_text(encoding="utf-8")
+        self.assertIn('$codex_provider_choices := list "litellm" "copilotd"', source)
+        for selected in ("litellm", "copilotd"):
+            with self.subTest(selected=selected):
+                config = self.render_config(selected, path=".chezmoi.toml.tmpl")
+                self.assertEqual(config["data"]["codex_provider"], selected)
 
 
 class ModelCatalogTests(unittest.TestCase):
