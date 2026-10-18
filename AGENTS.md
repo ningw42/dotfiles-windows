@@ -124,8 +124,8 @@ Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
 - Keep shared MCP server definitions aligned in `dot_codex/config.toml.tmpl`,
   `dot_copilot/mcp-config.json`, `dot_config/opencode/opencode.json.tmpl`,
   `dot_config/claude-code-chezmoi/plugins/user-mcps/dot_mcp.json`, and pi's
-  `dot_config/mcp/readonly_mcp.json` plus `dot_pi/agent/readonly_mcp.json`.
-  Copilot intentionally omits GitHub.
+  `dot_pi/agent/readonly_mcp.json`, which Pi's built-in MCP owns. Copilot
+  intentionally omits GitHub.
 - `dot_config/statusline/statusline.py` serves Claude Code and Copilot via the
   `claude` and `copilot` dispatch arguments.
 - Chezmoi owns raw Matt Pocock and HumanLayer snapshots selected by

@@ -134,7 +134,9 @@ Choose the procedure only after inspecting the deployment home:
 `dot_pi/` mirrors the portable pi settings from `nixfiles`, including the model
 catalog, extension preferences, subagent/task defaults, and workflow routes.
 Windows keeps PowerShell enabled and uses the checksum-pinned `pi-distribution`
-external rather than Nix store paths.
+external rather than Nix store paths. MCP comes from Pi's built-in support
+reading `~/.pi/agent/mcp.json`; the retired `pi-mcp-adapter` and its XDG server
+file are not deployed.
 
 Magpie models use `https://magpie.ningw.net`: Responses for DeepSeek and GLM,
 and Google's native Generative AI API for Gemini. Authentication requires

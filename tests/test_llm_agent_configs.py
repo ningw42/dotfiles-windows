@@ -269,14 +269,22 @@ class ModelCatalogTests(unittest.TestCase):
                     {"input": 0.15, "output": 0.6, "cache_read": 0.003},
                 )
 
-    def test_native_and_adapter_pi_mcp_configs_stay_identical(self):
-        self.assertEqual(
-            load_json("dot_pi/agent/readonly_mcp.json"),
-            load_json("dot_config/mcp/readonly_mcp.json"),
-        )
-
 
 class PiRuntimeConfigTests(unittest.TestCase):
+    def test_pi_builtin_mcp_replaces_the_retired_adapter(self):
+        # Pi 1.3 serves the shared remote servers natively; pi-distribution no
+        # longer bundles the adapter that used to own them.
+        self.assertFalse((REPO_ROOT / "dot_config/mcp/readonly_mcp.json").exists())
+        removals = (REPO_ROOT / ".chezmoiremove").read_text(encoding="utf-8").splitlines()
+        self.assertIn(".config/mcp/mcp.json", removals)
+
+        servers = load_json("dot_pi/agent/readonly_mcp.json")["mcpServers"]
+        self.assertEqual(set(servers), {"brave-search", "context7", "exa", "github"})
+        self.assertEqual(
+            servers["github"]["headers"],
+            {"Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"},
+        )
+
     def test_pi_clipboard_forwarding_matches_nixfiles_wrapper(self):
         statements = {
             "readonly_Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl":
@@ -292,7 +300,8 @@ class PiRuntimeConfigTests(unittest.TestCase):
     def test_pi_presentation_and_mcp_ownership_match_nixfiles(self):
         settings = load_json("dot_pi/agent/settings.json")
         self.assertEqual(settings["quietStartup"], "header")
-        self.assertEqual(settings["extensions"], ["-builtin:mcp"])
+        # Built-in MCP owns the shared servers, so nothing may exclude it.
+        self.assertNotIn("extensions", settings)
         self.assertTrue(settings["hideThinkingBlock"])
         self.assertTrue(settings["showCacheMissNotices"])
         self.assertFalse(settings["showHardwareCursor"])

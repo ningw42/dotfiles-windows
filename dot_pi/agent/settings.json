@@ -17,9 +17,6 @@
     "magpie-responses/glm-5.3-flash:max",
     "magpie-generative-ai/gemini-4-argon-contributor:medium"
   ],
-  "extensions": [
-    "-builtin:mcp"
-  ],
   "hideThinkingBlock": true,
   "httpIdleTimeoutMs": 600000,
   "markdown": {
