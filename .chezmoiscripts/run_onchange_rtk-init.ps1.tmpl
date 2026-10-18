@@ -1,7 +1,7 @@
 {{ if eq .chezmoi.os "windows" -}}
-# Regenerate rtk's awareness files for Codex and Copilot. Re-runs only when the
-# rtk binary version changes, since rtk owns the canonical content (rtk init
-# writes them).
+# Regenerate RTK-owned Codex awareness documents and the Copilot hook when
+# this script or the installed RTK version changes. Claude/Codex hook declarations
+# stay chezmoi-owned; only RTK generates its awareness content.
 #
 # Claude Code is intentionally NOT initialized here: its PreToolUse hook
 # (`rtk hook claude`, wired in dot_claude/settings.json.tmpl) transparently
@@ -13,9 +13,73 @@
 #
 # rtk version: {{ output "rtk" "--version" | trim }}
 
-# Codex: writes ~/.codex/RTK.md and adds @RTK.md to ~/.codex/AGENTS.md. Codex
-# has no command-rewrite hook, so this instruction file is its only integration.
-& rtk init -g --codex | Out-Null
+# Codex has a native rewrite hook declared in dot_codex/hooks.json.tmpl, plus
+# RTK's short awareness document. --codex rejects --no-patch, so generate in an
+# isolated CODEX_HOME and publish only the documents, never hooks.json/config.toml.
+function Initialize-CodexRtk([string]$CodexHome, [string]$RtkPath = 'rtk') {
+    $ErrorActionPreference = 'Stop'
+    $utf8NoBom = [Text.UTF8Encoding]::new($false)
+    $work = Join-Path ([IO.Path]::GetTempPath()) ("chezmoi-rtk-codex-{0}" -f [Guid]::NewGuid().ToString('N'))
+    $agentsPath = Join-Path $CodexHome 'AGENTS.md'
+    $rtkPathInHome = Join-Path $CodexHome 'RTK.md'
+    try {
+        New-Item -ItemType Directory -Path $work -Force | Out-Null
+        if (Test-Path -LiteralPath $agentsPath -PathType Leaf) {
+            $instructions = [IO.File]::ReadAllText($agentsPath)
+            # Let RTK migrate its own reference while retaining other instructions.
+            # Normalize only whole reference lines for this managed RTK document.
+            foreach ($reference in @("@$rtkPathInHome", "@$($rtkPathInHome.Replace('\', '/'))")) {
+                $pattern = '(?m)^' + [regex]::Escape($reference) + '(?=\r?$)'
+                $instructions = [regex]::Replace($instructions, $pattern, '@RTK.md')
+            }
+            [IO.File]::WriteAllText((Join-Path $work 'AGENTS.md'), $instructions, $utf8NoBom)
+        }
+
+        $startInfo = [Diagnostics.ProcessStartInfo]::new()
+        $startInfo.FileName = $RtkPath
+        $startInfo.WorkingDirectory = $work
+        $startInfo.UseShellExecute = $false
+        $startInfo.RedirectStandardInput = $true
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
+        $startInfo.Environment['CODEX_HOME'] = $work
+        foreach ($argument in @('init', '-g', '--codex')) {
+            $startInfo.ArgumentList.Add($argument)
+        }
+        $process = [Diagnostics.Process]::new()
+        $process.StartInfo = $startInfo
+        try {
+            $null = $process.Start()
+            $process.StandardInput.Close()
+            $null = $process.StandardOutput.ReadToEnd()
+            $stderr = $process.StandardError.ReadToEnd()
+            $process.WaitForExit()
+            if ($process.ExitCode -ne 0) {
+                throw "RTK Codex initialization failed (exit $($process.ExitCode)): $stderr"
+            }
+        }
+        finally {
+            $process.Dispose()
+        }
+
+        $instructions = [IO.File]::ReadAllText((Join-Path $work 'AGENTS.md'))
+        $generatedReference = '@' + (Join-Path $work 'RTK.md')
+        if (-not $instructions.Contains($generatedReference)) {
+            throw 'RTK emitted an unexpected Codex awareness reference; review its init output.'
+        }
+        $instructions = $instructions.Replace($generatedReference, "@$rtkPathInHome")
+        New-Item -ItemType Directory -Path $CodexHome -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $work 'RTK.md') -Destination $rtkPathInHome -Force
+        [IO.File]::WriteAllText($agentsPath, $instructions, $utf8NoBom)
+    }
+    finally {
+        if (Test-Path -LiteralPath $work) {
+            Remove-Item -LiteralPath $work -Recurse -Force
+        }
+    }
+}
+
+Initialize-CodexRtk -CodexHome (Join-Path $env:USERPROFILE '.codex')
 
 # Copilot CLI: hook-only, same rationale as Claude. The Copilot path is
 # "deny-with-suggestion" (rtk's `rtk hook copilot` blocks the bare command and

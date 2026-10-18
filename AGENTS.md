@@ -154,8 +154,11 @@ Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
 RTK owns its generated files; do not add them as chezmoi sources or edit deployed
 copies.
 
-- Codex remains prompt-based: `run_onchange_rtk-init.ps1.tmpl` generates
-  `~/.codex/{AGENTS,RTK}.md`.
+- Codex uses the `rtk hook codex` Bash `PreToolUse` handler in
+  `dot_codex/hooks.json.tmpl`, with exact hook trust in `config.toml.tmpl`.
+  `run_onchange_rtk-init.ps1.tmpl` generates `~/.codex/{AGENTS,RTK}.md` in an
+  isolated `CODEX_HOME`, preserving unrelated instructions and publishing only
+  those awareness documents; RTK never patches the managed hooks or config.
 - Claude Code uses the `rtk hook claude` hook in
   `dot_claude/settings.json.tmpl`; its old awareness files are removed through
   `.chezmoiremove`.

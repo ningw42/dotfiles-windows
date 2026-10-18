@@ -85,6 +85,11 @@ hooks = true
 # hooks.json. Refresh this hash if its command, timeout, event, or position changes.
 trusted_hash = "sha256:06548a65d143720b4561305061a21564fd877484854338649a2f447e27994852"
 
+[hooks.state.{{ printf "%s:pre_tool_use:0:0" (joinPath .chezmoi.homeDir ".codex" "hooks.json") | quote }}]
+# Verified with Codex 0.163.0 hooks/list: Bash matcher, synchronous command,
+# default timeout 600s. Refresh the hash when that normalized definition changes.
+trusted_hash = "sha256:be6c6fcb2978ea348dd05101efed0afcf00efcbfb5d7e78949108142c875a77d"
+
 [mcp_servers.brave-search]
 url = "https://brave-search-mcp.ningw.net/mcp"
 
