@@ -331,6 +331,25 @@ class PiRuntimeConfigTests(unittest.TestCase):
 
 
 class AgentDefaultTests(unittest.TestCase):
+    def test_copilot_behavior_settings_match_nixfiles(self):
+        settings = json.loads(
+            (REPO_ROOT / "dot_copilot/settings.json.tmpl")
+            .read_text(encoding="utf-8")
+            .replace(HOME_TEMPLATE, "C:/Users/fixture")
+        )
+        self.assertTrue(settings["copyOnSelect"])
+        self.assertFalse(settings["includeCoAuthoredBy"])
+        self.assertEqual(settings["theme"], "default")
+        self.assertNotIn("colorMode", settings)
+        self.assertEqual(
+            settings["allowedUrls"],
+            [
+                "https://learn.microsoft.com",
+                "https://neo.vimhelp.org",
+                "https://raw.githubusercontent.com",
+            ],
+        )
+
     def test_all_supported_agent_defaults_match_nixfiles(self):
         opencode = load_opencode_config()
         pi = load_json("dot_pi/agent/settings.json")
