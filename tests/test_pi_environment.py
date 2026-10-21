@@ -1,4 +1,4 @@
-"""Render provider credentials with fixtures; execute only in child-process envs."""
+"""Render managed environment variables; execute only in child-process envs."""
 
 import json
 import os
@@ -22,7 +22,7 @@ PROVIDER_ENVIRONMENT = {
 }
 OBSERVED_VARIABLES = [
     *PROVIDER_ENVIRONMENT, "CODEX_API_KEY", "PI_API_KEY", "OPENCODE_API_KEY",
-    "DEEPSEEK_API_KEY", "MAGPIE_API_KEY",
+    "DEEPSEEK_API_KEY", "MAGPIE_API_KEY", "PI_STATUSLINE_STARSHIP",
     "ROUTER_MAESTRO_API_KEY", "COPILOT_PROXY_API_KEY",
 ]
 SECRET_LOADER = 'include "secrets.yaml.age" | decrypt | fromYaml'
@@ -112,6 +112,18 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout)
+
+    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
+    def test_starship_uses_scoop_current_binary_not_removed_shim(self):
+        for path in TEMPLATES:
+            with self.subTest(path=path):
+                actual = self.evaluate(path, secrets={}, inherited={
+                    "PI_STATUSLINE_STARSHIP": "C:/Users/fixture/scoop/shims/starship.exe",
+                })
+                self.assertEqual(
+                    actual["PI_STATUSLINE_STARSHIP"],
+                    "C:/Users/fixture/scoop/apps/starship/current/starship.exe",
+                )
 
     @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
     def test_provider_fields_export_distinct_keys_not_legacy_credentials(self):
