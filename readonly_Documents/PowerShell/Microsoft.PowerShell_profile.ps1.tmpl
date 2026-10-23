@@ -45,7 +45,6 @@ foreach ($name in @(
 # Legacy harness-named fields are ignored; no credential aliases or fallbacks.
 {{ range $field, $variable := dict
   "copilotd_api_key" "COPILOTD_API_KEY"
-  "litellm_api_key" "LITELLM_API_KEY"
 -}}
 {{ if hasKey $secrets $field -}}
 $Env:{{ $variable }} = '{{ index $secrets $field | replace "'" "''" }}'
@@ -57,6 +56,7 @@ Remove-Item Env:PI_API_KEY -ErrorAction SilentlyContinue
 Remove-Item Env:OPENCODE_API_KEY -ErrorAction SilentlyContinue
 Remove-Item Env:ROUTER_MAESTRO_API_KEY -ErrorAction SilentlyContinue
 Remove-Item Env:COPILOT_PROXY_API_KEY -ErrorAction SilentlyContinue
+Remove-Item Env:LITELLM_API_KEY -ErrorAction SilentlyContinue
 
 # DeepSeek is optional until deepseek_api_key is added to secrets.yaml.age.
 {{ if hasKey $secrets "deepseek_api_key" -}}
@@ -140,6 +140,30 @@ Function cc
 Function oc
 {
   opencode @args
+}
+
+# Pi launch boundary: keep the stored DeepSeek key for other clients, but do
+# not auto-enable Pi's native provider alongside the selected Magpie route.
+# Resolve the application explicitly to avoid recursing into this function.
+Function pi
+{
+  $command = Get-Command pi.exe -CommandType Application -ErrorAction Stop
+  $hadDeepSeekKey = Test-Path Env:DEEPSEEK_API_KEY
+  $deepSeekKey = $Env:DEEPSEEK_API_KEY
+  try {
+    Remove-Item Env:DEEPSEEK_API_KEY -ErrorAction SilentlyContinue
+    if ($MyInvocation.ExpectingInput) {
+      $input | & $command.Source @args
+    } else {
+      & $command.Source @args
+    }
+  } finally {
+    if ($hadDeepSeekKey) {
+      $Env:DEEPSEEK_API_KEY = $deepSeekKey
+    } else {
+      Remove-Item Env:DEEPSEEK_API_KEY -ErrorAction SilentlyContinue
+    }
+  }
 }
 
 # alias for zellij, mirroring the `zj` shell alias from nixfiles' zellij module.

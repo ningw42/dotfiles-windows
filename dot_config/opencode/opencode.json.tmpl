@@ -10,7 +10,6 @@
   ],
   "enabled_providers": [
     "copilotd-responses",
-    "deepseek-responses",
     "magpie-generative-ai",
     "magpie-responses"
   ],
@@ -238,52 +237,6 @@
         "baseURL": "https://copilotd.ningw.net/openai/v1"
       }
     },
-    "deepseek-responses": {
-      "models": {
-        "deepseek-flash": {
-          "cost": {
-            "cache_read": 0.003,
-            "input": 0.15,
-            "output": 0.6
-          },
-          "limit": {
-            "context": 1000000,
-            "output": 384000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "name": "DeepSeek V4.1 Flash",
-          "options": {
-            "reasoningEffort": "high"
-          },
-          "reasoning": true,
-          "variants": {
-            "low": {
-              "reasoningEffort": "low"
-            },
-            "high": {
-              "reasoningEffort": "high"
-            },
-            "max": {
-              "reasoningEffort": "max"
-            }
-          }
-        }
-      },
-      "name": "DeepSeek (Responses)",
-      "npm": "@ai-sdk/openai",
-      "options": {
-        "apiKey": "{env:DEEPSEEK_API_KEY}",
-        "baseURL": "https://api.deepseek.com"
-      }
-    },
     "magpie-generative-ai": {
       "models": {
         "gemini-4-argon-contributor": {
@@ -344,7 +297,7 @@
     },
     "magpie-responses": {
       "models": {
-        "deepseek-v4.1-flash": {
+        "deepseek-flash": {
           "cost": {
             "cache_read": 0.003,
             "input": 0.15,
@@ -363,7 +316,7 @@
               "text"
             ]
           },
-          "name": "DeepSeek V4.1 Flash",
+          "name": "DeepSeek Flash",
           "options": {
             "reasoningEffort": "high"
           },

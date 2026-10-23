@@ -135,39 +135,6 @@
         }
       ]
     },
-    "deepseek-responses": {
-      "api": "openai-responses",
-      "apiKey": "$DEEPSEEK_API_KEY",
-      "baseUrl": "https://api.deepseek.com",
-      "models": [
-        {
-          "compat": {
-            "supportsDeveloperRole": false
-          },
-          "contextWindow": 1000000,
-          "cost": {
-            "cacheRead": 0.003,
-            "cacheWrite": 0,
-            "input": 0.15,
-            "output": 0.6
-          },
-          "id": "deepseek-flash",
-          "input": [
-            "text",
-            "image"
-          ],
-          "maxTokens": 384000,
-          "name": "DeepSeek V4.1 Flash",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "max": "max",
-            "medium": null,
-            "minimal": null,
-            "off": null
-          }
-        }
-      ]
-    },
     "magpie-generative-ai": {
       "api": "google-generative-ai",
       "apiKey": "$MAGPIE_API_KEY",
@@ -209,13 +176,13 @@
             "input": 0.15,
             "output": 0.6
           },
-          "id": "deepseek-v4.1-flash",
+          "id": "deepseek-flash",
           "input": [
             "text",
             "image"
           ],
           "maxTokens": 384000,
-          "name": "DeepSeek V4.1 Flash",
+          "name": "DeepSeek Flash",
           "reasoning": true,
           "thinkingLevelMap": {
             "max": "max",

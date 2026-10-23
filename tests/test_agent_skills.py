@@ -2431,7 +2431,7 @@ class RenderedWrapperExecutionTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         data = {
             "colorscheme": "catppuccin-mocha",
-            "codex_provider": "litellm",
+            "codex_provider": "copilotd",
             "password_manager": "bitwarden",
             "git_username": "Fixture User",
             "git_useremail": "fixture@example.test",

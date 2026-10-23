@@ -146,9 +146,26 @@ environment. If that optional secret is absent, the templates preserve any
 externally supplied key; they do not copy credentials from nixfiles' SOPS store.
 Without a key, the Magpie models are configured but unavailable for inference.
 
+DeepSeek Flash uses the bare `deepseek-flash` ID through Magpie's Responses
+endpoint, which supplies gateway routing and failover; neither Pi nor OpenCode
+registers the old direct `deepseek-responses` provider or versioned Magpie alias.
+The PowerShell profile's `pi` function masks `DEEPSEEK_API_KEY` while launching
+Pi and restores the shell's original value afterward, including on failure. The
+stored key remains available to other clients. This boundary applies to `pi` in
+a profile-loaded PowerShell session; invoking `pi.exe` directly or using
+`pwsh -NoProfile` bypasses it.
+
 The NixOS Magpie server and Linux/macOS Moshi daemon/hooks are not deployed by
 this Windows configuration. Magpie remains a remote service; no local gateway
 installation is needed.
+
+## Claude/Copilot statusline
+
+`dot_config/statusline/statusline.py` shares the nixfiles implementation: session
+input/output totals, cache-hit percentage and non-cache-read details, and a
+width-aware layout. Narrow terminals fall back to three ANSI-safely truncated
+rows. Claude supports multiline output; Copilot's host rendering of multiple
+rows remains unverified. Pi retains its separate package-owned statusline.
 
 ## Secrets
 
@@ -172,7 +189,6 @@ profile and persistent user environment export these optional secret fields:
 | Encrypted field | Environment variable | Existing clients |
 | :--- | :--- | :--- |
 | `copilotd_api_key` | `COPILOTD_API_KEY` | Codex, Pi, OpenCode |
-| `litellm_api_key` | `LITELLM_API_KEY` | Codex |
 
 A present field overrides that provider's environment key. An absent field
 preserves an externally supplied key; without either, the provider cannot
@@ -187,20 +203,22 @@ There are no credential compatibility aliases. The legacy fields `codex_api_key`
 fields remain in the encrypted store. OpenCode uses the provider-owned
 `copilotd_api_key`, not an OpenCode-specific secret.
 
-Router Maestro and Copilot Proxy are retired: their Codex registrations and
-choices are removed, their secret fields are ignored, and `ROUTER_MAESTRO_API_KEY`
-and `COPILOT_PROXY_API_KEY` are cleared in both export paths. Do not provision
-`router_maestro_api_key` or `copilot_proxy_api_key`; remove any leftover fields
-when editing the encrypted store. A saved retired provider stops rendering with
-an instruction to use `chezmoi edit-config` to select a current provider; it does
-not silently reroute requests.
+LiteLLM, Router Maestro, and Copilot Proxy are retired: their Codex
+registrations and choices are removed, their secret fields are ignored, and
+`LITELLM_API_KEY`, `ROUTER_MAESTRO_API_KEY`, and `COPILOT_PROXY_API_KEY` are cleared
+in both export paths. Do not provision `litellm_api_key`, `router_maestro_api_key`,
+or `copilot_proxy_api_key`; remove any leftover fields when editing the encrypted
+store. The unused local Agent Maestro registration is also removed. Codex's
+managed provider remains `copilotd`; saved retired selections stop rendering with
+an instruction to use `chezmoi edit-config` to select it, never silently rerouting
+requests. Running processes retain their inherited environments until restarted.
 
-Before the first apply of this migration, move the copilotd credential from
-`pi_api_key` to `copilotd_api_key` and the LiteLLM credential from `codex_api_key`
-to `litellm_api_key` if you use those providers, then remove the legacy fields.
-Do not assume that harness-named credentials are interchangeable or overwrite
-a provider key without checking its intended service. Re-encrypt the store and
-privately review `chezmoi diff` before applying; no key rotation is required.
+Before the first apply of the provider-key migration, move the copilotd
+credential from `pi_api_key` to `copilotd_api_key` if needed, then remove the
+legacy fields. Do not migrate retired LiteLLM credentials to copilotd or assume
+that harness-named credentials are interchangeable. Check the intended service
+before overwriting a provider key. Re-encrypt the store and privately review
+`chezmoi diff` before applying; no key rotation is required.
 
 ## Maintenance
 

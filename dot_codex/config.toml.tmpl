@@ -1,4 +1,4 @@
-{{- if or (eq .codex_provider "router-maestro") (eq .codex_provider "copilot-proxy") -}}
+{{- if ne .codex_provider "copilotd" -}}
 {{- fail (printf "Codex provider %q is retired; run chezmoi edit-config and select a current data.codex_provider from .chezmoi.toml.tmpl" .codex_provider) -}}
 {{- end -}}
 model = "gpt-6.1-sol"
@@ -7,19 +7,6 @@ model_reasoning_effort = "xhigh"
 suppress_unstable_features_warning = true
 approval_policy = "on-request"
 approvals_reviewer = "auto_review"
-
-[model_providers.agent-maestro]
-name = "Agent Maestro"
-base_url = "http://localhost:23333/api/openai/v1/"
-wire_api = "responses"
-stream_idle_timeout_ms = 600000
-
-[model_providers.litellm]
-name = "LiteLLM"
-base_url = "https://litellm.ningw.net/openai/v1/"
-env_key = "LITELLM_API_KEY"
-wire_api = "responses"
-stream_idle_timeout_ms = 600000
 
 [model_providers.copilotd]
 name = "copilotd"

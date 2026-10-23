@@ -14,16 +14,14 @@ CHEZMOI = shutil.which("chezmoi")
 POWERSHELL = shutil.which("pwsh")
 PROVIDER_SECRETS = {
     "copilotd_api_key": "fixture-copilotd-key",
-    "litellm_api_key": "fixture-litellm-key",
 }
 PROVIDER_ENVIRONMENT = {
     "COPILOTD_API_KEY": "fixture-copilotd-key",
-    "LITELLM_API_KEY": "fixture-litellm-key",
 }
 OBSERVED_VARIABLES = [
     *PROVIDER_ENVIRONMENT, "CODEX_API_KEY", "PI_API_KEY", "OPENCODE_API_KEY",
     "DEEPSEEK_API_KEY", "MAGPIE_API_KEY", "PI_STATUSLINE_STARSHIP",
-    "ROUTER_MAESTRO_API_KEY", "COPILOT_PROXY_API_KEY",
+    "ROUTER_MAESTRO_API_KEY", "COPILOT_PROXY_API_KEY", "LITELLM_API_KEY",
 ]
 SECRET_LOADER = 'include "secrets.yaml.age" | decrypt | fromYaml'
 TEMPLATES = {
@@ -165,12 +163,12 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
                         name: f"external-{name}" for name in PROVIDER_ENVIRONMENT
                     } if external else {}
                     actual = self.evaluate(path, secrets={
-                        "copilotd_api_key": "fixture-copilotd-key",
                         "codex_api_key": "fixture-legacy-codex-key",
                         "pi_api_key": "fixture-retired-pi-key",
                     }, inherited=inherited)
-                    self.assertEqual(actual["COPILOTD_API_KEY"], "fixture-copilotd-key")
-                    self.assertEqual(actual["LITELLM_API_KEY"], inherited.get("LITELLM_API_KEY"))
+                    self.assertEqual(actual["COPILOTD_API_KEY"], inherited.get("COPILOTD_API_KEY"))
+                    self.assertFalse(actual["CODEX_API_KEY"])
+                    self.assertFalse(actual["PI_API_KEY"])
 
     @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
     def test_generic_export_is_cleared_with_or_without_legacy_secret(self):
@@ -188,17 +186,6 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
                     # .NET's Process target can report a cleared variable as empty.
                     for name in ("CODEX_API_KEY", "PI_API_KEY", "OPENCODE_API_KEY"):
                         self.assertFalse(actual[name])
-
-    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
-    def test_provider_fields_can_explicitly_share_a_value(self):
-        for path in TEMPLATES:
-            with self.subTest(path=path):
-                actual = self.evaluate(path, secrets={
-                    field: "fixture-intentionally-shared-key" for field in PROVIDER_SECRETS
-                })
-                for name in PROVIDER_ENVIRONMENT:
-                    self.assertEqual(actual[name], "fixture-intentionally-shared-key")
-                self.assertFalse(actual["CODEX_API_KEY"])
 
     @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
     def test_provider_credentials_are_literal_powershell_strings(self):
@@ -233,6 +220,7 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
     @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
     def test_retired_provider_keys_are_cleared_even_if_old_secret_fields_remain(self):
         retired = {
+            "litellm_api_key": "fixture-retired-litellm-key",
             "router_maestro_api_key": "fixture-retired-router-key",
             "copilot_proxy_api_key": "fixture-retired-proxy-key",
             "opencode_api_key": "fixture-retired-opencode-key",
@@ -245,12 +233,14 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
                     for value in retired.values():
                         self.assertNotIn(value, rendered)
                     actual = self.evaluate(path, secrets=secrets, inherited={
+                        "LITELLM_API_KEY": "external-litellm-key",
                         "ROUTER_MAESTRO_API_KEY": "external-router-key",
                         "COPILOT_PROXY_API_KEY": "external-proxy-key",
                         "OPENCODE_API_KEY": "external-opencode-key",
                     })
                     for name in (
-                        "ROUTER_MAESTRO_API_KEY", "COPILOT_PROXY_API_KEY", "OPENCODE_API_KEY",
+                        "LITELLM_API_KEY", "ROUTER_MAESTRO_API_KEY",
+                        "COPILOT_PROXY_API_KEY", "OPENCODE_API_KEY",
                     ):
                         self.assertFalse(actual[name])
                     for name, value in PROVIDER_ENVIRONMENT.items():

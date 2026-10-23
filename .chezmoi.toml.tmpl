@@ -1,9 +1,9 @@
 {{- $colorscheme_choices := list "catppuccin-latte" "catppuccin-frappe" "catppuccin-macchiato" "catppuccin-mocha" "gruvbox-dark" -}}
 {{- $colorscheme := promptChoiceOnce . "colorscheme" "colorscheme to use" $colorscheme_choices -}}
 
-{{- $codex_provider_choices := list "litellm" "copilotd" -}}
+{{- $codex_provider_choices := list "copilotd" -}}
 {{- if hasKey . "codex_provider" -}}
-  {{- if or (eq .codex_provider "router-maestro") (eq .codex_provider "copilot-proxy") -}}
+  {{- if not (has .codex_provider $codex_provider_choices) -}}
     {{- fail (printf "Codex provider %q is retired; run chezmoi edit-config and set data.codex_provider to one of: %s" .codex_provider (join ", " $codex_provider_choices)) -}}
   {{- end -}}
 {{- end -}}

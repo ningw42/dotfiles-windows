@@ -6,10 +6,35 @@ that right-aligns the metrics group. A shared ``Statusline`` base owns the look
 -- the left starship segments, colours, the context bar, the flex/margin
 arithmetic, and payload capture -- while a thin per-agent subclass maps that
 agent's stdin JSON schema into the component contract (cost, tokens, context,
-model, effort). Every component is guaranteed present and rendered
-unconditionally. The token section matches pi-statusline: accumulated all-input
-(non-cache-read input) and output for the whole session; the context section
-shows the live input/context token count and limit.
+model, effort)::
+
+    <starship: dir + git>   $cost  ↑all-in (󰮆 non-cache-read 󱤟 cache%) ↓out  ▰▰▱▱ pct% used/limit  Model  effort
+    └────────── left ──────────┘   └──────────────────────── right group, flex-right ────────────────────────┘
+
+When that layout does not fit the terminal, the same five segments are re-laid
+out as three independently truncated rows, ordered from most frequently changing
+to least: tokens + cost; model + effort + context; the starship left side.
+claude-code documents multi-line statusline output (one row per printed line).
+copilot-cli's handling of a second line is unverified; should it keep only the
+first, the fallback still leaves the most volatile row on screen.
+
+The token section matches pi-statusline: accumulated all-input and output for
+the whole session, with the spend-oriented non-cache-read input followed by the
+session cache hit rate in parentheses; icons label both values. Either value is
+dropped when it has nothing to say -- a zero non-cache-read count, an
+uncomputable rate -- and the parentheses go with them when both are absent. That
+group is muted (overlay 1) so the accumulated ↑/↓ counts stay the pair the eye
+lands on. The context section shows the live input/context token count and limit.
+
+Deliberately NOT ported from pi-statusline: the TTFT and decode-speed readings
+riding its output count. Pi renders its footer in-process and sees every
+streaming delta; here both agents spawn this script once per render and hand it
+a JSON snapshot carrying no per-turn timing (claude-code's
+``cost.total_api_duration_ms`` is a session-cumulative API wait and its
+transcript records no first-token time; copilot-cli reports no timing at all),
+so neither reading is derivable. Effort likewise keeps a fixed colour: pi tints
+it with the active theme's thinking-level colour, and a payload that carries no
+theme has no analogue to follow.
 
 Invoked as ``statusline.py <claude|copilot>`` by a per-agent shell wrapper;
 ``statusline.py test`` runs the in-file unittest suite.
@@ -19,6 +44,7 @@ is ``starship``. Width is probed from the controlling terminal (``/dev/tty`` or
 ``CONOUT$``) since stdout is a pipe here.
 """
 
+import collections
 import json
 import math
 import os
@@ -47,8 +73,12 @@ def fg(hex_color):
 # catppuccin-mocha
 TEAL = fg("#94E2D5")  # cost
 SAPPHIRE = fg("#74C7EC")  # accumulated token usage
-MAROON = fg("#EBA0AC")  # context bar
-FLAMINGO = fg("#F2CDCD")  # model + effort
+OVERLAY_1 = fg("#7F849C")  # secondary token details
+PEACH = fg("#FAB387")  # model
+# pi-statusline tints effort with its active theme's thinking-level colour; with
+# no theme in either payload this keeps the shared palette's own maroon.
+MAROON = fg("#EBA0AC")  # effort
+FLAMINGO = fg("#F2CDCD")  # context bar
 RESET = "\033[0m"
 
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
@@ -59,6 +89,12 @@ ANSI = re.compile(r"\x1b\[[0-9;]*m")
 # "&#60931;" entities, which then printed literally in the statusline.
 CTX_EMPTY = ("\uee00", "\uee01", "\uee02")
 CTX_FILLED = ("\uee03", "\uee04", "\uee05")
+
+# Nerd Font icons labelling the non-cache-read input and cache hit rate inside
+# the token section's parentheses. Written as escapes so the source survives
+# encoding and HTML round-trips.
+NON_CACHE_READ_ICON = "\U000f0b86"
+CACHE_HIT_ICON = "\U000f191f"
 
 
 # --- number / text helpers ---------------------------------------------------
@@ -96,6 +132,36 @@ def context_bar(pct, width=10):
 def vlen(s):
     """Visible width: strip SGR escapes, count codepoints (all width-1 here)."""
     return len(ANSI.sub("", s))
+
+
+def truncate_to_width(s, width):
+    """Cut ``s`` to ``width`` visible columns without splitting an SGR escape.
+
+    Escapes are zero-width, so they are copied through while the visible budget
+    lasts and dropped once it runs out; a truncated result is closed with RESET
+    so a severed colour cannot bleed into whatever the host prints next.
+    """
+    if width <= 0:
+        return ""
+    if vlen(s) <= width:
+        return s
+
+    out = []
+    remaining = width
+    pos = 0
+    for match in ANSI.finditer(s):
+        chunk = s[pos : match.start()]
+        if len(chunk) >= remaining:
+            out.append(chunk[:remaining])
+            remaining = 0
+            break
+        out.append(chunk)
+        remaining -= len(chunk)
+        out.append(match.group())
+        pos = match.end()
+    if remaining > 0:
+        out.append(s[pos : pos + remaining])
+    return "".join(out) + RESET
 
 
 def term_width(default=120):
@@ -165,14 +231,22 @@ def padding_env(name, default):
 # --- statusline base ---------------------------------------------------------
 
 
+# The five right-hand segments, each already coloured. Named rather than
+# positional because the narrow fallback regroups them across rows.
+RightSegments = collections.namedtuple(
+    "RightSegments", ("cost", "tokens", "context", "model", "effort")
+)
+
+
 class Statusline:
     """Shared statusline renderer; subclasses implement the component contract.
 
     The look (left starship modules, colours, context bar, flex/margin math,
     payload capture) lives here. Subclasses override only the per-agent
     payload-schema accessors and the margin policy. ``token_totals`` reports
-    accumulated session usage as (all input, non-cache-read input, output),
-    while ``context_tokens`` / ``context_limit`` report live context usage; an
+    accumulated session usage as (all input, output, cache read), where the
+    cache-read element is ``None`` when the payload carries no cache split at
+    all; ``context_tokens`` / ``context_limit`` report live context usage; an
     agent with a different ``context_window`` shape may override them.
     """
 
@@ -214,10 +288,13 @@ class Statusline:
     #
     # The token section follows pi-statusline's accumulated-session unit:
     # all input (normal + cache writes + cache reads), the spend-oriented
-    # non-cache-read subset in parentheses, and output. The base fallback uses
-    # the latest call because that is all claude-code's payload itself exposes;
-    # the Claude subclass scans its transcript, while Copilot's payload already
-    # carries cumulative totals.
+    # non-cache-read subset in parentheses, and output. Cache read is carried
+    # rather than the non-cache-read subset because the latter is derivable
+    # (all input minus cache read) while the reverse loses the "no cache split
+    # in this payload" state, which must not be reported as a 0% hit rate.
+    # The base fallback uses the latest call because that is all claude-code's
+    # payload itself exposes; the Claude subclass scans its transcript, while
+    # Copilot's payload already carries cumulative totals.
 
     def _cw(self):
         cw = self.data.get("context_window")
@@ -230,7 +307,7 @@ class Statusline:
         return 0
 
     def _current_call_tokens(self):
-        """Return (all input, non-cache-read input, output) for the last call."""
+        """Return (all input, output, cache read) for the last call."""
         cw = self._cw()
         usage = cw.get("current_usage")
         input_keys = (
@@ -243,13 +320,14 @@ class Statusline:
             cache_write = self._token_count(usage.get("cache_creation_input_tokens"))
             cache_read = self._token_count(usage.get("cache_read_input_tokens"))
             output = self._token_count(usage.get("output_tokens"))
-            return (regular + cache_write + cache_read, regular + cache_write, output)
+            return (regular + cache_write + cache_read, output, cache_read)
 
         # Older payloads have only the cache-inclusive combined value, so the
-        # best available non-cache-read fallback is the same value.
+        # best available non-cache-read fallback is that same value and the hit
+        # rate is genuinely unknown (None) rather than zero.
         all_input = self._token_count(cw.get("total_input_tokens"))
         output = self._token_count(cw.get("total_output_tokens"))
-        return (all_input, all_input, output)
+        return (all_input, output, None)
 
     def _compute_token_totals(self):
         return self._current_call_tokens()
@@ -262,11 +340,32 @@ class Statusline:
     def input_tokens(self):
         return self.token_totals()[0]
 
-    def non_cache_read_input_tokens(self):
+    def output_tokens(self):
         return self.token_totals()[1]
 
-    def output_tokens(self):
+    def cache_read_tokens(self):
+        """Accumulated cache-read input, or None when the payload omits it."""
         return self.token_totals()[2]
+
+    def non_cache_read_input_tokens(self):
+        return max(0, self.input_tokens() - (self.cache_read_tokens() or 0))
+
+    def cache_hit_rate(self):
+        """Share of accumulated input tokens served from cache, or None.
+
+        None means "not knowable" -- either nothing has been sent yet or the
+        payload carries no cache split -- and is omitted from the rendered token
+        section entirely. A genuine 0.0 is kept and shown: a cold or invalidated
+        cache is a real and meaningfully different reading. This is a
+        token-count rate, not a spend rate: cache writes cost more per token
+        than reads, so even a high hit rate can leave the miss share dominating
+        the bill.
+        """
+        cache_read = self.cache_read_tokens()
+        all_input = self.input_tokens()
+        if cache_read is None or all_input <= 0:
+            return None
+        return max(0.0, min(1.0, cache_read / all_input))
 
     def context_tokens(self):
         # Claude Code defines total_input_tokens as the cache-inclusive input
@@ -290,42 +389,65 @@ class Statusline:
     def effort(self):
         raise NotImplementedError
 
-    # -- shared right side (every segment rendered unconditionally) -----------
+    # -- shared right side (segments carry their own colours) -----------------
+    #
+    # Each accessor returns a finished, self-terminating string rather than a
+    # (colour, text) pair: the token segment mixes three colours internally now,
+    # and the narrow fallback re-orders the segments across rows, so neither
+    # caller can own a single colour for a whole segment any more.
 
     def _cost_seg(self):
-        return (TEAL, f"${self.cost_usd():.2f}")
+        return f"{TEAL}${self.cost_usd():.2f}{RESET}"
 
     def _tokens_seg(self):
-        all_input, non_cache_read, output = self.token_totals()
-        text = (
-            f"↑{fmt_tokens(all_input)} ({fmt_tokens(non_cache_read)}) "
-            f"↓{fmt_tokens(output)}"
+        # ↑all-input (non-cache-read cache-hit-rate) ↓output. Icons identify the
+        # two parenthesised values, which are muted so the accumulated ↑/↓ pair
+        # keeps the emphasis. A value with nothing to say is dropped rather than
+        # filled with a placeholder -- a zero non-cache-read count, or a rate
+        # that is not computable -- and the parentheses go with the last of them.
+        rate = self.cache_hit_rate()
+        non_cache_read = self.non_cache_read_input_tokens()
+        details = []
+        if non_cache_read > 0:
+            details.append(f"{NON_CACHE_READ_ICON} {fmt_tokens(non_cache_read)}")
+        if rate is not None:
+            # One decimal, rounded jq-style through jround rather than left to
+            # "%.1f" (which rounds half to even), so this agrees with the pi
+            # extension digit for digit. The trailing zero is kept -- "80.0%"
+            # not "80%" -- so the segment does not change width as it drifts.
+            details.append(f"{CACHE_HIT_ICON} {jround(rate * 1000) / 10:.1f}%")
+        detail = f" {OVERLAY_1}({' '.join(details)}){RESET}" if details else ""
+        return (
+            f"{SAPPHIRE}↑{fmt_tokens(self.input_tokens())}{RESET}{detail} "
+            f"{SAPPHIRE}↓{fmt_tokens(self.output_tokens())}{RESET}"
         )
-        return (SAPPHIRE, text)
 
     def _context_seg(self):
         pct = self.context_pct()
-        text = (
-            f"{context_bar(pct)} {num(pct)}% "
+        return (
+            f"{FLAMINGO}{context_bar(pct)} {num(pct)}% "
             f"{fmt_tokens(self.context_tokens())}/{fmt_tokens(self.context_limit())}"
+            f"{RESET}"
         )
-        return (MAROON, text)
 
     def _model_seg(self):
-        return (FLAMINGO, self.model())
+        return f"{PEACH}{self.model()}{RESET}"
 
     def _effort_seg(self):
-        return (FLAMINGO, self.effort())
+        return f"{MAROON}{self.effort()}{RESET}"
 
-    def render_right(self):
-        pieces = [
-            self._cost_seg(),
-            self._tokens_seg(),
-            self._context_seg(),
-            self._model_seg(),
-            self._effort_seg(),
-        ]
-        return " ".join(f"{color}{text}{RESET}" for color, text in pieces)
+    def right_segments(self):
+        return RightSegments(
+            cost=self._cost_seg(),
+            tokens=self._tokens_seg(),
+            context=self._context_seg(),
+            model=self._model_seg(),
+            effort=self._effort_seg(),
+        )
+
+    def render_right(self, segments=None):
+        segments = self.right_segments() if segments is None else segments
+        return " ".join(segments)
 
     # -- margin policy (subclasses override the two hooks) --------------------
 
@@ -334,18 +456,43 @@ class Statusline:
         return (0, 0)
 
     def decorate(self, line):
-        """Wrap the composed line (e.g. invisible RESET edge-guards)."""
+        """Wrap a composed row (e.g. invisible RESET edge-guards)."""
         return line
 
-    def compose_line(self, left, right):
+    def compose_rows(self, left, segments):
+        """Lay the left side and the right group out within the usable width.
+
+        One flex-right row when it fits. When it does not, the same segments are
+        re-grouped into three rows ordered most- to least-volatile, so the row
+        that survives a very narrow terminal is the one that changes every turn.
+        Each row is truncated independently; the padding a host reserves is
+        excluded from the budget first, so the fallback trips on the same
+        effective width the single row would have had to fit into.
+        """
         left_pad, right_pad = self.margins()
-        width = term_width()
-        gap = max(1, width - left_pad - right_pad - vlen(left) - vlen(right))
-        line = " " * left_pad + left + " " * gap + right + " " * right_pad
-        return self.decorate(line)
+        width = max(0, term_width() - left_pad - right_pad)
+        right = self.render_right(segments)
+        gap = width - vlen(left) - vlen(right)
+        if gap >= 1:
+            rows = [left + " " * gap + right]
+        else:
+            rows = [
+                f"{segments.tokens} {segments.cost}",
+                f"{segments.model} {segments.effort} {segments.context}",
+                left,
+            ]
+        return [
+            self.decorate(
+                " " * left_pad + truncate_to_width(row, width) + " " * right_pad
+            )
+            for row in rows
+        ]
+
+    def render_rows(self):
+        return self.compose_rows(self.render_left(), self.right_segments())
 
     def render(self):
-        return self.compose_line(self.render_left(), self.render_right())
+        return "\n".join(self.render_rows())
 
     # -- shared payload capture ----------------------------------------------
 
@@ -416,6 +563,11 @@ class ClaudeStatusline(Statusline):
         when duplicate entries very rarely disagree. Reading every append-only
         entry also keeps abandoned/rewound branches in incurred usage, matching
         pi-statusline's all-entry accounting.
+
+        The transcript is the only cumulative source here: claude-code's own
+        payload describes the LAST call (its total_input_tokens equals the sum
+        of current_usage's components, i.e. current context occupancy), so the
+        base-class fallback below yields a last-call rate, not a session one.
         """
         by_message_id = {}
         for path in self._transcript_paths():
@@ -427,7 +579,7 @@ class ClaudeStatusline(Statusline):
                 for line in lines:
                     try:
                         entry = json.loads(line)
-                    except (json.JSONDecodeError, TypeError):
+                    except json.JSONDecodeError:
                         # The final line can be observed while it is being appended.
                         continue
                     if not isinstance(entry, dict) or entry.get("type") != "assistant":
@@ -460,8 +612,8 @@ class ClaudeStatusline(Statusline):
         )
         return (
             regular + cache_write + cache_read,
-            regular + cache_write,
             output,
+            cache_read,
         )
 
     def cost_usd(self):
@@ -526,13 +678,17 @@ class CopilotStatusline(Statusline):
 
     def _compute_token_totals(self):
         # Copilot constructs total_* by summing every model's session metrics.
-        # total_input_tokens is already cache-inclusive; subtract only cache
-        # reads to retain normal input + cache writes in the parenthesized value.
+        # total_input_tokens is already cache-inclusive, so cache reads are the
+        # cache-hit numerator and subtracting them leaves normal input plus
+        # cache writes. Note that current_usage here is CUMULATIVE (it mirrors
+        # total_* component-wise), unlike claude-code's per-call current_usage,
+        # and last_call_* carries no cache split -- so a per-turn hit rate is
+        # not derivable from this payload, only the session-cumulative one.
         cw = self._cw()
         all_input = self._token_count(cw.get("total_input_tokens"))
         cache_read = self._token_count(cw.get("total_cache_read_tokens"))
         output = self._token_count(cw.get("total_output_tokens"))
-        return (all_input, max(0, all_input - cache_read), output)
+        return (all_input, output, cache_read)
 
     def context_pct(self):
         return self._cw().get("current_context_used_percentage") or 0
@@ -632,7 +788,7 @@ def main(argv=None):
     argv = sys.argv if argv is None else argv
     flavor = argv[1] if len(argv) > 1 else ""
     if flavor == "test":
-        return _run_tests(argv[2:])
+        return _run_tests()
     cls = DISPATCH.get(flavor)
     if cls is None:
         usage = "|".join(DISPATCH)
@@ -654,7 +810,7 @@ def main(argv=None):
 # --- self-tests (loaded only via `statusline.py test`) -----------------------
 
 
-def _run_tests(argv):
+def _run_tests():
     """Run the in-file unittest suite. Kept lazy so a normal render never imports
     unittest or builds the fixtures."""
     import io
@@ -664,6 +820,10 @@ def _run_tests(argv):
     def fake_starship(mapping=None):
         mapping = mapping or {}
         return lambda module, cwd: mapping.get(module, "")
+
+    def plain(s):
+        """Segment text with its colours stripped, for content assertions."""
+        return ANSI.sub("", s)
 
     claude_payload = {
         "workspace": {"current_dir": "/nonexistent-statusline-test-dir"},
@@ -729,6 +889,20 @@ def _run_tests(argv):
         def test_vlen_strips_sgr(self):
             self.assertEqual(vlen(f"{TEAL}abc{RESET}"), 3)
 
+        def test_truncate_to_width(self):
+            self.assertEqual(truncate_to_width("abcdef", 10), "abcdef")
+            self.assertEqual(truncate_to_width("abcdef", 6), "abcdef")
+            self.assertEqual(truncate_to_width("abcdef", 0), "")
+            # A cut counts visible columns only and keeps every escape it
+            # passed, so the surviving text holds the colour it was written in;
+            # the severed colour is then closed with RESET.
+            cut = truncate_to_width(f"{TEAL}abc{RESET}{SAPPHIRE}def{RESET}", 4)
+            self.assertEqual(vlen(cut), 4)
+            self.assertEqual(plain(cut), "abcd")
+            self.assertTrue(cut.startswith(TEAL))
+            self.assertIn(SAPPHIRE, cut)
+            self.assertTrue(cut.endswith(RESET))
+
         def test_context_bar(self):
             self.assertEqual(len(context_bar(0)), 10)
             self.assertTrue(all(c in CTX_EMPTY for c in context_bar(0)))
@@ -739,12 +913,13 @@ def _run_tests(argv):
             self.assertEqual(f("claude-opus-5"), "Opus 5")
             # Dotted claude id: the version token keeps its dot verbatim.
             self.assertEqual(f("claude-haiku-4.5"), "Haiku 4.5")
+            self.assertEqual(f("claude-opus-5.5"), "Opus 5.5")
             self.assertEqual(f("gpt-5.5"), "GPT-5.5")
             self.assertEqual(f("gpt-5.6-sol"), "GPT-5.6 Sol")
             self.assertEqual(f("gpt-5.6-sol-fast"), "GPT-5.6 Sol")
             self.assertEqual(f("GPT-5.6 Sol Fast"), "GPT-5.6 Sol")
             self.assertEqual(f("gpt-6-luna"), "GPT-6 Luna")
-            self.assertEqual(f("gpt-6-sol"), "GPT-6 Sol")
+            self.assertEqual(f("gpt-6.1-sol"), "GPT-6.1 Sol")
             self.assertEqual(f("gpt-6-astra"), "GPT-6 Astra")
 
     class ClaudeAccessorTests(unittest.TestCase):
@@ -752,13 +927,64 @@ def _run_tests(argv):
             self.sl = ClaudeStatusline(claude_payload)
 
         def test_cost(self):
-            self.assertEqual(self.sl._cost_seg()[1], "$1.23")
+            self.assertEqual(plain(self.sl._cost_seg()), "$1.23")
 
         def test_tokens_fall_back_to_current_call(self):
             self.assertEqual(self.sl.input_tokens(), 1500)
             self.assertEqual(self.sl.non_cache_read_input_tokens(), 500)
             self.assertEqual(self.sl.output_tokens(), 2500)
-            self.assertEqual(self.sl._tokens_seg()[1], "↑1.5k (500) ↓2.5k")
+            self.assertEqual(
+                plain(self.sl._tokens_seg()),
+                f"↑1.5k ({NON_CACHE_READ_ICON} 500 {CACHE_HIT_ICON} 66.7%) ↓2.5k",
+            )
+
+        def test_cache_hit_rate_from_current_call(self):
+            # 1000 cache reads of 1500 all-input.
+            self.assertEqual(self.sl.cache_read_tokens(), 1000)
+            self.assertAlmostEqual(self.sl.cache_hit_rate(), 1000 / 1500)
+            self.assertEqual(
+                plain(self.sl._tokens_seg()),
+                f"↑1.5k ({NON_CACHE_READ_ICON} 500 {CACHE_HIT_ICON} 66.7%) ↓2.5k",
+            )
+
+        def test_cache_hit_rate_omitted_without_cache_split(self):
+            # Legacy payload shape: cache-inclusive total only, no split. The
+            # rate is dropped rather than fabricated as 0%.
+            sl = ClaudeStatusline(
+                {
+                    "context_window": {
+                        "total_input_tokens": 1500,
+                        "total_output_tokens": 2500,
+                    }
+                }
+            )
+            self.assertIsNone(sl.cache_read_tokens())
+            self.assertIsNone(sl.cache_hit_rate())
+            self.assertEqual(sl.non_cache_read_input_tokens(), 1500)
+            self.assertEqual(
+                plain(sl._tokens_seg()),
+                f"↑1.5k ({NON_CACHE_READ_ICON} 1.5k) ↓2.5k",
+            )
+
+        def test_cache_hit_rate_zero_is_shown(self):
+            # A genuinely cold cache reports 0%; only unknowable is omitted.
+            sl = ClaudeStatusline(
+                {
+                    "context_window": {
+                        "current_usage": {
+                            "input_tokens": 1500,
+                            "cache_creation_input_tokens": 0,
+                            "cache_read_input_tokens": 0,
+                            "output_tokens": 10,
+                        }
+                    }
+                }
+            )
+            self.assertEqual(sl.cache_hit_rate(), 0.0)
+            self.assertEqual(
+                plain(sl._tokens_seg()),
+                f"↑1.5k ({NON_CACHE_READ_ICON} 1.5k {CACHE_HIT_ICON} 0.0%) ↓10",
+            )
 
         def test_tokens_accumulate_transcript_and_subagents(self):
             def assistant(message_id, regular, cache_write, cache_read, output):
@@ -802,14 +1028,18 @@ def _run_tests(argv):
                 sl = ClaudeStatusline(
                     {**claude_payload, "transcript_path": str(transcript)}
                 )
-                self.assertEqual(sl.token_totals(), (84, 44, 19))
-                self.assertEqual(sl._tokens_seg()[1], "↑84 (44) ↓19")
+                self.assertEqual(sl.token_totals(), (84, 19, 40))
+                # 30 + 3 + 7 cache reads of 84 all-input -> 47.6%.
+                self.assertEqual(
+                    plain(sl._tokens_seg()),
+                    f"↑84 ({NON_CACHE_READ_ICON} 44 {CACHE_HIT_ICON} 47.6%) ↓19",
+                )
 
         def test_context(self):
             self.assertEqual(self.sl.context_pct(), 18)
             self.assertEqual(self.sl.context_tokens(), 1500)
             self.assertEqual(self.sl.context_limit(), 200000)
-            self.assertIn("18% 1.5k/200k", self.sl._context_seg()[1])
+            self.assertIn("18% 1.5k/200k", plain(self.sl._context_seg()))
 
         def test_model_strips_1m(self):
             self.assertEqual(self.sl.model(), "Opus 5")
@@ -836,20 +1066,48 @@ def _run_tests(argv):
             self.sl = CopilotStatusline(copilot_payload)
 
         def test_cost_nano(self):
-            self.assertEqual(self.sl._cost_seg()[1], "$1.23")
+            self.assertEqual(plain(self.sl._cost_seg()), "$1.23")
 
         def test_tokens(self):
             self.assertEqual(self.sl.input_tokens(), 9000)
             self.assertEqual(self.sl.non_cache_read_input_tokens(), 6000)
             self.assertEqual(self.sl.output_tokens(), 8000)
-            self.assertEqual(self.sl._tokens_seg()[1], "↑9k (6k) ↓8k")
+            self.assertEqual(
+                plain(self.sl._tokens_seg()),
+                f"↑9k ({NON_CACHE_READ_ICON} 6k {CACHE_HIT_ICON} 33.3%) ↓8k",
+            )
+
+        def test_cache_hit_rate_from_cumulative_totals(self):
+            # total_input_tokens is cache-inclusive: 3000 of 9000 were reads.
+            self.assertEqual(self.sl.cache_read_tokens(), 3000)
+            self.assertAlmostEqual(self.sl.cache_hit_rate(), 1 / 3)
+            self.assertEqual(
+                plain(self.sl._tokens_seg()),
+                f"↑9k ({NON_CACHE_READ_ICON} 6k {CACHE_HIT_ICON} 33.3%) ↓8k",
+            )
+
+        def test_cache_hit_rate_omitted_on_fresh_session(self):
+            # A brand-new session reports all-zero totals; refuse to call that 0%.
+            sl = CopilotStatusline(
+                {
+                    "context_window": {
+                        "total_input_tokens": 0,
+                        "total_output_tokens": 0,
+                        "total_cache_read_tokens": 0,
+                    }
+                }
+            )
+            self.assertIsNone(sl.cache_hit_rate())
+            # Nothing to put in the parentheses: a zero non-cache-read count and
+            # an uncomputable rate, so the whole group is dropped.
+            self.assertEqual(plain(sl._tokens_seg()), "↑0 ↓0")
 
         def test_context_pct_key(self):
             self.assertEqual(self.sl.context_pct(), 18)
             self.assertEqual(self.sl.context_tokens(), 36000)
             # context_window_size is null for Copilot; limit comes from displayed_context_limit.
             self.assertEqual(self.sl.context_limit(), 200000)
-            self.assertIn("18% 36k/200k", self.sl._context_seg()[1])
+            self.assertIn("18% 36k/200k", plain(self.sl._context_seg()))
 
         def test_context_limit_falls_back_to_window_size(self):
             payload = {
@@ -887,10 +1145,25 @@ def _run_tests(argv):
                 sl = cls({}, starship=fake_starship())
                 right = sl.render_right()
                 self.assertIn("$0.00", right)
-                self.assertIn("↑0 (0) ↓0", right)
-                self.assertIn("0% 0/0", right)
-                # five colour-reset-terminated segments, none dropped
-                self.assertEqual(right.count(RESET), 5)
+                # Nothing sent yet: neither parenthesised value is available, so
+                # the group is dropped rather than filled with a misleading 0%.
+                self.assertIn("↑0 ↓0", plain(right))
+                self.assertIn("0% 0/0", plain(right))
+                self.assertTrue(sl._cost_seg().startswith(TEAL))
+                self.assertTrue(sl._tokens_seg().startswith(SAPPHIRE))
+                self.assertTrue(sl._context_seg().startswith(FLAMINGO))
+                self.assertTrue(sl._model_seg().startswith(PEACH))
+                self.assertTrue(sl._effort_seg().startswith(MAROON))
+                # Five segments, none dropped; the token segment closes its two
+                # counts separately so the muted detail group can sit between
+                # them without inheriting their colour.
+                self.assertEqual(right.count(RESET), 6)
+
+        def test_detail_group_is_muted(self):
+            sl = ClaudeStatusline(claude_payload)
+            tokens = sl._tokens_seg()
+            self.assertIn(f"{OVERLAY_1}({NON_CACHE_READ_ICON}", tokens)
+            self.assertTrue(tokens.endswith(RESET))
 
     class RenderTests(unittest.TestCase):
         def setUp(self):
@@ -914,16 +1187,50 @@ def _run_tests(argv):
 
         def test_full_render(self):
             fake = fake_starship({"directory": "~/proj"})
-            line = ClaudeStatusline(claude_payload, starship=fake).render()
-            self.assertIn("~/proj", line)
-            self.assertIn("Opus 5", line)
-            self.assertIn("$1.23", line)
+            rows = ClaudeStatusline(claude_payload, starship=fake).render_rows()
+            self.assertEqual(len(rows), 1)
+            self.assertIn("~/proj", rows[0])
+            self.assertIn("Opus 5", rows[0])
+            self.assertIn("$1.23", rows[0])
+
+        def test_wide_row_fills_usable_width(self):
+            fake = fake_starship({"directory": "~/proj"})
+            rows = ClaudeStatusline(claude_payload, starship=fake).render_rows()
+            # The flex gap fills the usable width (120 columns less claude-code's
+            # default 4-column reserve), which the reserve is then re-added to.
+            self.assertEqual(vlen(rows[0]), 120)
+
+        def test_narrow_falls_back_to_three_rows(self):
+            os.environ["COLUMNS"] = "40"
+            fake = fake_starship({"directory": "~/proj"})
+            rows = ClaudeStatusline(claude_payload, starship=fake).render_rows()
+            self.assertEqual(len(rows), 3)
+            # Most volatile first, least last; every row fits the usable width.
+            self.assertIn("$1.23", plain(rows[0]))
+            self.assertIn("↑", plain(rows[0]))
+            self.assertIn("Opus 5", plain(rows[1]))
+            self.assertIn("xhigh", plain(rows[1]))
+            self.assertIn("~/proj", plain(rows[2]))
+            for row in rows:
+                self.assertLessEqual(vlen(row), 40)
+
+        def test_narrow_row_order_matches_pi(self):
+            os.environ["COLUMNS"] = "40"
+            fake = fake_starship({"directory": "~/proj"})
+            rows = ClaudeStatusline(claude_payload, starship=fake).render_rows()
+            # Cost trails the tokens it explains on the volatile row, and the
+            # context bar rides with the model/effort it belongs to.
+            self.assertTrue(plain(rows[0]).startswith("↑"))
+            self.assertIn("18%", plain(rows[1]))
 
         def test_copilot_edge_guards(self):
             fake = fake_starship({"directory": "x"})
-            line = CopilotStatusline(copilot_payload, starship=fake).render()
-            self.assertTrue(line.startswith(RESET))
-            self.assertTrue(line.endswith(RESET))
+            for columns in ("120", "40"):
+                os.environ["COLUMNS"] = columns
+                rows = CopilotStatusline(copilot_payload, starship=fake).render_rows()
+                for row in rows:
+                    self.assertTrue(row.startswith(RESET))
+                    self.assertTrue(row.endswith(RESET))
 
     class CaptureTests(unittest.TestCase):
         def setUp(self):
@@ -998,4 +1305,3 @@ def _run_tests(argv):
 
 if __name__ == "__main__":
     sys.exit(main())
-

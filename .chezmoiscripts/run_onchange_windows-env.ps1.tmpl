@@ -27,7 +27,6 @@ foreach ($name in @(
 # Legacy harness-named fields are ignored; no credential aliases or fallbacks.
 {{ range $field, $variable := dict
     "copilotd_api_key" "COPILOTD_API_KEY"
-    "litellm_api_key" "LITELLM_API_KEY"
 -}}
 {{ if hasKey $secrets $field -}}
 [Environment]::SetEnvironmentVariable("{{ $variable }}", '{{ index $secrets $field | replace "'" "''" }}', "User")
@@ -39,6 +38,7 @@ foreach ($name in @(
 [Environment]::SetEnvironmentVariable("OPENCODE_API_KEY", $null, "User")
 [Environment]::SetEnvironmentVariable("ROUTER_MAESTRO_API_KEY", $null, "User")
 [Environment]::SetEnvironmentVariable("COPILOT_PROXY_API_KEY", $null, "User")
+[Environment]::SetEnvironmentVariable("LITELLM_API_KEY", $null, "User")
 
 # DeepSeek is optional until deepseek_api_key is added to secrets.yaml.age.
 {{ if hasKey $secrets "deepseek_api_key" -}}

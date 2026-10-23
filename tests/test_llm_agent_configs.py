@@ -27,8 +27,7 @@ GPT_MODELS = [
     "gpt-6.1-sol",
     "gpt-6-astra",
 ]
-DEEPSEEK_MODELS = ["deepseek-flash"]
-MAGPIE_RESPONSE_MODELS = ["deepseek-v4.1-flash", "glm-5.3", "glm-5.3-flash"]
+MAGPIE_RESPONSE_MODELS = ["deepseek-flash", "glm-5.3", "glm-5.3-flash"]
 MAGPIE_GEMINI_MODELS = ["gemini-4-argon-contributor"]
 HOME_TEMPLATE = '{{ .chezmoi.homeDir | replace "\\\\" "/" }}'
 
@@ -101,11 +100,9 @@ class CodexProviderRoutingTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             return tomllib.loads(config.read_text(encoding="utf-8") if initializing else result.stdout)
 
-    def test_providers_use_specific_keys_without_changing_auth_mechanisms(self):
+    def test_only_copilotd_is_registered_with_command_auth(self):
         providers = self.render_config()["model_providers"]
-        self.assertEqual(set(providers), {"agent-maestro", "litellm", "copilotd"})
-        self.assertEqual(providers["litellm"]["env_key"], "LITELLM_API_KEY")
-        self.assertNotIn("auth", providers["litellm"])
+        self.assertEqual(set(providers), {"copilotd"})
         self.assertNotIn("env_key", providers["copilotd"])
         self.assertEqual(providers["copilotd"]["auth"], {
             "command": "pwsh",
@@ -114,17 +111,15 @@ class CodexProviderRoutingTests(unittest.TestCase):
             "timeout_ms": 5000,
             "refresh_interval_ms": 0,
         })
-        self.assertNotIn("env_key", providers["agent-maestro"])
-        self.assertNotIn("auth", providers["agent-maestro"])
 
     @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture auth commands")
-    def test_auth_lookup_uses_distinct_fixture_keys_and_never_falls_back(self):
-        providers = self.render_config()["model_providers"]
+    def test_auth_lookup_uses_provider_key_without_legacy_fallback(self):
+        auth = self.render_config()["model_providers"]["copilotd"]["auth"]
         fixtures = {
             "COPILOTD_API_KEY": "fixture-copilotd-key",
-            "LITELLM_API_KEY": "fixture-litellm-key",
-            "ROUTER_MAESTRO_API_KEY": "fixture-router-maestro-key",
-            "COPILOT_PROXY_API_KEY": "fixture-copilot-proxy-key",
+            "LITELLM_API_KEY": "fixture-retired-litellm-key",
+            "ROUTER_MAESTRO_API_KEY": "fixture-retired-router-key",
+            "COPILOT_PROXY_API_KEY": "fixture-retired-proxy-key",
             "CODEX_API_KEY": "fixture-legacy-codex-key",
             "PI_API_KEY": "fixture-retired-pi-key",
             "OPENCODE_API_KEY": "fixture-retired-opencode-key",
@@ -134,57 +129,38 @@ class CodexProviderRoutingTests(unittest.TestCase):
             key: value for key, value in os.environ.items()
             if not key.upper().endswith("_API_KEY")
         }
-        for name, variable, expected in (
-            ("copilotd", "COPILOTD_API_KEY", "fixture-copilotd-key"),
-            ("litellm", "LITELLM_API_KEY", "fixture-litellm-key"),
-        ):
-            for present in (True, False):
-                with self.subTest(provider=name, present=present):
-                    env = {**clean_env, **fixtures}
-                    if not present:
-                        del env[variable]
-                    provider = providers[name]
-                    if "auth" in provider:
-                        auth = provider["auth"]
-                        result = subprocess.run(
-                            [POWERSHELL, *auth["args"]], env=env,
-                            capture_output=True, text=True, encoding="utf-8", timeout=10,
-                        )
-                        self.assertEqual(result.returncode, 0, result.stderr)
-                        actual = result.stdout
-                    else:
-                        actual = env.get(provider["env_key"], "")
-                    self.assertEqual(actual, expected if present else "")
+        for present in (True, False):
+            with self.subTest(present=present):
+                env = {**clean_env, **fixtures}
+                if not present:
+                    del env["COPILOTD_API_KEY"]
+                result = subprocess.run(
+                    [POWERSHELL, *auth["args"]], env=env,
+                    capture_output=True, text=True, encoding="utf-8", timeout=10,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout, "fixture-copilotd-key" if present else "")
 
-    def test_saved_provider_selection_and_endpoints_are_unchanged(self):
-        for selected in ("litellm", "copilotd"):
-            with self.subTest(selected=selected):
-                config = self.render_config(selected)
-                self.assertEqual(config["model_provider"], selected)
-                providers = config["model_providers"]
-                for name, url in (
-                    ("agent-maestro", "http://localhost:23333/api/openai/v1/"),
-                    ("litellm", "https://litellm.ningw.net/openai/v1/"),
-                    ("copilotd", "https://copilotd.ningw.net/openai/v1"),
-                ):
-                    self.assertEqual(providers[name]["base_url"], url)
-                    self.assertEqual(providers[name]["wire_api"], "responses")
-                    self.assertEqual(providers[name]["stream_idle_timeout_ms"], 600000)
-                self.assertTrue(providers["copilotd"]["supports_websockets"])
+    def test_saved_provider_selection_and_endpoint_are_preserved(self):
+        config = self.render_config()
+        self.assertEqual(config["model_provider"], "copilotd")
+        provider = config["model_providers"]["copilotd"]
+        self.assertEqual(provider["base_url"], "https://copilotd.ningw.net/openai/v1")
+        self.assertEqual(provider["wire_api"], "responses")
+        self.assertEqual(provider["stream_idle_timeout_ms"], 600000)
+        self.assertTrue(provider["supports_websockets"])
 
     def test_retired_saved_provider_requires_explicit_reselection(self):
         for path in ("dot_codex/config.toml.tmpl", ".chezmoi.toml.tmpl"):
-            for retired in ("router-maestro", "copilot-proxy"):
+            for retired in ("litellm", "agent-maestro", "router-maestro", "copilot-proxy"):
                 with self.subTest(path=path, retired=retired):
                     self.render_config(retired, path=path, expected_error="retired")
 
-    def test_init_choices_and_saved_active_providers_exclude_retired_providers(self):
+    def test_init_choices_and_saved_active_provider_exclude_retired_providers(self):
         source = (REPO_ROOT / ".chezmoi.toml.tmpl").read_text(encoding="utf-8")
-        self.assertIn('$codex_provider_choices := list "litellm" "copilotd"', source)
-        for selected in ("litellm", "copilotd"):
-            with self.subTest(selected=selected):
-                config = self.render_config(selected, path=".chezmoi.toml.tmpl")
-                self.assertEqual(config["data"]["codex_provider"], selected)
+        self.assertIn('$codex_provider_choices := list "copilotd"', source)
+        config = self.render_config(path=".chezmoi.toml.tmpl")
+        self.assertEqual(config["data"]["codex_provider"], "copilotd")
 
 
 class ModelCatalogTests(unittest.TestCase):
@@ -202,7 +178,6 @@ class ModelCatalogTests(unittest.TestCase):
             config["enabled_providers"],
             [
                 "copilotd-responses",
-                "deepseek-responses",
                 "magpie-generative-ai",
                 "magpie-responses",
             ],
@@ -214,16 +189,12 @@ class ModelCatalogTests(unittest.TestCase):
             set(providers),
             {
                 "copilotd-responses",
-                "deepseek-responses",
                 "magpie-generative-ai",
                 "magpie-responses",
             },
         )
         self.assertEqual(
             list(providers["copilotd-responses"]["models"]), GPT_MODELS
-        )
-        self.assertEqual(
-            list(providers["deepseek-responses"]["models"]), DEEPSEEK_MODELS
         )
         self.assertEqual(
             list(providers["magpie-responses"]["models"]), MAGPIE_RESPONSE_MODELS
@@ -239,10 +210,10 @@ class ModelCatalogTests(unittest.TestCase):
             "{env:COPILOTD_API_KEY}",
         )
         self.assertEqual(
-            providers["deepseek-responses"]["options"],
+            providers["magpie-responses"]["options"],
             {
-                "apiKey": "{env:DEEPSEEK_API_KEY}",
-                "baseURL": "https://api.deepseek.com",
+                "apiKey": "{env:MAGPIE_API_KEY}",
+                "baseURL": "https://magpie.ningw.net/v1",
             },
         )
         self.assertEqual(
@@ -252,7 +223,7 @@ class ModelCatalogTests(unittest.TestCase):
             1_050_000,
         )
         self.assertEqual(
-            providers["deepseek-responses"]["models"]["deepseek-flash"][
+            providers["magpie-responses"]["models"]["deepseek-flash"][
                 "options"
             ]["reasoningEffort"],
             "high",
@@ -275,11 +246,6 @@ class ModelCatalogTests(unittest.TestCase):
                 "https://copilotd.ningw.net/openai/v1",
             ),
             (
-                "deepseek-responses",
-                "@ai-sdk/openai",
-                "https://api.deepseek.com",
-            ),
-            (
                 "magpie-responses",
                 "@ai-sdk/openai",
                 "https://magpie.ningw.net/v1",
@@ -296,14 +262,14 @@ class ModelCatalogTests(unittest.TestCase):
 
     def test_opencode_provider_metadata_matches_nixfiles_snapshot(self):
         # Full provider snapshot from nixfiles' llm-agents/tests/model-catalog.nix
-        # at 0b0ed60; canonical JSON matches Nix's builtins.toJSON rendering.
+        # at f2a6af1; canonical JSON matches Nix's builtins.toJSON rendering.
         providers = load_opencode_config()["provider"]
         snapshot = json.dumps(
             providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
         ).encode("utf-8")
         self.assertEqual(
             hashlib.sha256(snapshot).hexdigest(),
-            "162ef1c963d266461e661a51f38ce417d558bddf5f2cef6e230d0dbd2606672b",
+            "05d69ea3eddeb33ee2a875e6bf3c7bacc590916ec2a0d09363fac3a43f9f9fa1",
         )
 
     def test_pi_catalog_and_cycle_defaults_match_nixfiles_projection(self):
@@ -313,15 +279,11 @@ class ModelCatalogTests(unittest.TestCase):
 
         self.assertEqual(
             set(providers),
-            {"copilotd-responses", "deepseek-responses", "magpie-responses", "magpie-generative-ai"},
+            {"copilotd-responses", "magpie-responses", "magpie-generative-ai"},
         )
         self.assertEqual(
             [model["id"] for model in providers["copilotd-responses"]["models"]],
             GPT_MODELS,
-        )
-        self.assertEqual(
-            [model["id"] for model in providers["deepseek-responses"]["models"]],
-            DEEPSEEK_MODELS,
         )
         self.assertEqual(
             [model["id"] for model in providers["magpie-responses"]["models"]],
@@ -335,7 +297,7 @@ class ModelCatalogTests(unittest.TestCase):
             "compat", providers["copilotd-responses"]["models"][-1]
         )
         self.assertEqual(
-            providers["deepseek-responses"]["models"][0]["thinkingLevelMap"],
+            providers["magpie-responses"]["models"][0]["thinkingLevelMap"],
             {"off": None, "minimal": None, "medium": None, "max": "max"},
         )
         self.assertEqual(settings["defaultProvider"], "copilotd-responses")
@@ -346,8 +308,7 @@ class ModelCatalogTests(unittest.TestCase):
             settings["enabledModels"],
             [
                 *[f"copilotd-responses/{model}:xhigh" for model in GPT_MODELS],
-                "deepseek-responses/deepseek-flash:high",
-                "magpie-responses/deepseek-v4.1-flash:high",
+                "magpie-responses/deepseek-flash:high",
                 "magpie-responses/glm-5.3:max",
                 "magpie-responses/glm-5.3-flash:max",
                 "magpie-generative-ai/gemini-4-argon-contributor:medium",
@@ -376,23 +337,21 @@ class ModelCatalogTests(unittest.TestCase):
                     model["thinkingLevelMap"],
                     {"off": None, "minimal": None, "medium": None, "max": "max"},
                 )
-        native_flash = providers["deepseek-responses"]["models"][0]
-        magpie_flash = providers["magpie-responses"]["models"][0]
-        self.assertEqual(
-            {key: value for key, value in native_flash.items() if key not in {"id", "compat"}},
-            {key: value for key, value in magpie_flash.items() if key != "id"},
-        )
+        flash = providers["magpie-responses"]["models"][0]
+        self.assertEqual(flash["id"], "deepseek-flash")
+        self.assertEqual(flash["name"], "DeepSeek Flash")
+        self.assertNotIn("deepseek-responses", providers)
 
     def test_pi_provider_metadata_matches_nixfiles_snapshot(self):
         # Full provider snapshot from nixfiles' llm-agents/tests/model-catalog.nix
-        # at 0b0ed60; canonical JSON matches Nix's builtins.toJSON rendering.
+        # at f2a6af1; canonical JSON matches Nix's builtins.toJSON rendering.
         providers = load_json("dot_pi/agent/models.json")["providers"]
         snapshot = json.dumps(
             providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
         ).encode("utf-8")
         self.assertEqual(
             hashlib.sha256(snapshot).hexdigest(),
-            "ac2e4588d97d25a7ec4e4114c6133dc005762fc8ed89070f5c477b0f6c6dfad1",
+            "02752fb310c0d29f4b0c236e3cdd2ed7b3d71bff6e6af98a319e928c295a911f",
         )
         sol = next(
             model
@@ -404,20 +363,19 @@ class ModelCatalogTests(unittest.TestCase):
     def test_deepseek_flash_shared_display_rates_match_nixfiles(self):
         pi = load_json("dot_pi/agent/models.json")["providers"]
         opencode = load_opencode_config()["provider"]
-        for provider, model_id in (
-            ("deepseek-responses", "deepseek-flash"),
-            ("magpie-responses", "deepseek-v4.1-flash"),
-        ):
-            with self.subTest(provider=provider):
-                model = next(m for m in pi[provider]["models"] if m["id"] == model_id)
-                self.assertEqual(
-                    model["cost"],
-                    {"input": 0.15, "output": 0.6, "cacheRead": 0.003, "cacheWrite": 0},
-                )
-                self.assertEqual(
-                    opencode[provider]["models"][model_id]["cost"],
-                    {"input": 0.15, "output": 0.6, "cache_read": 0.003},
-                )
+        flash = next(m for m in pi["magpie-responses"]["models"] if m["id"] == "deepseek-flash")
+        self.assertEqual(
+            flash["cost"],
+            {"input": 0.15, "output": 0.6, "cacheRead": 0.003, "cacheWrite": 0},
+        )
+        self.assertEqual(
+            opencode["magpie-responses"]["models"]["deepseek-flash"]["cost"],
+            {"input": 0.15, "output": 0.6, "cache_read": 0.003},
+        )
+        self.assertEqual(
+            opencode["magpie-responses"]["models"]["deepseek-flash"]["name"],
+            "DeepSeek Flash",
+        )
 
 
 class PiRuntimeConfigTests(unittest.TestCase):
