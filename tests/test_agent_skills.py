@@ -51,32 +51,6 @@ BASE_MARKETPLACE = {
     ],
 }
 
-MATT_SKILL_ROOTS = [
-    "skills/engineering/ask-matt",
-    "skills/engineering/diagnosing-bugs",
-    "skills/engineering/grill-with-docs",
-    "skills/engineering/triage",
-    "skills/engineering/improve-codebase-architecture",
-    "skills/engineering/setup-matt-pocock-skills",
-    "skills/engineering/tdd",
-    "skills/engineering/to-spec",
-    "skills/engineering/to-tickets",
-    "skills/engineering/wayfinder",
-    "skills/engineering/implement",
-    "skills/engineering/prototype",
-    "skills/engineering/research",
-    "skills/engineering/domain-modeling",
-    "skills/engineering/codebase-design",
-    "skills/engineering/code-review",
-    "skills/engineering/wizard",
-    "skills/productivity/grill-me",
-    "skills/productivity/grilling",
-    "skills/productivity/handoff",
-    "skills/productivity/teach",
-    "skills/productivity/to-questionnaire",
-    "skills/productivity/wait-what",
-    "skills/productivity/writing-for-agents",
-]
 
 # Independent contract table, not imported from the production checker.
 EXPECTED_MATT_DEPENDENCIES = {
@@ -305,7 +279,7 @@ class PublisherCase(unittest.TestCase):
     def declaration(self, root, include=None, exclude=None):
         value = {
             "directory": root.relative_to(self.home).as_posix(),
-            "include": list(include or ["."]),
+            "include": list(["."] if include is None else include),
         }
         if exclude is not None:
             value["exclude"] = list(exclude)
@@ -468,6 +442,331 @@ class SelectionContractTests(PublisherCase):
             with self.subTest(declaration=declaration):
                 with self.assertRaises(publisher.PublicationError):
                     self.publish({"example": declaration}, dry_run=True)
+
+
+class OptionalFilterContractTests(PublisherCase):
+    def unfiltered(self, root, **filters):
+        return {"directory": root.relative_to(self.home).as_posix(), **filters}
+
+    def plugin_fixture(self):
+        root = self.source_root()
+        for name in ("one", "two"):
+            write_skill(root, f"skills/{name}")
+            write_bytes(root / f"skills/{name}/references/detail.md", b"skill support\n")
+        write_skill(root, "drafts/unlisted")
+        write_skill(root, "skills/unlisted-category/draft")
+        write_bytes(root / "LICENSE", b"license\n")
+        write_bytes(root / "scripts/run.ps1", b"throw 'must never execute'\n")
+        write_bytes(root / "agents/reviewer.md", b"reviewer\n")
+        write_bytes(root / "package.json", b'{"devDependencies":{"repository-tool":"1"}}')
+        manifest = {
+            "name": "example", "version": "1.0.0", "description": "upstream description",
+            "skills": ["./skills/one", "./skills/two"],
+            "agents": ["./agents/reviewer.md"],
+            "hooks": {"hooks": {"SessionStart": [{"hooks": [{
+                "type": "command", "command": "pwsh ${CLAUDE_PLUGIN_ROOT}/scripts/run.ps1",
+            }]}]}},
+        }
+        write_bytes(root / ".claude-plugin/plugin.json", canonical_json_bytes(manifest))
+        return root, manifest
+
+    def test_default_include_only_exclude_only_and_combined_filters(self):
+        self.require_symlinks()
+        root, upstream = self.plugin_fixture()
+        includes = ["skills/one", "skills/two", "LICENSE", ".claude-plugin/plugin.json", "agents", "scripts"]
+        cases = [
+            ({}, {"one", "two"}),
+            ({"exclude": []}, {"one", "two"}),
+            ({"exclude": ["skills/one"]}, {"two"}),
+            ({"include": [path for path in includes if path != "skills/two"]}, {"one"}),
+            ({"include": includes, "exclude": ["skills/one"]}, {"two"}),
+        ]
+        for filters, expected in cases:
+            with self.subTest(filters=filters):
+                sources = {"example": self.unfiltered(root, **filters)}
+                before = snapshot_entry(self.home)
+                preview = self.publish(sources, dry_run=True)
+                self.assertEqual(snapshot_entry(self.home), before)
+                with mock.patch.object(subprocess, "run", side_effect=AssertionError("no upstream execution")):
+                    self.assertEqual(self.publish(sources).actions, preview.actions)
+                view = self.home / ".config/claude-code-chezmoi/generated-skills/example"
+                manifest = json.loads((view / ".claude-plugin/plugin.json").read_bytes())
+                self.assertEqual(manifest["skills"], [f"./skills/{name}" for name in sorted(expected)])
+                self.assertEqual(manifest["hooks"], upstream["hooks"])
+                self.assertEqual(manifest["agents"], upstream["agents"])
+                self.assertEqual((view / "LICENSE").read_bytes(), b"license\n")
+                self.assertEqual((view / "scripts/run.ps1").read_bytes(), b"throw 'must never execute'\n")
+                for name in expected:
+                    self.assertEqual((view / f"skills/{name}/references/detail.md").read_bytes(), b"skill support\n")
+                self.assertFalse((view / "drafts").exists())
+                self.assertFalse((view / "skills/unlisted-category").exists())
+                self.assertFalse((view / "package.json").exists())
+                self.assertEqual({path.name for path in (self.home / ".agents/skills").iterdir()}, expected)
+
+    def test_literal_marker_include_preserves_the_selected_skill_support_tree(self):
+        self.require_symlinks()
+        root = self.source_root()
+        write_skill(root, "skills/one")
+        write_bytes(root / "skills/one/templates/example.md", b"template\n")
+        write_bytes(root / "skills/one/optional.txt", b"optional\n")
+        self.publish({"example": self.unfiltered(
+            root, include=["skills/one/SKILL.md"], exclude=["skills/one/optional.txt"],
+        )})
+        view = self.home / ".config/claude-code-chezmoi/generated-skills/example"
+        self.assertEqual((view / "skills/one/templates/example.md").read_bytes(), b"template\n")
+        self.assertFalse((view / "skills/one/optional.txt").exists())
+
+    def test_default_conventional_locations_do_not_recursively_discover_unlisted_content(self):
+        self.require_symlinks()
+        root = self.source_root()
+        write_skill(root, "skills/one")
+        write_skill(root, "examples/example")
+        write_skill(root, "skills/drafts/unfinished")
+        write_bytes(root / "LICENSE", b"license\n")
+        sources = {"example": self.unfiltered(root)}
+        self.publish(sources)
+        view = self.home / ".config/claude-code-chezmoi/generated-skills/example"
+        self.assertTrue((view / "skills/one/SKILL.md").is_file())
+        self.assertFalse((view / "skills/drafts").exists())
+        self.assertFalse((view / "examples").exists())
+        self.assertEqual(self.publish({"example": self.unfiltered(root, exclude=[])}).actions, [])
+
+    def test_default_keeps_support_templates_inert_even_when_named_skill_md(self):
+        self.require_symlinks()
+        root, _ = self.plugin_fixture()
+        templates = [
+            "references/draft/SKILL.md",
+            "scripts/templates/example/SKILL.md",
+            "skills/one/templates/example/SKILL.md",
+        ]
+        for relative in templates:
+            write_bytes(root / relative, b"inert template without skill frontmatter\n")
+        self.publish({"example": self.unfiltered(root)})
+        view = self.home / ".config/claude-code-chezmoi/generated-skills/example"
+        manifest = json.loads((view / ".claude-plugin/plugin.json").read_bytes())
+        self.assertEqual(manifest["skills"], ["./skills/one", "./skills/two"])
+        self.assertEqual({path.name for path in (self.home / ".agents/skills").iterdir()}, {"one", "two"})
+        for relative in templates:
+            self.assertEqual((view / relative).read_bytes(), (root / relative).read_bytes())
+
+    def test_missing_filters_are_distinct_from_empty_or_malformed_filters_before_mutation(self):
+        self.require_symlinks()
+        root, _ = self.plugin_fixture()
+        self.publish({"example": self.unfiltered(root)})
+        before = snapshot_entry(self.home)
+        invalid = [
+            {"include": []}, {"include": None}, {"include": "skills/one"}, {"include": {}},
+            {"exclude": None}, {"exclude": "skills/one"}, {"exclude": {}},
+            {"exclude": [None]}, {"exclude": ["skills/*"]}, {"exclude": ["../outside"]},
+            {"exclude": ["."]}, {"include": ["LICENSE"]},
+            {"include": ["skills/one"], "exclude": ["skills/one"]},
+        ]
+        for filters in invalid:
+            for dry_run in (True, False):
+                with self.subTest(filters=filters, dry_run=dry_run):
+                    with self.assertRaises(publisher.PublicationError):
+                        self.publish({"example": self.unfiltered(root, **filters)}, dry_run=dry_run)
+                    self.assertEqual(snapshot_entry(self.home), before)
+        # An invalid source is not equivalent to removing that source from the mapping.
+        self.assertEqual(self.publish({"example": self.unfiltered(root)}).actions, [])
+
+    def test_new_upstream_declaration_is_adopted_without_configuration_edits(self):
+        self.require_symlinks()
+        root, manifest = self.plugin_fixture()
+        sources = {"example": self.unfiltered(root)}
+        original = copy.deepcopy(sources)
+        self.publish(sources)
+        write_skill(root, "skills/three")
+        self.assertEqual(self.publish(sources).actions, [], "undeclared skill is not an update")
+        manifest["skills"].append("./skills/three")
+        write_bytes(root / ".claude-plugin/plugin.json", canonical_json_bytes(manifest))
+        self.publish(sources)
+        self.assertEqual(sources, original)
+        self.assertTrue((self.home / ".agents/skills/three").is_symlink())
+        receipt = json.loads((self.home / publisher.RECEIPT_REL).read_bytes())
+        self.assertEqual(set(receipt["sources"]["example"]["skills"]), {"one", "two", "three"})
+
+    def test_each_source_chooses_its_own_optional_filters(self):
+        self.require_symlinks()
+        sources = {}
+        for source_id, filters in (
+            ("alpha", {}),
+            ("beta", {"include": ["skills/beta-one"]}),
+            ("gamma", {"exclude": ["skills/gamma-one"]}),
+        ):
+            root = self.source_root(source_id)
+            for suffix in ("one", "two"):
+                write_skill(root, f"skills/{source_id}-{suffix}")
+            sources[source_id] = self.unfiltered(root, **filters)
+        self.publish(sources)
+        self.assertEqual({path.name for path in (self.home / ".agents/skills").iterdir()}, {
+            "alpha-one", "alpha-two", "beta-one", "gamma-two",
+        })
+
+    def test_default_refuses_missing_malformed_escaping_and_case_mismatched_declarations(self):
+        root, manifest = self.plugin_fixture()
+        manifest_path = root / ".claude-plugin/plugin.json"
+        for value in ([], None, ["./missing"], ["../outside"], ["./Skills/one"], ["./skills/*"]):
+            write_bytes(manifest_path, canonical_json_bytes({**manifest, "skills": value}))
+            for dry_run in (True, False):
+                with self.subTest(value=value, dry_run=dry_run):
+                    with self.assertRaises(publisher.PublicationError):
+                        self.publish({"example": self.unfiltered(root)}, dry_run=dry_run)
+                    self.assertFalse((self.home / ".config").exists())
+        for data in (b'{broken', b'{"name":"example","skills":[],"skills":[]}'):
+            write_bytes(manifest_path, data)
+            with self.assertRaises(publisher.PublicationError):
+                self.publish({"example": self.unfiltered(root)}, dry_run=True)
+
+    def test_default_ignores_unrelated_root_alias_but_refuses_declared_symlink(self):
+        self.require_symlinks()
+        root, manifest = self.plugin_fixture()
+        outside = self.root / "outside"
+        write_skill(outside, "escape")
+        os.symlink(str(outside / "escape/SKILL.md"), root / "AGENTS.md")
+        self.publish({"example": self.unfiltered(root)})
+        os.symlink(str(outside / "escape"), root / "skills/escape", target_is_directory=True)
+        manifest["skills"].append("./skills/escape")
+        write_bytes(root / ".claude-plugin/plugin.json", canonical_json_bytes(manifest))
+        before = snapshot_entry(self.home)
+        for dry_run in (True, False):
+            with self.assertRaisesRegex(publisher.PublicationError, "symlink or reparse"):
+                self.publish({"example": self.unfiltered(root)}, dry_run=dry_run)
+            self.assertEqual(snapshot_entry(self.home), before)
+
+    def test_default_filters_cannot_leave_metadata_referencing_omitted_support(self):
+        root, _ = self.plugin_fixture()
+        for path in ("agents/reviewer.md", "scripts/run.ps1"):
+            with self.subTest(exclude=path):
+                with self.assertRaisesRegex(publisher.PublicationError, "not retained"):
+                    self.publish({"example": self.unfiltered(root, exclude=[path])}, dry_run=True)
+                self.assertFalse((self.home / ".config").exists())
+
+    def marketplace_fixture(self):
+        root = self.source_root()
+        entries = []
+        for name in ("one", "two"):
+            plugin_root = root / f"plugins/{name}"
+            write_skill(plugin_root, f"skills/{name}")
+            write_skill(plugin_root, "drafts/unlisted-" + name)
+            write_bytes(plugin_root / f"skills/{name}/templates/example.md", b"template\n")
+            write_bytes(plugin_root / f"skills/{name}/templates/SKILL.md", b"inert template\n")
+            manifest = {"name": name, "description": "upstream " + name, "license": "MIT"}
+            if name == "one":
+                manifest["skills"] = "./skills/"
+                manifest["agents"] = ["./agents/reviewer.md"]
+                manifest["hooks"] = "config/hooks.json"
+                write_bytes(plugin_root / "agents/reviewer.md", b"reviewer\n")
+                write_bytes(plugin_root / "config/hooks.json", canonical_json_bytes({
+                    "hooks": {"SessionStart": [{"hooks": [{
+                        "type": "command", "command": "pwsh ${CLAUDE_PLUGIN_ROOT}/scripts/run.ps1",
+                    }]}]},
+                }))
+                write_bytes(plugin_root / "scripts/run.ps1", b"throw 'not executed'\n")
+            write_bytes(plugin_root / ".claude-plugin/plugin.json", canonical_json_bytes(manifest))
+            entries.append({"name": name, "source": f"./plugins/{name}", "category": "fixture"})
+        write_bytes(root / ".claude-plugin/marketplace.json", canonical_json_bytes({
+            "name": "upstream", "owner": {"name": "Fixture"}, "plugins": entries,
+        }))
+        write_bytes(root / "LICENSE", b"license\n")
+        return root
+
+    def test_unfiltered_marketplace_publishes_all_declared_plugins_with_rebased_metadata(self):
+        self.require_symlinks()
+        root = self.marketplace_fixture()
+        self.publish({"example": self.unfiltered(root)})
+        view = self.home / ".config/claude-code-chezmoi/generated-skills/example"
+        manifest = json.loads((view / ".claude-plugin/plugin.json").read_bytes())
+        self.assertEqual(manifest["name"], "example", "source output identity is unchanged")
+        self.assertEqual(manifest["skills"], ["./plugins/one/skills/one", "./plugins/two/skills/two"])
+        self.assertIn("./plugins/one/agents/reviewer.md", manifest["agents"])
+        command = manifest["hooks"]["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+        self.assertEqual(command, "pwsh ${CLAUDE_PLUGIN_ROOT}/plugins/one/scripts/run.ps1")
+        for name in ("one", "two"):
+            nested = json.loads((view / f"plugins/{name}/.claude-plugin/plugin.json").read_bytes())
+            self.assertEqual(nested["license"], "MIT")
+            self.assertEqual(nested["skills"], [f"./skills/{name}"])
+            self.assertEqual((view / f"plugins/{name}/skills/{name}/templates/example.md").read_bytes(), b"template\n")
+            self.assertFalse((view / f"plugins/{name}/drafts").exists())
+        self.assertEqual(self.publish({"example": self.unfiltered(root)}).actions, [])
+        self.publish({"example": self.unfiltered(root, exclude=["plugins/one"])})
+        manifest = json.loads((view / ".claude-plugin/plugin.json").read_bytes())
+        self.assertEqual(manifest["skills"], ["./plugins/two/skills/two"])
+        self.assertNotIn("hooks", manifest)
+        provenance = json.loads((view / ".claude-plugin/upstream-marketplace.json").read_bytes())
+        self.assertEqual([entry["name"] for entry in provenance["plugins"]], ["two"])
+        self.assertFalse((view / "plugins/one").exists())
+
+    def test_marketplace_rebases_bare_plugin_root_in_hooks_without_executing_them(self):
+        self.require_symlinks()
+        root = self.marketplace_fixture()
+        manifest_path = root / "plugins/one/.claude-plugin/plugin.json"
+        manifest = json.loads(manifest_path.read_bytes())
+        manifest["hooks"] = {"hooks": {"SessionStart": [{"hooks": [{
+            "type": "command", "command": 'cd "${CLAUDE_PLUGIN_ROOT}"; pwsh ./scripts/run.ps1',
+        }]}]}}
+        write_bytes(manifest_path, canonical_json_bytes(manifest))
+        self.publish({"example": self.unfiltered(root)})
+        view = self.home / ".config/claude-code-chezmoi/generated-skills/example"
+        generated = json.loads((view / ".claude-plugin/plugin.json").read_bytes())
+        command = generated["hooks"]["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+        self.assertEqual(command, 'cd "${CLAUDE_PLUGIN_ROOT}/plugins/one"; pwsh ./scripts/run.ps1')
+        self.assertTrue((view / "plugins/one/scripts/run.ps1").is_file())
+
+    def test_marketplace_refuses_remote_traversal_duplicates_and_missing_sources(self):
+        root = self.marketplace_fixture()
+        path = root / ".claude-plugin/marketplace.json"
+        entries = [
+            [{"name": "one", "source": {"source": "github", "repo": "owner/repo"}}],
+            [{"name": "one", "source": "../outside"}],
+            [{"name": "one", "source": "./plugins/missing"}],
+            [{"name": "one", "source": "./plugins/One"}],
+            [{"name": "one", "source": "./"}],
+            [{"name": "one", "source": "./plugins/one"}] * 2,
+            [{"name": "one", "source": "./plugins/one"}, {"name": "alias", "source": "./plugins/one"}],
+            [{"name": "one", "source": "./plugins/one", "skills": ["./omitted"]}],
+        ]
+        for plugins in entries:
+            write_bytes(path, canonical_json_bytes({"plugins": plugins}))
+            with self.subTest(plugins=plugins):
+                with self.assertRaises(publisher.PublicationError):
+                    self.publish({"example": self.unfiltered(root)}, dry_run=True)
+                self.assertFalse((self.home / ".config").exists())
+
+    def test_default_update_failure_rolls_back_receipt_views_links_and_marketplace(self):
+        self.require_symlinks()
+        root, manifest = self.plugin_fixture()
+        sources = {"example": self.unfiltered(root)}
+        self.publish(sources)
+        before = managed_snapshot(self.home)
+        write_skill(root, "skills/three")
+        manifest["skills"].append("./skills/three")
+        write_bytes(root / ".claude-plugin/plugin.json", canonical_json_bytes(manifest))
+        with mock.patch.object(publisher, "_write_receipt", side_effect=OSError("injected failure")):
+            with self.assertRaisesRegex(publisher.PublicationError, "previous outputs were restored"):
+                self.publish(sources)
+        self.assertEqual(managed_snapshot(self.home), before)
+        self.assertFalse((self.home / publisher.WORK_REL).exists())
+        self.publish(sources)
+        self.assertTrue((self.home / ".agents/skills/three").is_symlink())
+
+    def test_default_collisions_and_modified_owned_outputs_still_refuse(self):
+        self.require_symlinks()
+        root, _ = self.plugin_fixture()
+        sources = {"example": self.unfiltered(root)}
+        with self.assertRaisesRegex(publisher.PublicationError, "reserved"):
+            self.publish(sources, reserved_names=["one"], dry_run=True)
+        another = self.source_root("another")
+        write_skill(another, "skills/one")
+        with self.assertRaisesRegex(publisher.PublicationError, "duplicate skill name"):
+            self.publish({**sources, "another": self.unfiltered(another)}, dry_run=True)
+        self.publish(sources)
+        view = self.home / ".config/claude-code-chezmoi/generated-skills/example"
+        write_bytes(view / "skills/one/references/detail.md", b"foreign edit\n")
+        before = snapshot_entry(self.home)
+        with self.assertRaises(publisher.PublicationError):
+            self.publish(sources)
+        self.assertEqual(snapshot_entry(self.home), before)
 
 
 class DiscoveryContractTests(PublisherCase):
@@ -1968,6 +2267,15 @@ class CliReportingContractTests(PublisherCase):
         self.assertEqual(stderr.getvalue(), "")
         return stdout.getvalue()
 
+    def test_main_accepts_a_source_without_filters(self):
+        self.config.write_text(
+            '[agent_skills.sources.example]\ndirectory = "inputs/example"\n', encoding="utf-8",
+        )
+        before = snapshot_entry(self.home)
+        output = self.run_cli("--dry-run")
+        self.assertIn("publish source example", output)
+        self.assertEqual(snapshot_entry(self.home), before)
+
     def test_main_custom_marketplace_preview_suggests_its_identity_without_writes(self):
         before = snapshot_entry(self.home)
         output = self.run_cli("--dry-run")
@@ -2021,10 +2329,8 @@ class RepositoryDeclarationTests(unittest.TestCase):
             sources["mattpocock-skills"],
             {
                 "directory": ".local/share/llm-agents/plugins/mattpocock-skills",
-                "include": [".claude-plugin/plugin.json", "LICENSE", *MATT_SKILL_ROOTS],
             },
         )
-        self.assertEqual(len(MATT_SKILL_ROOTS), 24)
         self.assertEqual(
             sources["humanlayer"],
             {
@@ -2068,7 +2374,7 @@ class RepositoryDeclarationTests(unittest.TestCase):
         )
         self.assertRegex(matt["sha256"], r"^[0-9a-f]{64}$")
 
-    def test_repository_matt_selection_publishes_after_upstream_skill_removal(self):
+    def test_repository_matt_default_publishes_exact_upstream_inventory_not_drafts(self):
         # Independent upstream inventory: .claude-plugin/plugin.json from the
         # checksum-verified mattpocock/skills v1.3.1 archive. Do not construct the
         # source tree from our includes: that masks missing paths after pin bumps.
@@ -2084,6 +2390,16 @@ class RepositoryDeclarationTests(unittest.TestCase):
             write_bytes(root / "LICENSE", b"fixture license\n")
             for relative in upstream["skills"]:
                 write_skill(root, relative)
+            self.assertEqual(len(upstream["skills"]), 27)
+            for relative in ("skills/in-progress/draft", "skills/misc/unlisted", "examples/example"):
+                write_skill(root, relative)
+            write_bytes(root / "skills/engineering/implement-spec/templates/spec.md", b"spec support\n")
+            write_bytes(root / ".claude-plugin/marketplace.json", canonical_json_bytes({
+                "name": "mattpocock", "plugins": [{"name": "mattpocock-skills", "source": "./"}],
+            }))
+            if SYMLINKS_AVAILABLE:
+                write_bytes(root / "CLAUDE.md", b"repository instructions\n")
+                os.symlink("CLAUDE.md", root / "AGENTS.md")
             self.assertFalse((root / "skills/engineering/resolving-merge-conflicts").exists())
             before = snapshot_entry(home)
             report = publisher.publish(
@@ -2095,6 +2411,49 @@ class RepositoryDeclarationTests(unittest.TestCase):
             self.assertEqual(report.plugins, ["mattpocock-skills"])
             self.assertIn("publish source mattpocock-skills", report.actions)
             self.assertEqual(snapshot_entry(home), before)
+            if SYMLINKS_AVAILABLE:
+                publisher.publish(
+                    home, {"mattpocock-skills": declaration},
+                    REPO_ROOT / "dot_config/claude-code-chezmoi/marketplace-base.json",
+                )
+                view = home / ".config/claude-code-chezmoi/generated-skills/mattpocock-skills"
+                manifest = json.loads((view / ".claude-plugin/plugin.json").read_bytes())
+                self.assertEqual(set(manifest["skills"]), set(upstream["skills"]))
+                shared = home / ".agents/skills"
+                self.assertEqual({path.name for path in shared.iterdir()}, {
+                    Path(relative).name for relative in upstream["skills"]
+                })
+                self.assertTrue({"implement-spec", "pr", "retro"} <= {path.name for path in shared.iterdir()})
+                self.assertEqual((view / "skills/engineering/implement-spec/templates/spec.md").read_bytes(), b"spec support\n")
+                self.assertFalse((view / "AGENTS.md").exists())
+                self.assertFalse((view / "skills/in-progress").exists())
+                self.assertFalse((view / "skills/misc").exists())
+
+    @unittest.skipUnless(SYMLINKS_AVAILABLE, SYMLINK_REASON)
+    def test_repository_humanlayer_filter_keeps_show_me_not_the_whole_marketplace(self):
+        declaration = self.data["agent_skills"]["sources"]["humanlayer"]
+        with tempfile.TemporaryDirectory(prefix="humanlayer-filter-") as temporary:
+            home = Path(temporary)
+            root = home / declaration["directory"]
+            entries = []
+            for name in ("show-me", "rpi", "other"):
+                plugin_root = root / f"plugins/{name}"
+                write_skill(plugin_root, f"skills/{name}")
+                write_bytes(plugin_root / f"skills/{name}/references/detail.md", b"support\n")
+                write_bytes(plugin_root / ".claude-plugin/plugin.json", canonical_json_bytes({"name": name}))
+                entries.append({"name": name, "source": f"./plugins/{name}"})
+            write_bytes(root / ".claude-plugin/marketplace.json", canonical_json_bytes({"plugins": entries}))
+            write_bytes(root / "LICENSE", b"license\n")
+            publisher.publish(
+                home, {"humanlayer": declaration},
+                REPO_ROOT / "dot_config/claude-code-chezmoi/marketplace-base.json",
+            )
+            view = home / ".config/claude-code-chezmoi/generated-skills/humanlayer"
+            self.assertEqual({path.name for path in (home / ".agents/skills").iterdir()}, {"show-me"})
+            self.assertEqual((view / "LICENSE").read_bytes(), b"license\n")
+            self.assertEqual((view / "plugins/show-me/skills/show-me/references/detail.md").read_bytes(), b"support\n")
+            self.assertFalse((view / "plugins/rpi").exists())
+            self.assertFalse((view / "plugins/other").exists())
 
     def test_obsolete_sources_are_absent_and_new_humanlayer_archive_is_exact(self):
         obsolete = [

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Publish explicitly selected agent skills into a local Claude marketplace.
+"""Publish upstream-declared agent skills, with optional literal path filters.
 
 The publisher deliberately owns only the outputs recorded in its receipt.  It
 never fetches inputs, installs Claude plugins, or adopts pre-existing files.
@@ -604,9 +604,17 @@ def _validate_selected_metadata_paths(files: Mapping[str, PublishedFile], source
 
 
 def _discover_skills(
-    files: Mapping[str, PublishedFile], source_id: str
+    files: Mapping[str, PublishedFile], source_id: str,
+    *, declared_roots: Sequence[str] | None = None,
 ) -> dict[str, str]:
-    markers = [name for name in sorted(files) if name.split("/")[-1] == "SKILL.md"]
+    declared_markers = None if declared_roots is None else {
+        "SKILL.md" if root == "." else f"{root}/SKILL.md" for root in declared_roots
+    }
+    markers = [
+        name for name in sorted(files)
+        if name.split("/")[-1] == "SKILL.md"
+        and (declared_markers is None or name in declared_markers)
+    ]
     skills: dict[str, str] = {}
     roots: list[str] = []
     for marker in markers:
@@ -658,6 +666,12 @@ def _normalize_plugin_path(value: Any, label: str) -> str:
     if not isinstance(value, str):
         raise _error(f"{label} must be a path string")
     normalized = value[2:] if value.startswith("./") else value
+    # Upstream plugin declarations commonly use './skills/' or './'. This
+    # normalization does not change the literal source-filter vocabulary.
+    if value == "./":
+        normalized = "."
+    elif normalized.endswith("/"):
+        normalized = normalized[:-1]
     return _validate_literal_path(normalized, label, allow_dot=True)
 
 
@@ -853,6 +867,223 @@ def _check_matt_dependencies(source_id: str, skills: Mapping[str, str]) -> None:
             )
 
 
+def _optional_input(root: Path, relative: str) -> Path | None:
+    """Find conventional metadata without accepting aliases or following links."""
+
+    if not _strict_output_chain(root, relative, "upstream declaration"):
+        return None
+    path = root.joinpath(*_path_parts(relative))
+    _reject_reparse(path, os.lstat(path), "upstream declaration")
+    return path
+
+
+def _declared_skill_roots(root: Path, manifest: Mapping[str, Any]) -> list[str]:
+    if "skills" in manifest:
+        locations = _path_values(manifest["skills"], "manifest skills")
+        if not locations:
+            raise _error("manifest skills must not be empty")
+    elif _optional_input(root, "skills") is not None:
+        locations = ["skills"]
+    elif _optional_input(root, "SKILL.md") is not None:
+        locations = ["."]
+    else:
+        raise _error(f"upstream has no declared or conventional skill locations: {root}")
+
+    roots: list[str] = []
+    for value in locations:
+        relative = _normalize_plugin_path(value, "declared skill location")
+        path = _exact_existing_path(root, relative, "declared skill location")
+        _reject_reparse(path, os.lstat(path), "declared skill location")
+        if not path.is_dir():
+            raise _error(f"declared skill location must be a directory: {relative!r}")
+        if _optional_input(path, "SKILL.md") is not None:
+            roots.append(relative)
+            continue
+        # A collection declares immediate skill directories, not arbitrary nested
+        # examples, templates, drafts, or categories elsewhere in the repository.
+        found = []
+        with os.scandir(path) as entries:
+            for entry in sorted(entries, key=lambda item: item.name):
+                child = Path(entry.path)
+                entry_stat = entry.stat(follow_symlinks=False)
+                _reject_reparse(child, entry_stat, "declared skill collection")
+                if stat.S_ISDIR(entry_stat.st_mode) and _optional_input(child, "SKILL.md") is not None:
+                    found.append(entry.name if relative == "." else f"{relative}/{entry.name}")
+        if not found:
+            raise _error(f"declared skill location contains no immediate skills: {relative!r}")
+        roots.extend(found)
+    return list(dict.fromkeys(roots))
+
+
+def _plugin_root_references(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return PLUGIN_PATH_RE.findall(value)
+    if isinstance(value, dict):
+        return [path for item in value.values() for path in _plugin_root_references(item)]
+    if isinstance(value, list):
+        return [path for item in value for path in _plugin_root_references(item)]
+    return []
+
+
+def _default_plugin_files(
+    source_id: str, root: Path, excludes: Sequence[str]
+) -> tuple[dict[str, PublishedFile], list[str]]:
+    manifest_path = _optional_input(root, _MANIFEST_PATH)
+    manifest = {} if manifest_path is None else _parse_json_bytes(
+        _read_regular_bytes(manifest_path, "upstream plugin manifest"), "upstream plugin manifest"
+    )
+    if not isinstance(manifest, dict):
+        raise _error("upstream plugin manifest must contain an object")
+    skill_roots = _declared_skill_roots(root, manifest)
+    includes = list(skill_roots)
+    for relative in (
+        _MANIFEST_PATH, "LICENSE", "LICENSE.md", "LICENSE.txt", "COPYING",
+        "scripts", "references", "assets", "agents", "output-styles",
+        _DEFAULT_HOOKS_PATH,
+    ):
+        if _optional_input(root, relative) is not None:
+            includes.append(relative)
+    for field in ("agents", "outputStyles"):
+        if field in manifest:
+            includes.extend(_normalize_plugin_path(value, field) for value in _path_values(manifest[field], field))
+    hook_documents = [manifest.get("hooks", {})]
+    hook_paths = [_DEFAULT_HOOKS_PATH] if _DEFAULT_HOOKS_PATH in includes else []
+    if isinstance(manifest.get("hooks"), str):
+        hook_path = _normalize_plugin_path(manifest["hooks"], "manifest hooks")
+        includes.append(hook_path)
+        hook_paths.append(hook_path)
+    for relative in dict.fromkeys(hook_paths):
+        hook_documents.append(_parse_json_bytes(
+            _read_regular_bytes(_exact_existing_path(root, relative, "hook document"), "hook document"),
+            "hook document",
+        ))
+    includes.extend(
+        _normalize_plugin_path(value, "plugin-root reference")
+        for document in hook_documents for value in _plugin_root_references(document)
+    )
+    return _select_files(source_id, root, list(dict.fromkeys(includes)), excludes), skill_roots
+
+
+def _rebase_hook_document(value: Any, prefix: str) -> Any:
+    if isinstance(value, str):
+        return value.replace("${CLAUDE_PLUGIN_ROOT}", f"${{CLAUDE_PLUGIN_ROOT}}/{prefix}")
+    if isinstance(value, dict):
+        return {key: _rebase_hook_document(item, prefix) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_rebase_hook_document(item, prefix) for item in value]
+    return value
+
+
+def _default_source_files(
+    source_id: str, root: Path, excludes: Sequence[str]
+) -> tuple[dict[str, PublishedFile], list[str]]:
+    # A root plugin is authoritative even when the repo also advertises itself
+    # through a marketplace (Matt's archive does both).
+    if _optional_input(root, _MANIFEST_PATH) is not None:
+        return _default_plugin_files(source_id, root, excludes)
+    marketplace_path = _optional_input(root, ".claude-plugin/marketplace.json")
+    if marketplace_path is None:
+        return _default_plugin_files(source_id, root, excludes)
+    marketplace = _parse_json_bytes(
+        _read_regular_bytes(marketplace_path, "upstream marketplace"), "upstream marketplace"
+    )
+    if not isinstance(marketplace, dict) or not isinstance(marketplace.get("plugins"), list):
+        raise _error("upstream marketplace must contain a plugins list")
+
+    # Keep the existing one-output-plugin-per-configured-source identity and
+    # receipt schema. Bundle declared local plugins under their original paths;
+    # rebase active metadata into the source's generated root manifest.
+    files: dict[str, PublishedFile] = {}
+    combined: dict[str, Any] = {"name": source_id}
+    skill_roots: list[str] = []
+    hook_events: dict[str, list[Any]] = {}
+    names: set[str] = set()
+    plugin_roots: list[tuple[str, ...]] = []
+    retained_entries = []
+    for entry in marketplace["plugins"]:
+        if not isinstance(entry, dict):
+            raise _error("upstream marketplace plugin must be an object")
+        unsupported = set(entry) - {
+            "name", "source", "description", "version", "author", "homepage",
+            "repository", "license", "keywords", "category", "tags", "strict",
+        }
+        if unsupported or entry.get("strict", True) is not True:
+            raise _error("upstream marketplace plugin requires unsupported component overrides")
+        name = _validate_name(entry.get("name"), "upstream marketplace plugin name")
+        if name in names:
+            raise _error(f"duplicate upstream marketplace plugin name: {name!r}")
+        names.add(name)
+        prefix = _normalize_plugin_path(entry.get("source"), "marketplace plugin source")
+        if prefix == ".":
+            raise _error("marketplace plugin source '.' requires a root plugin manifest")
+        parts = tuple(part.casefold() for part in _path_parts(prefix))
+        if any(_is_prefix(parts, other) or _is_prefix(other, parts) for other in plugin_roots):
+            raise _error(f"overlapping marketplace plugin sources: {prefix!r}")
+        plugin_roots.append(parts)
+        plugin_root = _exact_existing_path(root, prefix, "marketplace plugin source")
+        _assert_safe_existing_ancestors(plugin_root, "marketplace plugin source", require_leaf=True)
+        local_excludes = [
+            "." if _is_prefix(_path_parts(exclude), _path_parts(prefix))
+            else "/".join(_path_parts(exclude)[len(_path_parts(prefix)):])
+            for exclude in excludes
+            if _is_prefix(_path_parts(exclude), _path_parts(prefix))
+            or _is_prefix(_path_parts(prefix), _path_parts(exclude))
+        ]
+        if "." in local_excludes:
+            continue
+        selected, declared_roots = _default_plugin_files(name, plugin_root, local_excludes)
+        _validate_selected_metadata_paths(selected, name)
+        if not any(
+            ("SKILL.md" if relative == "." else f"{relative}/SKILL.md") in selected
+            for relative in declared_roots
+        ):
+            continue
+        skills = _discover_skills(selected, name, declared_roots=declared_roots)
+        skill_roots.extend(
+            prefix if relative == "." else f"{prefix}/{relative}" for relative in skills.values()
+        )
+        _validate_package_files(selected, name)
+        manifest = _normalize_manifest(name, selected, skills)
+        selected[_MANIFEST_PATH] = PublishedFile(json_bytes(manifest), False)
+        for field, conventional in (("agents", "agents"), ("outputStyles", "output-styles")):
+            values = _path_values(manifest.get(field, []), field)
+            if _path_is_retained(conventional, selected):
+                values = [*values, conventional]
+            if values:
+                rebased = [
+                    prefix if path == "." else f"{prefix}/{path}"
+                    for path in (_normalize_plugin_path(value, field) for value in values)
+                ]
+                combined.setdefault(field, []).extend(f"./{path}" for path in dict.fromkeys(rebased))
+        hooks = manifest.get("hooks", {})
+        documents = [hooks] if isinstance(hooks, dict) else [
+            _parse_json_bytes(selected[_normalize_plugin_path(hooks, "manifest hooks")].data, "manifest hooks")
+        ]
+        if _DEFAULT_HOOKS_PATH in selected:
+            documents.append(_parse_json_bytes(selected[_DEFAULT_HOOKS_PATH].data, "default hooks"))
+        for document in documents:
+            for event, groups in _rebase_hook_document(document, prefix).get("hooks", {}).items():
+                hook_events.setdefault(event, []).extend(groups)
+        for path, data in selected.items():
+            target = f"{prefix}/{path}"
+            if target in files and files[target] != data:
+                raise _error(f"overlapping marketplace plugin content: {target!r}")
+            files[target] = data
+        retained_entries.append(entry)
+    if hook_events:
+        combined["hooks"] = {"hooks": hook_events}
+    files[_MANIFEST_PATH] = PublishedFile(json_bytes(combined), False)
+    # Inert provenance, not another active marketplace. Entries retain upstream
+    # metadata but cannot point to plugins removed by the source filter.
+    files[".claude-plugin/upstream-marketplace.json"] = PublishedFile(
+        json_bytes({**marketplace, "plugins": retained_entries}), False
+    )
+    for relative in ("LICENSE", "LICENSE.md", "LICENSE.txt", "COPYING"):
+        if _optional_input(root, relative) is not None:
+            files.update(_select_files(source_id, root, [relative], excludes))
+    return files, skill_roots
+
+
 def _build_candidate(
     home: Path,
     source_id: str,
@@ -865,8 +1096,8 @@ def _build_candidate(
     unknown = set(declaration) - {"directory", "include", "exclude"}
     if unknown:
         raise _error(f"source {source_id!r} has unsupported fields: {sorted(unknown)!r}")
-    if "directory" not in declaration or "include" not in declaration:
-        raise _error(f"source {source_id!r} requires directory and include")
+    if "directory" not in declaration:
+        raise _error(f"source {source_id!r} requires directory")
 
     directory = _validate_literal_path(
         declaration["directory"], f"source {source_id!r} directory", allow_dot=True
@@ -881,15 +1112,15 @@ def _build_candidate(
                 f"source {source_id!r} directory overlaps output root {output_root!r}"
             )
 
-    includes_value = declaration["include"]
+    includes_value = declaration.get("include")
     excludes_value = declaration.get("exclude", [])
-    if not isinstance(includes_value, list) or not includes_value:
+    if "include" in declaration and (not isinstance(includes_value, list) or not includes_value):
         raise _error(f"source {source_id!r} include must be a nonempty list")
     if not isinstance(excludes_value, list):
         raise _error(f"source {source_id!r} exclude must be a list")
     includes = [
         _validate_literal_path(value, f"source {source_id!r} include", allow_dot=True)
-        for value in includes_value
+        for value in includes_value or []
     ]
     excludes = [
         _validate_literal_path(value, f"source {source_id!r} exclude", allow_dot=True)
@@ -907,9 +1138,19 @@ def _build_candidate(
     if not stat.S_ISDIR(source_stat.st_mode):
         raise _error(f"source {source_id!r} directory is not a directory")
 
-    files = _select_files(source_id, source_root, includes, excludes)
+    declared_roots = None
+    if includes_value is None:
+        files, declared_roots = _default_source_files(source_id, source_root, excludes)
+    else:
+        files = _select_files(source_id, source_root, includes, excludes)
     _validate_selected_metadata_paths(files, source_id)
-    skills = _discover_skills(files, source_id)
+    skills = _discover_skills(files, source_id, declared_roots=declared_roots)
+    if includes_value is not None:
+        # A literal SKILL.md include selects a skill, not a truncated skill view.
+        # Explicit exclusions still win, including optional support-file filters.
+        files = _select_files(source_id, source_root, [*includes, *skills.values()], excludes)
+        _validate_selected_metadata_paths(files, source_id)
+        skills = _discover_skills(files, source_id)
     _validate_package_files(files, source_id)
     _check_matt_dependencies(source_id, skills)
     manifest = _normalize_manifest(source_id, files, skills)

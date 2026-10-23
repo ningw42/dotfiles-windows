@@ -45,12 +45,54 @@ sync across applications.
 ## Shared agent skills
 
 Chezmoi acquires immutable upstream snapshots, while `manage_skills.py` publishes
-reviewed subsets from `agent_skills.sources` in `.chezmoidata.toml`. Each source
-has a home-relative `directory`, a nonempty list of literal file or subtree
-`include` paths, and an optional `exclude` list. Paths are relative and use `/`;
-they are not globs. The explicit list is the review boundary: refreshing an
-upstream pin never adopts a newly promoted skill. Review and edit the includes
-separately when changing the published set.
+skills from `agent_skills.sources` in `.chezmoidata.toml`. Each source has a
+home-relative `directory` and its own **optional**, declarative `include` and
+`exclude` filters:
+
+| Source filters | Published selection |
+| :--- | :--- |
+| Neither supplied | All upstream-declared skills |
+| `exclude` only | All upstream-declared skills, minus exclusions |
+| `include` supplied | That selection, minus any exclusions (exclusions win) |
+
+An omitted `include` is different from `include = []`: an explicitly supplied
+include must be a nonempty list. `exclude = []` is valid and equivalent to omitting
+exclude. Nulls, malformed paths/declarations, missing inputs, and selections with
+no remaining skills are errors **before mutation**, not requests to remove owned
+outputs. Remove a source from the mapping to intentionally retire its outputs.
+Filter paths remain literal, source-relative file/subtree paths using `/`, not
+globs; existing configurations retain their meaning, including support-file
+includes and exclusions. Including a literal `SKILL.md` also retains that skill's
+support directory, subject to explicit exclusions.
+
+Default-all follows a root plugin's `skills` declarations; without that field,
+it uses immediate skill directories under `skills/` (or a root `SKILL.md`). A
+source that is a marketplace enumerates its declared local plugin sources using
+the same rules. Discovery does not recursively search examples, drafts, templates,
+or unlisted categories. A root plugin takes precedence over a repository's
+marketplace wrapper. Selected skill directories retain their support trees;
+default discovery also retains licenses, conventional plugin support directories
+(`scripts`, `references`, `assets`, `agents`, `output-styles`), and declared
+agent/style/hook resources. Unrelated repository metadata and installers are not
+implicitly imported. Selected links/reparse points are refused, not followed.
+
+Matt Pocock intentionally has **no filters**: its pinned v1.3.1 plugin declares
+27 skills, including `implement-spec`, `pr`, and `retro`; unlisted in-progress
+and misc skills stay out. New upstream declarations become available on a reviewed
+pin refresh without a separate allowlist edit. HumanLayer intentionally retains
+`include = ["plugins/show-me/skills/show-me", "LICENSE"]`: this filtered source
+remains show-me-only, not the whole seven-plugin marketplace. Review intentionally
+filtered sources separately when widening their scope.
+
+Each configured source keeps its existing generated plugin name and output path.
+An unfiltered marketplace source bundles declared plugins under their original
+relative paths, retains their normalized plugin metadata, and rebases agent,
+style, and hook references into the generated root manifest. Its filtered
+marketplace metadata is kept as inert `.claude-plugin/upstream-marketplace.json`
+provenance. Skill lists are regenerated from retained skills; missing declared
+support references fail validation rather than producing dangling manifest paths.
+Remote marketplace entries, component overrides, and unsupported active plugin
+fields are refused; publication never acquires dependencies or runs upstream code.
 
 The publisher owns only outputs attested by
 `~/.config/claude-code-chezmoi/.skill-publisher.json`:
@@ -63,8 +105,8 @@ Raw snapshots, repo-authored skills, HerdR's generated skill, `plugins/user-mcps
 and Claude's plugin registry/cache keep their existing owners. A lock serializes
 writers, and foreign or modified outputs are refused rather than adopted. Plugin
 versions are derived from selected bytes, executable bits, normalized metadata,
-and filters, so support-file changes invalidate Claude's cache while an upstream
-version field or unselected file does not. Publication never activates plugins;
+and filters, so support-file changes invalidate Claude's cache while a root
+plugin's upstream version field or an unselected file does not. Publication never activates plugins;
 after it succeeds, use native Claude commands to refresh the `chezmoi`
 marketplace and install or update its plugins.
 

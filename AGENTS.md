@@ -132,7 +132,10 @@ Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
   `.chezmoidata.toml`. `manage_skills.py` owns the filtered plugin views, their
   shared links, its receipt/lock, and the generated Claude marketplace; Claude
   owns its runtime registry/cache. Repo-authored skills under `dot_agents/skills/`
-  and the separate HerdR integration retain their owners. The publisher never
+  and the separate HerdR integration retain their owners. Source filters are
+  opt-in: omitted include selects upstream-declared/conventional skills, an
+  explicit include stays nonempty, and exclude wins. Matt follows its upstream
+  manifest; HumanLayer intentionally remains show-me-only. The publisher never
   adopts foreign outputs. See README's shared-skills section for selection,
   recovery, deployment, and the human-only legacy handoff.
 - `.chezmoiscripts/run_after_shared-agent-skills.ps1.tmpl` invokes the publisher
