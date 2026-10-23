@@ -40,8 +40,15 @@
 # cross-machine purge of any already-deployed copy.
 .copilot/copilot-instructions.md
 
-# OpenCode 2 uses cli.json; HerdR's generated V1 tui.jsonc registration is stale.
+# HerdR still requires the V1-shaped OpenCode TUI registration for
+# `integration status` when only V2 is installed, so
+# run_onchange_herdr-integrations publishes HerdR's generated tui.jsonc. Set
+# herdr.opencode_pure_v2 = true in .chezmoidata.toml once HerdR validates a
+# cli.json-only V2 setup: the publisher stops and this entry removes the
+# obsolete marker.
+{{- if .herdr.opencode_pure_v2 }}
 .config/opencode/tui.jsonc
+{{- end }}
 
 # pi-distribution moved from Pi's git package store to a checksum-pinned chezmoi
 # external under ~/.pi/agent/packages.

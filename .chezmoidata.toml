@@ -260,3 +260,10 @@ type = "github_release"
 repository = "dj95/zjstatus"
 tag = "v0.25.0"
 asset = "zjstatus.wasm"
+
+[herdr]
+# HerdR's `integration status` still requires the V1-shaped OpenCode TUI
+# registration even for a V2-only install. Set to true once HerdR validates a
+# cli.json-only setup: run_onchange_herdr-integrations.ps1 stops publishing
+# .config/opencode/tui.jsonc and .chezmoiremove deletes the obsolete marker.
+opencode_pure_v2 = false
