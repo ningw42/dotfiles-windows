@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "copilotd-responses/gpt-6.1-sol",
+  "model": "magpie-responses/gpt-6.1-sol",
   "plugins": [
     "-opencode.config.compatibility"
   ],
@@ -9,7 +9,6 @@
     ".agents/skills"
   ],
   "enabled_providers": [
-    "copilotd-responses",
     "magpie-generative-ai",
     "magpie-responses"
   ],
@@ -53,7 +52,65 @@
     }
   },
   "provider": {
-    "copilotd-responses": {
+    "magpie-generative-ai": {
+      "models": {
+        "gemini-4-argon-contributor": {
+          "cost": {
+            "cache_read": 0.2,
+            "input": 4,
+            "output": 20
+          },
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Gemini 4 Argon",
+          "options": {
+            "thinkingConfig": {
+              "includeThoughts": true,
+              "thinkingLevel": "medium"
+            }
+          },
+          "reasoning": true,
+          "variants": {
+            "low": {
+              "thinkingConfig": {
+                "includeThoughts": true,
+                "thinkingLevel": "low"
+              }
+            },
+            "medium": {
+              "thinkingConfig": {
+                "includeThoughts": true,
+                "thinkingLevel": "medium"
+              }
+            },
+            "high": {
+              "thinkingConfig": {
+                "includeThoughts": true,
+                "thinkingLevel": "high"
+              }
+            }
+          }
+        }
+      },
+      "name": "magpie (Generative AI)",
+      "npm": "@ai-sdk/google",
+      "options": {
+        "apiKey": "{env:MAGPIE_API_KEY}",
+        "baseURL": "https://magpie.ningw.net/v1beta"
+      }
+    },
+    "magpie-responses": {
       "models": {
         "gpt-6-luna": {
           "cost": {
@@ -100,7 +157,7 @@
             }
           }
         },
-        "gpt-5.6-sol-fast": {
+        "gpt-5.6-sol": {
           "cost": {
             "cache_read": 0.4,
             "input": 4,
@@ -228,75 +285,7 @@
               "reasoningEffort": "max"
             }
           }
-        }
-      },
-      "name": "copilotd (Responses)",
-      "npm": "@ai-sdk/openai",
-      "options": {
-        "apiKey": "{env:COPILOTD_API_KEY}",
-        "baseURL": "https://copilotd.ningw.net/openai/v1"
-      }
-    },
-    "magpie-generative-ai": {
-      "models": {
-        "gemini-4-argon-contributor": {
-          "cost": {
-            "cache_read": 0.2,
-            "input": 4,
-            "output": 20
-          },
-          "limit": {
-            "context": 1048576,
-            "output": 65536
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "name": "Gemini 4 Argon",
-          "options": {
-            "thinkingConfig": {
-              "includeThoughts": true,
-              "thinkingLevel": "medium"
-            }
-          },
-          "reasoning": true,
-          "variants": {
-            "low": {
-              "thinkingConfig": {
-                "includeThoughts": true,
-                "thinkingLevel": "low"
-              }
-            },
-            "medium": {
-              "thinkingConfig": {
-                "includeThoughts": true,
-                "thinkingLevel": "medium"
-              }
-            },
-            "high": {
-              "thinkingConfig": {
-                "includeThoughts": true,
-                "thinkingLevel": "high"
-              }
-            }
-          }
-        }
-      },
-      "name": "magpie (Generative AI)",
-      "npm": "@ai-sdk/google",
-      "options": {
-        "apiKey": "{env:MAGPIE_API_KEY}",
-        "baseURL": "https://magpie.ningw.net/v1beta"
-      }
-    },
-    "magpie-responses": {
-      "models": {
+        },
         "deepseek-flash": {
           "cost": {
             "cache_read": 0.003,

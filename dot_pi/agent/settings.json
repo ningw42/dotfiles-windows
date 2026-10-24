@@ -1,16 +1,16 @@
 {
   "defaultModel": "gpt-6.1-sol",
-  "defaultProvider": "copilotd-responses",
+  "defaultProvider": "magpie-responses",
   "defaultThinkingLevel": "xhigh",
   "defaultTools": [
     "+powershell",
     "+codemode"
   ],
   "enabledModels": [
-    "copilotd-responses/gpt-6-luna:xhigh",
-    "copilotd-responses/gpt-5.6-sol-fast:xhigh",
-    "copilotd-responses/gpt-6.1-sol:xhigh",
-    "copilotd-responses/gpt-6-astra:xhigh",
+    "magpie-responses/gpt-6-luna:xhigh",
+    "magpie-responses/gpt-5.6-sol:xhigh",
+    "magpie-responses/gpt-6.1-sol:xhigh",
+    "magpie-responses/gpt-6-astra:xhigh",
     "magpie-responses/deepseek-flash:high",
     "magpie-responses/glm-5.3:max",
     "magpie-responses/glm-5.3-flash:max",

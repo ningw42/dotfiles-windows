@@ -1,9 +1,37 @@
 {
   "providers": {
-    "copilotd-responses": {
+    "magpie-generative-ai": {
+      "api": "google-generative-ai",
+      "apiKey": "$MAGPIE_API_KEY",
+      "baseUrl": "https://magpie.ningw.net/v1beta",
+      "models": [
+        {
+          "contextWindow": 1048576,
+          "cost": {
+            "cacheRead": 0.2,
+            "cacheWrite": 0,
+            "input": 4,
+            "output": 20
+          },
+          "id": "gemini-4-argon-contributor",
+          "input": [
+            "text",
+            "image"
+          ],
+          "maxTokens": 65536,
+          "name": "Gemini 4 Argon",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "minimal": null,
+            "off": null
+          }
+        }
+      ]
+    },
+    "magpie-responses": {
       "api": "openai-responses",
-      "apiKey": "$COPILOTD_API_KEY",
-      "baseUrl": "https://copilotd.ningw.net/openai/v1",
+      "apiKey": "$MAGPIE_API_KEY",
+      "baseUrl": "https://magpie.ningw.net/v1",
       "models": [
         {
           "contextWindow": 1000000,
@@ -54,7 +82,7 @@
               }
             ]
           },
-          "id": "gpt-5.6-sol-fast",
+          "id": "gpt-5.6-sol",
           "input": [
             "text",
             "image"
@@ -132,42 +160,7 @@
             "off": null,
             "xhigh": "xhigh"
           }
-        }
-      ]
-    },
-    "magpie-generative-ai": {
-      "api": "google-generative-ai",
-      "apiKey": "$MAGPIE_API_KEY",
-      "baseUrl": "https://magpie.ningw.net/v1beta",
-      "models": [
-        {
-          "contextWindow": 1048576,
-          "cost": {
-            "cacheRead": 0.2,
-            "cacheWrite": 0,
-            "input": 4,
-            "output": 20
-          },
-          "id": "gemini-4-argon-contributor",
-          "input": [
-            "text",
-            "image"
-          ],
-          "maxTokens": 65536,
-          "name": "Gemini 4 Argon",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "minimal": null,
-            "off": null
-          }
-        }
-      ]
-    },
-    "magpie-responses": {
-      "api": "openai-responses",
-      "apiKey": "$MAGPIE_API_KEY",
-      "baseUrl": "https://magpie.ningw.net/v1",
-      "models": [
+        },
         {
           "contextWindow": 1000000,
           "cost": {

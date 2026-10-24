@@ -40,7 +40,7 @@ foreach ($name in @(
   Remove-Item "Env:$name" -ErrorAction SilentlyContinue
 }
 
-# Provider-owned credentials; copilotd is shared by Codex, Pi, and OpenCode.
+# Provider-owned credentials; copilotd remains Codex's provider.
 # Missing fields preserve external keys (unused providers need no secret).
 # Legacy harness-named fields are ignored; no credential aliases or fallbacks.
 {{ range $field, $variable := dict

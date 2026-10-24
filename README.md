@@ -180,10 +180,17 @@ external rather than Nix store paths. MCP comes from Pi's built-in support
 reading `~/.pi/agent/mcp.json`; the retired `pi-mcp-adapter` and its XDG server
 file are not deployed.
 
-Magpie models use `https://magpie.ningw.net`: Responses for DeepSeek and GLM,
-and Google's native Generative AI API for Gemini. Authentication requires
-`MAGPIE_API_KEY`. Add `magpie_api_key` to `secrets.yaml.age` using the procedure
-below to publish it through both the PowerShell profile and persistent user
+Pi and OpenCode use `https://magpie.ningw.net`: Responses for GPT, DeepSeek,
+and GLM, and Google's native Generative AI API for Gemini. Pi's generated
+Explore/Plan agents and all workflow tiers also use `magpie-responses`. GPT-5.6
+Sol sends the bare `gpt-5.6-sol` request ID; Magpie selects Copilot's fast tier
+internally. Both clients keep `gpt-6.1-sol` as their default at `xhigh` effort.
+Codex remains on Copilotd, Copilot CLI uses its native authentication, and Claude
+Code uses subscription authentication.
+
+Magpie authentication requires `MAGPIE_API_KEY`. Add `magpie_api_key` to
+`secrets.yaml.age` using the procedure below to publish it through both the
+PowerShell profile and persistent user
 environment. If that optional secret is absent, the templates preserve any
 externally supplied key; they do not copy credentials from nixfiles' SOPS store.
 Without a key, the Magpie models are configured but unavailable for inference.
@@ -230,20 +237,21 @@ profile and persistent user environment export these optional secret fields:
 
 | Encrypted field | Environment variable | Existing clients |
 | :--- | :--- | :--- |
-| `copilotd_api_key` | `COPILOTD_API_KEY` | Codex, Pi, OpenCode |
+| `copilotd_api_key` | `COPILOTD_API_KEY` | Codex |
+| `magpie_api_key` | `MAGPIE_API_KEY` | Pi, OpenCode |
 
 A present field overrides that provider's environment key. An absent field
 preserves an externally supplied key; without either, the provider cannot
 authenticate. Unused providers need no field. Removing a field does **not** clear
 a previously published provider key: explicitly clear it in both the shell and
 user environment if retiring it. No provider falls back to a generic credential.
-DeepSeek and Magpie retain their existing optional-secret policies.
+DeepSeek retains its existing optional-secret policy.
 
 There are no credential compatibility aliases. The legacy fields `codex_api_key`,
 `pi_api_key`, and `opencode_api_key` are ignored; `CODEX_API_KEY`, `PI_API_KEY`, and
 `OPENCODE_API_KEY` are unconditionally cleared in both export paths, even if those
-fields remain in the encrypted store. OpenCode uses the provider-owned
-`copilotd_api_key`, not an OpenCode-specific secret.
+fields remain in the encrypted store. Pi and OpenCode use the provider-owned
+`magpie_api_key`, not harness-specific secrets.
 
 LiteLLM, Router Maestro, and Copilot Proxy are retired: their Codex
 registrations and choices are removed, their secret fields are ignored, and
