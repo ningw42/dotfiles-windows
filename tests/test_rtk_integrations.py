@@ -89,10 +89,18 @@ class CodexRtkConfigTests(unittest.TestCase):
                 trust[f"{hook_path}:session_start:0:0"]["trusted_hash"],
                 "sha256:06548a65d143720b4561305061a21564fd877484854338649a2f447e27994852",
             )
-            self.assertIn(
-                "herdr-agent-state.ps1",
-                hooks["SessionStart"][0]["hooks"][0]["command"],
-            )
+            # The trust hash is tied to this reviewed definition, not merely
+            # the script filename. Changes require a new native hooks/list hash.
+            self.assertEqual(hooks["SessionStart"], [{
+                "hooks": [{
+                    "type": "command",
+                    "command": (
+                        "pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass "
+                        f'-File "{home.as_posix()}/.codex/herdr-agent-state.ps1" session'
+                    ),
+                    "timeout": 10,
+                }],
+            }])
             self.assertTrue(settings["features"]["hooks"])
             self.assertEqual(settings["model_provider"], "copilotd")
             self.assertEqual(

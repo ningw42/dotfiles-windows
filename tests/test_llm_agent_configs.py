@@ -14,13 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 CHEZMOI = shutil.which("chezmoi")
 POWERSHELL = shutil.which("pwsh")
 USER_SKILLS = {
-    "close-code-review",
-    "develop-and-squash",
-    "develop-and-submit-pr",
-    "simplification-review",
-    "subagent-parity",
-    "subagent-unlimited-turns",
-    "traceability",
+    path.parent.name for path in (REPO_ROOT / "dot_agents/skills").glob("*/SKILL.md")
 }
 GPT_MODELS = [
     "gpt-6-luna",
@@ -171,6 +165,56 @@ class CodexProviderRoutingTests(unittest.TestCase):
         self.assertEqual(config["data"]["codex_provider"], "copilotd")
 
 
+@unittest.skipUnless(CHEZMOI, "chezmoi is required for real template rendering")
+class ClaudeConfigTests(unittest.TestCase):
+    def test_subscription_auth_and_model_effort(self):
+        with tempfile.TemporaryDirectory(prefix="claude-config-render-") as temporary:
+            root = Path(temporary)
+            source = root / "source"
+            source.mkdir()
+            home = root / "home"
+            home.mkdir()
+            config = root / "chezmoi.json"
+            config.write_text("{}", encoding="utf-8")
+            result = subprocess.run(
+                [
+                    CHEZMOI, "execute-template", "--config", str(config),
+                    "--source", str(source), "--destination", str(home),
+                    "--persistent-state", str(root / "state.boltdb"),
+                    "--cache", str(root / "cache"), "--no-tty", "--no-pager",
+                    "--refresh-externals=never", "--override-data",
+                    json.dumps({
+                        "chezmoi": {"homeDir": str(home)},
+                        "agent_skills": {"sources": {}},
+                    }),
+                ],
+                input=(REPO_ROOT / "dot_claude/settings.json.tmpl").read_text("utf-8"),
+                capture_output=True, text=True, encoding="utf-8", timeout=30,
+                env={
+                    key: value for key, value in os.environ.items()
+                    if not key.upper().startswith("CHEZMOI_")
+                },
+                cwd=root,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            settings = json.loads(result.stdout)
+
+        self.assertNotIn("apiKeyHelper", settings)
+        for key in (
+            "ANTHROPIC_API_KEY",
+            "ANTHROPIC_AUTH_TOKEN",
+            "ANTHROPIC_BASE_URL",
+            "ANTHROPIC_MODEL",
+            "ANTHROPIC_DEFAULT_OPUS_MODEL",
+            "ANTHROPIC_DEFAULT_SONNET_MODEL",
+            "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+            "ANTHROPIC_DEFAULT_FABLE_MODEL",
+        ):
+            with self.subTest(key=key):
+                self.assertNotIn(key, settings["env"])
+        self.assertEqual(settings["modelSettings"]["claude-opus-5-5"]["effortLevel"], "xhigh")
+
+
 class ModelCatalogTests(unittest.TestCase):
     def test_opencode_catalog_and_policy_match_nixfiles_projection(self):
         config = load_opencode_config()
@@ -186,7 +230,7 @@ class ModelCatalogTests(unittest.TestCase):
             config["enabled_providers"],
             ["magpie-generative-ai", "magpie-responses"],
         )
-        self.assertEqual(set(config["permission"]["skill"]), USER_SKILLS)
+        self.assertEqual(config["permission"]["skill"], {name: "deny" for name in USER_SKILLS})
 
         providers = config["provider"]
         self.assertEqual(set(providers), {"magpie-generative-ai", "magpie-responses"})
@@ -403,8 +447,8 @@ class ModelCatalogTests(unittest.TestCase):
 
 class PiRuntimeConfigTests(unittest.TestCase):
     def test_pi_builtin_mcp_replaces_the_retired_adapter(self):
-        # Pi 1.3 serves the shared remote servers natively; pi-distribution no
-        # longer bundles the adapter that used to own them.
+        # Built-in MCP reads the shared server configuration; the retired
+        # adapter must not introduce a second owner.
         self.assertFalse((REPO_ROOT / "dot_config/mcp/readonly_mcp.json").exists())
         removals = (REPO_ROOT / ".chezmoiremove").read_text(encoding="utf-8").splitlines()
         self.assertIn(".config/mcp/mcp.json", removals)
@@ -432,7 +476,7 @@ class PiRuntimeConfigTests(unittest.TestCase):
         settings = load_json("dot_pi/agent/settings.json")
         self.assertEqual(settings["quietStartup"], "header")
         # Built-in MCP owns the shared servers, so nothing may exclude it.
-        self.assertNotIn("extensions", settings)
+        self.assertNotIn("-builtin:mcp", settings.get("extensions", []))
         self.assertTrue(settings["hideThinkingBlock"])
         self.assertTrue(settings["showCacheMissNotices"])
         self.assertFalse(settings["showHardwareCursor"])
@@ -492,9 +536,6 @@ class AgentDefaultTests(unittest.TestCase):
         codex = (REPO_ROOT / "dot_codex/config.toml.tmpl").read_text(
             encoding="utf-8"
         )
-        claude = (REPO_ROOT / "dot_claude/settings.json.tmpl").read_text(
-            encoding="utf-8"
-        )
         profile = (
             REPO_ROOT
             / "readonly_Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl"
@@ -504,11 +545,10 @@ class AgentDefaultTests(unittest.TestCase):
         self.assertEqual(pi["defaultModel"], "gpt-6.1-sol")
         self.assertEqual(copilot["model"], "gpt-6.1-sol")
         self.assertRegex(codex, r'(?m)^model = "gpt-6\.1-sol"$')
-        self.assertIn('"claude-opus-5-5"', claude)
-        self.assertNotIn("ANTHROPIC_BASE_URL", claude)
         self.assertIn('claude --model "claude-opus-5-5[1m]"', profile)
 
     def test_opencode_human_only_commands_cover_every_local_skill(self):
+        self.assertTrue(USER_SKILLS, "no repo-authored skills found")
         command_dir = REPO_ROOT / "dot_config/opencode/commands"
         command_names = {path.name.removesuffix(".md.tmpl") for path in command_dir.iterdir()}
         self.assertEqual(command_names, USER_SKILLS)

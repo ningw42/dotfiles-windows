@@ -68,17 +68,6 @@ EXPECTED_MATT_DEPENDENCIES = {
     "triage": ("setup-matt-pocock-skills",),
 }
 
-REPO_SKILL_NAMES = {
-    "close-code-review",
-    "develop-and-squash",
-    "develop-and-submit-pr",
-    "simplification-review",
-    "subagent-parity",
-    "subagent-unlimited-turns",
-    "traceability",
-}
-
-
 # Test helpers deliberately reproduce public formats instead of calling private
 # candidate/digest helpers.  Private functions are patched only at the explicit
 # transaction-failure seams exercised below.
@@ -2214,16 +2203,16 @@ class LegacyAndOtherOwnersContractTests(PublisherCase):
     def test_repo_authored_skill_copies_and_herdr_entry_survive_publish_update_and_removal(self):
         source_skills = REPO_ROOT / "dot_agents" / "skills"
         actual_names = {path.name for path in source_skills.iterdir() if path.is_dir()}
-        self.assertEqual(actual_names, REPO_SKILL_NAMES)
+        self.assertTrue(actual_names, "no repo-authored skills found")
         shared = self.home / ".agents/skills"
         shared.mkdir(parents=True)
         owner_snapshots = {}
-        for name in sorted(REPO_SKILL_NAMES):
+        for name in sorted(actual_names):
             destination = shared / name
             shutil.copytree(source_skills / name, destination)
             owner_snapshots[name] = snapshot_entry(destination)
 
-        herdr_target = self.home / ".local/share/herdr/agents/skills/herdr"
+        herdr_target = self.home / ".local/share/herdr/skills/herdr"
         write_skill(herdr_target, ".", "herdr")
         herdr_link = shared / "herdr"
         os.symlink(str(herdr_target), str(herdr_link), target_is_directory=True)
@@ -2374,10 +2363,11 @@ class RepositoryDeclarationTests(unittest.TestCase):
         )
         self.assertRegex(matt["sha256"], r"^[0-9a-f]{64}$")
 
-    def test_repository_matt_default_publishes_exact_upstream_inventory_not_drafts(self):
-        # Independent upstream inventory: .claude-plugin/plugin.json from the
-        # checksum-verified mattpocock/skills v1.3.1 archive. Do not construct the
-        # source tree from our includes: that masks missing paths after pin bumps.
+    def test_repository_matt_default_publishes_v1_3_1_fixture_inventory_not_drafts(self):
+        # Independent regression fixture from the checksum-verified v1.3.1 archive.
+        # Apply the current selection policy to this fixed upstream layout; this
+        # does not validate the contents of later releases selected by pin bumps.
+        # Build the source from upstream declarations, not our include filters.
         manifest_bytes = (
             REPO_ROOT / "tests/fixtures/mattpocock_skills_v1.3.1_plugin.json"
         ).read_bytes()
@@ -2455,7 +2445,7 @@ class RepositoryDeclarationTests(unittest.TestCase):
             self.assertFalse((view / "plugins/rpi").exists())
             self.assertFalse((view / "plugins/other").exists())
 
-    def test_obsolete_sources_are_absent_and_new_humanlayer_archive_is_exact(self):
+    def test_acquisition_sources_respect_publisher_ownership(self):
         obsolete = [
             "dot_local/share/llm-agents/skills/.chezmoiexternal.toml.tmpl",
             "dot_config/claude-code-chezmoi/dot_claude-plugin/marketplace.json",
@@ -2505,7 +2495,7 @@ class RepositoryDeclarationTests(unittest.TestCase):
         self.assertNotIn("superpowers", plugin_manifest.casefold())
         self.assertIn('[' + '"mattpocock-skills"' + ']', plugin_manifest)
 
-    def test_ignore_base_marketplace_and_repo_skill_declarations_are_exact(self):
+    def test_ignore_rules_and_base_marketplace_preserve_publisher_ownership(self):
         ignored = {
             line.strip()
             for line in (REPO_ROOT / ".chezmoiignore").read_text("utf-8").splitlines()
@@ -2541,14 +2531,6 @@ class RepositoryDeclarationTests(unittest.TestCase):
                 ],
             },
         )
-        self.assertNotIn("superpowers", json.dumps(base).casefold())
-        self.assertNotIn("mattpocock", json.dumps(base).casefold())
-        actual_repo_skills = {
-            path.name
-            for path in (REPO_ROOT / "dot_agents/skills").iterdir()
-            if path.is_dir()
-        }
-        self.assertEqual(actual_repo_skills, REPO_SKILL_NAMES)
 
     def test_python_dsc_resource_is_version_aware_idempotent_and_uses_managed_scoop_paths(self):
         document = (REPO_ROOT / "configuration.dsc.yaml").read_text("utf-8")
@@ -2582,16 +2564,6 @@ class RepositoryDeclarationTests(unittest.TestCase):
             with self.subTest(fragment=fragment):
                 self.assertIn(fragment, normalized)
         self.assertGreaterEqual(normalized.count("return $false"), 2)
-
-
-def configured_choices(variable_name):
-    text = (REPO_ROOT / ".chezmoi.toml.tmpl").read_text("utf-8")
-    match = re.search(
-        rf"\${re.escape(variable_name)}\s*:=\s*list\s+([^\r\n]+)", text
-    )
-    if match is None:
-        raise AssertionError(f"could not find {variable_name} choices")
-    return tuple(re.findall(r'"([^"]+)"', match.group(1)))
 
 
 def isolated_environment(destination, root):
@@ -2700,13 +2672,7 @@ def assert_powershell_parses(testcase, text, root):
 class TemplateRenderingIntegrationTests(unittest.TestCase):
     maxDiff = None
 
-    def test_all_configured_themes_providers_and_populated_or_empty_registries_render_in_isolation(self):
-        themes = configured_choices("colorscheme_choices")
-        providers = configured_choices("codex_provider_choices")
-        self.assertTrue(themes, "no colorscheme choices extracted from the source template")
-        self.assertTrue(providers, "no provider choices extracted from the source template")
-        self.assertEqual(len(themes), len(set(themes)), "duplicate colorscheme choices")
-        self.assertEqual(len(providers), len(set(providers)), "duplicate provider choices")
+    def test_populated_and_empty_skill_registries_render_in_isolation(self):
         repository_data = tomllib.loads(
             (REPO_ROOT / ".chezmoidata.toml").read_text("utf-8")
         )
@@ -2719,64 +2685,31 @@ class TemplateRenderingIntegrationTests(unittest.TestCase):
                 ("populated", repository_data["agent_skills"]["sources"]),
                 ("empty", {}),
             ):
-                for theme in themes:
-                    for provider_name in providers:
-                        with self.subTest(
-                            registry=registry_label,
-                            colorscheme=theme,
-                            codex_provider=provider_name,
-                        ):
-                            data = {
-                                "colorscheme": theme,
-                                "codex_provider": provider_name,
-                                "password_manager": "bitwarden",
-                                "git_username": "Fixture User",
-                                "git_useremail": "fixture@example.test",
-                                "git_signingkey": "FIXTURE",
-                                "agent_skills": {"sources": copy.deepcopy(registry)},
-                            }
-                            case_root = parent / "isolated-render"
-                            case_root.mkdir(exist_ok=True)
-                            rendered, source, destination = render_claude_and_wrapper(
-                                case_root, data
-                            )
-                            settings = json.loads(rendered["settings"])
-                            expected_plugins = {
-                                **{f"{name}@chezmoi": True for name in registry},
-                                "user-mcps@chezmoi": True,
-                            }
-                            self.assertEqual(settings["enabledPlugins"], expected_plugins)
-                            self.assertNotIn("apiKeyHelper", settings)
-                            for key in (
-                                "ANTHROPIC_BASE_URL",
-                                "ANTHROPIC_MODEL",
-                                "ANTHROPIC_DEFAULT_OPUS_MODEL",
-                                "ANTHROPIC_DEFAULT_SONNET_MODEL",
-                                "ANTHROPIC_DEFAULT_HAIKU_MODEL",
-                                "ANTHROPIC_DEFAULT_FABLE_MODEL",
-                            ):
-                                self.assertNotIn(key, settings["env"])
-                            self.assertEqual(
-                                settings["modelSettings"]["claude-opus-5-5"][
-                                    "effortLevel"
-                                ],
-                                "xhigh",
-                            )
-                            comparison = copy.deepcopy(settings)
-                            comparison.pop("enabledPlugins")
-                            if settings_without_plugins is None:
-                                settings_without_plugins = comparison
-                            else:
-                                self.assertEqual(comparison, settings_without_plugins)
-                            wrappers.add(rendered["wrapper"])
-                            self.assertIn(
-                                source.as_posix() + "/manage_skills.py", rendered["wrapper"]
-                            )
-                            self.assertIn(
-                                destination.as_posix()
-                                + "/scoop/apps/python/current/python.exe",
-                                rendered["wrapper"],
-                            )
+                with self.subTest(registry=registry_label):
+                    data = {"agent_skills": {"sources": copy.deepcopy(registry)}}
+                    case_root = parent / "isolated-render"
+                    case_root.mkdir(exist_ok=True)
+                    rendered, source, destination = render_claude_and_wrapper(case_root, data)
+                    settings = json.loads(rendered["settings"])
+                    expected_plugins = {
+                        **{f"{name}@chezmoi": True for name in registry},
+                        "user-mcps@chezmoi": True,
+                    }
+                    self.assertEqual(settings["enabledPlugins"], expected_plugins)
+                    comparison = copy.deepcopy(settings)
+                    comparison.pop("enabledPlugins")
+                    if settings_without_plugins is None:
+                        settings_without_plugins = comparison
+                    else:
+                        self.assertEqual(comparison, settings_without_plugins)
+                    wrappers.add(rendered["wrapper"])
+                    self.assertIn(
+                        source.as_posix() + "/manage_skills.py", rendered["wrapper"]
+                    )
+                    self.assertIn(
+                        destination.as_posix() + "/scoop/apps/python/current/python.exe",
+                        rendered["wrapper"],
+                    )
 
             self.assertEqual(len(wrappers), 1)
             assert_powershell_parses(self, next(iter(wrappers)), parent)

@@ -1,7 +1,4 @@
 {
-  "baseline_commit": "0608f32e9b858f4e1b92b8285205d83a14fb69ce",
-  "baseline_renderer": "chezmoi version v2.72.2, commit 125d00fe730fc9abf456ec312ba85b18c859bc50, built at 2026-09-13T18:23:26Z, built by goreleaser",
-  "baseline_platform": "windows/amd64",
   "by_theme": {
     "catppuccin-latte": {
       "AppData/Local/glow/Config/.chezmoiexternal.toml": {
@@ -127,14 +124,6 @@
           "stripComponents": 1,
           "exact": true,
           "pin": "humanlayer_skills"
-        }
-      },
-      "dot_pi/agent/packages/.chezmoiexternal.toml": {
-        "pi-distribution": {
-          "type": "archive",
-          "stripComponents": 1,
-          "exact": true,
-          "pin": "pi_distribution_windows_x64"
         }
       },
       "scoop/persist/btop/themes/.chezmoiexternal.toml": {
@@ -270,14 +259,6 @@
           "pin": "humanlayer_skills"
         }
       },
-      "dot_pi/agent/packages/.chezmoiexternal.toml": {
-        "pi-distribution": {
-          "type": "archive",
-          "stripComponents": 1,
-          "exact": true,
-          "pin": "pi_distribution_windows_x64"
-        }
-      },
       "scoop/persist/btop/themes/.chezmoiexternal.toml": {
         "catppuccin_frappe.theme": {
           "type": "file",
@@ -409,14 +390,6 @@
           "stripComponents": 1,
           "exact": true,
           "pin": "humanlayer_skills"
-        }
-      },
-      "dot_pi/agent/packages/.chezmoiexternal.toml": {
-        "pi-distribution": {
-          "type": "archive",
-          "stripComponents": 1,
-          "exact": true,
-          "pin": "pi_distribution_windows_x64"
         }
       },
       "scoop/persist/btop/themes/.chezmoiexternal.toml": {
@@ -552,14 +525,6 @@
           "pin": "humanlayer_skills"
         }
       },
-      "dot_pi/agent/packages/.chezmoiexternal.toml": {
-        "pi-distribution": {
-          "type": "archive",
-          "stripComponents": 1,
-          "exact": true,
-          "pin": "pi_distribution_windows_x64"
-        }
-      },
       "scoop/persist/btop/themes/.chezmoiexternal.toml": {
         "catppuccin_mocha.theme": {
           "type": "file",
@@ -668,14 +633,6 @@
           "pin": "humanlayer_skills"
         }
       },
-      "dot_pi/agent/packages/.chezmoiexternal.toml": {
-        "pi-distribution": {
-          "type": "archive",
-          "stripComponents": 1,
-          "exact": true,
-          "pin": "pi_distribution_windows_x64"
-        }
-      },
       "scoop/persist/btop/themes/.chezmoiexternal.toml": {}
     },
     "everforest-dark": {
@@ -775,14 +732,6 @@
           "pin": "humanlayer_skills"
         }
       },
-      "dot_pi/agent/packages/.chezmoiexternal.toml": {
-        "pi-distribution": {
-          "type": "archive",
-          "stripComponents": 1,
-          "exact": true,
-          "pin": "pi_distribution_windows_x64"
-        }
-      },
       "scoop/persist/btop/themes/.chezmoiexternal.toml": {}
     },
     "unknown-theme": {
@@ -868,14 +817,6 @@
           "pin": "humanlayer_skills"
         }
       },
-      "dot_pi/agent/packages/.chezmoiexternal.toml": {
-        "pi-distribution": {
-          "type": "archive",
-          "stripComponents": 1,
-          "exact": true,
-          "pin": "pi_distribution_windows_x64"
-        }
-      },
       "scoop/persist/btop/themes/.chezmoiexternal.toml": {}
     }
   },
@@ -899,6 +840,5 @@
     "linux/amd64": {},
     "linux/386": {},
     "darwin/arm64": {}
-  },
-  "pin_binding_note": "Exact legacy URL/SHA/type/target/options parity passed before binding each payload to its normalized pin ID. Pin values now follow .chezmoidata.toml; deployment layout stays frozen."
+  }
 }

@@ -16,9 +16,13 @@ chezmoi init github.com/ningw42/dotfiles-windows
 winget configure -f ~/.local/share/chezmoi/configuration.dsc.yaml
 ```
 
-Place the age identity at `~/.config/chezmoi/key.txt`, then render the dotfiles:
+Place the age identity at `~/.config/chezmoi/key.txt`, then preview and deploy the
+dotfiles. Existing installations that predate the shared-skill publisher or
+provider-owned credentials must complete the [legacy handoff](docs/legacy-migrations.md)
+first:
 
 ```powershell
+chezmoi diff
 chezmoi apply
 ```
 
@@ -36,7 +40,8 @@ choices.
   shared MCP/skills infrastructure, release-matched HerdR integrations, and a
   Claude/Copilot status line.
 - **Bootstrap:** `configuration.dsc.yaml` installs Scoop packages, WinGet apps,
-  PowerShell modules, and per-user fonts.
+  PowerShell modules, and per-user fonts. WinGet resources request the latest
+  available manifest version; WezTerm uses the nightly channel.
 
 Five colorschemes are available: Catppuccin Latte, Frappé, Macchiato, and Mocha,
 plus Gruvbox Dark. Templates and checksum-pinned chezmoi externals keep themes in
@@ -76,13 +81,12 @@ default discovery also retains licenses, conventional plugin support directories
 agent/style/hook resources. Unrelated repository metadata and installers are not
 implicitly imported. Selected links/reparse points are refused, not followed.
 
-Matt Pocock intentionally has **no filters**: its pinned v1.3.1 plugin declares
-27 skills, including `implement-spec`, `pr`, and `retro`; unlisted in-progress
-and misc skills stay out. New upstream declarations become available on a reviewed
-pin refresh without a separate allowlist edit. HumanLayer intentionally retains
-`include = ["plugins/show-me/skills/show-me", "LICENSE"]`: this filtered source
-remains show-me-only, not the whole seven-plugin marketplace. Review intentionally
-filtered sources separately when widening their scope.
+Matt Pocock intentionally has **no filters**: the pinned root plugin manifest
+defines the selection; unlisted skills stay out. New upstream declarations become
+available on a reviewed pin refresh without a separate allowlist edit. HumanLayer
+intentionally retains `include = ["plugins/show-me/skills/show-me", "LICENSE"]`:
+this filtered source remains show-me-only, not the whole marketplace. Review
+intentionally filtered sources separately when widening their scope.
 
 Each configured source keeps its existing generated plugin name and output path.
 An unfiltered marketplace source bundles declared plugins under their original
@@ -106,8 +110,8 @@ and Claude's plugin registry/cache keep their existing owners. A lock serializes
 writers, and foreign or modified outputs are refused rather than adopted. Plugin
 versions are derived from selected bytes, executable bits, normalized metadata,
 and filters, so support-file changes invalidate Claude's cache while a root
-plugin's upstream version field or an unselected file does not. Publication never activates plugins;
-after it succeeds, use native Claude commands to refresh the `chezmoi`
+plugin's upstream version field or an unselected file does not. Publication never
+activates plugins; after it succeeds, use native Claude commands to refresh the `chezmoi`
 marketplace and install or update its plugins.
 
 A leftover `.skill-publisher-work` means a transaction or cleanup was interrupted.
@@ -117,59 +121,40 @@ force adoption. Caught pre-commit failures normally restore the previous state,
 but process termination is not automatically recoverable and concurrent readers
 do not receive an atomic multi-file snapshot.
 
-### Human-run deployment and legacy handoff
+### Deployment
 
-Choose the procedure only after inspecting the deployment home:
+`chezmoi apply` runs the publisher after acquiring the configured snapshots.
+For pre-publisher installations, complete the
+[human-only legacy handoff](docs/legacy-migrations.md#shared-skills-publisher)
+first. Keep an existing receipt and validate its recorded outputs; stop competing
+applies before switching checkouts.
 
-1. **Clean installation:** there are no old links, plugin archive links, or static
-   marketplace to remove. If a publisher receipt already exists, first validate
-   its schema, recorded digests, links, and marketplace. A receipt identifies
-   content rather than this repository; obtain an explicit ownership decision
-   before using it from another checkout, and stop competing applies.
-2. **Legacy installation:** close agent sessions. Back up and remove only Matt
-   shared-skill links whose targets are skills declared by the old Matt plugin
-   manifest. Remove `.agents/skills/show-me` only when it is a directory symlink
-   whose target is exactly `.local/share/llm-agents/skills/show-me` under that
-   deployment home. A regular directory, relative link, or unexpected target
-   requires inspection. Delete links themselves, never their target trees.
-3. Preserve the Matt archive, every local skill, HerdR links, and unrelated
-   entries. Copy any custom fixed marketplace entries into
-   `marketplace-base.json`, then back up and remove the old static live
-   marketplace plus only the verified `plugins/mattpocock-skills` and
-   `plugins/superpowers` directory links. Keep `plugins/user-mcps`, Claude
-   registries, and caches.
-4. Inspect and manually retire the unused Superpowers archive and old standalone
-   `show-me` backing directory. The old `SKILL.md` must hash to
-   `bea6da70a58096730b9aeb0bae293ddf4726103a98efc9ce13c481619942a810`.
-   Preserve modified or extra files for review, and never remove the whole
-   `.local/share/llm-agents/skills` parent.
-5. Explicitly select this checkout. Acquire externals without lifecycle scripts,
-   preview the publisher, and inspect the complete diff before an authorized
-   apply (replace `$source` with the checkout path):
+To preview publication separately, explicitly select the checkout and acquire
+externals without lifecycle scripts (replace `$source` with the checkout path):
 
-   ```powershell
-   chezmoi --source $source --refresh-externals=always apply --include=externals
-   & "$HOME/scoop/apps/python/current/python.exe" -X utf8 "$source/manage_skills.py" --home $HOME --dry-run
-   chezmoi --source $source --refresh-externals=never diff
-   # Human approval boundary:
-   chezmoi --source $source --refresh-externals=never apply
-   ```
+```powershell
+chezmoi --source $source --refresh-externals=always apply --include=externals
+& "$HOME/scoop/apps/python/current/python.exe" -X utf8 "$source/manage_skills.py" --home $HOME --dry-run
+chezmoi --source $source --refresh-externals=never diff
+# Human approval boundary:
+chezmoi --source $source --refresh-externals=never apply
+```
 
-   A scripted apply that can touch Pi settings uses `--force`. The externals-only
-   apply above deliberately excludes lifecycle scripts; it is acquisition, not
-   authorization to publish or migrate.
-6. Refresh Claude through its native interface, preserving unrelated plugins:
+A scripted apply that can touch pi settings uses `--force`. The externals-only
+apply deliberately excludes lifecycle scripts; it is acquisition, not
+authorization to publish or migrate.
 
-   ```powershell
-   claude plugin marketplace update chezmoi
-   claude plugin uninstall superpowers@chezmoi
-   claude plugin update mattpocock-skills@chezmoi --scope user
-   claude plugin install humanlayer@chezmoi --scope user
-   ```
+After publication, refresh Claude through its native interface:
 
-   Inspect and remove any older remotely installed Superpowers plugin separately
-   through Claude's CLI. Restart or reload agents after publication and cache
-   changes.
+```powershell
+claude plugin marketplace update chezmoi
+claude plugin install mattpocock-skills@chezmoi --scope user
+claude plugin install humanlayer@chezmoi --scope user
+```
+
+Use `claude plugin update` instead of `install` for plugins already installed.
+Preserve unrelated plugins, and restart or reload agents after publication and
+cache changes.
 
 ## Pi
 
@@ -177,22 +162,22 @@ Choose the procedure only after inspecting the deployment home:
 catalog, extension preferences, subagent/task defaults, and workflow routes.
 Windows keeps PowerShell enabled and uses the checksum-pinned `pi-distribution`
 external rather than Nix store paths. MCP comes from Pi's built-in support
-reading `~/.pi/agent/mcp.json`; the retired `pi-mcp-adapter` and its XDG server
-file are not deployed.
+reading the repo-managed `~/.pi/agent/mcp.json`.
 
 Pi and OpenCode use `https://magpie.ningw.net`: Responses for GPT, DeepSeek,
 and GLM, and Google's native Generative AI API for Gemini. Pi's generated
 Explore/Plan agents and all workflow tiers also use `magpie-responses`. GPT-5.6
 Sol sends the bare `gpt-5.6-sol` request ID; Magpie selects Copilot's fast tier
-internally. Both clients keep `gpt-6.1-sol` as their default at `xhigh` effort.
-Codex remains on Copilotd, Copilot CLI uses its native authentication, and Claude
-Code uses subscription authentication.
+internally. Current defaults and model catalogs live in
+`dot_pi/agent/{settings,models}.json` and
+`dot_config/opencode/opencode.json.tmpl`. Codex remains on Copilotd, Copilot CLI
+uses its native authentication, and Claude Code uses subscription authentication.
 
 Magpie authentication requires `MAGPIE_API_KEY`. Add `magpie_api_key` to
 `secrets.yaml.age` using the procedure below to publish it through both the
-PowerShell profile and persistent user
-environment. If that optional secret is absent, the templates preserve any
-externally supplied key; they do not copy credentials from nixfiles' SOPS store.
+PowerShell profile and persistent user environment. If that optional secret is
+absent, the templates preserve any externally supplied key; they do not copy
+credentials from nixfiles' SOPS store.
 Without a key, the Magpie models are configured but unavailable for inference.
 
 DeepSeek Flash uses the bare `deepseek-flash` ID through Magpie's Responses
@@ -245,30 +230,15 @@ preserves an externally supplied key; without either, the provider cannot
 authenticate. Unused providers need no field. Removing a field does **not** clear
 a previously published provider key: explicitly clear it in both the shell and
 user environment if retiring it. No provider falls back to a generic credential.
-DeepSeek retains its existing optional-secret policy.
+DeepSeek differs: an absent `deepseek_api_key` clears `DEEPSEEK_API_KEY` in both
+export paths; a present field exports it for other clients. The PowerShell `pi`
+launcher masks it only for the child process, as described above.
 
-There are no credential compatibility aliases. The legacy fields `codex_api_key`,
-`pi_api_key`, and `opencode_api_key` are ignored; `CODEX_API_KEY`, `PI_API_KEY`, and
-`OPENCODE_API_KEY` are unconditionally cleared in both export paths, even if those
-fields remain in the encrypted store. Pi and OpenCode use the provider-owned
-`magpie_api_key`, not harness-specific secrets.
-
-LiteLLM, Router Maestro, and Copilot Proxy are retired: their Codex
-registrations and choices are removed, their secret fields are ignored, and
-`LITELLM_API_KEY`, `ROUTER_MAESTRO_API_KEY`, and `COPILOT_PROXY_API_KEY` are cleared
-in both export paths. Do not provision `litellm_api_key`, `router_maestro_api_key`,
-or `copilot_proxy_api_key`; remove any leftover fields when editing the encrypted
-store. The unused local Agent Maestro registration is also removed. Codex's
-managed provider remains `copilotd`; saved retired selections stop rendering with
-an instruction to use `chezmoi edit-config` to select it, never silently rerouting
-requests. Running processes retain their inherited environments until restarted.
-
-Before the first apply of the provider-key migration, move the copilotd
-credential from `pi_api_key` to `copilotd_api_key` if needed, then remove the
-legacy fields. Do not migrate retired LiteLLM credentials to copilotd or assume
-that harness-named credentials are interchangeable. Check the intended service
-before overwriting a provider key. Re-encrypt the store and privately review
-`chezmoi diff` before applying; no key rotation is required.
+Retired harness-specific credentials and provider keys are ignored and their
+environment variables are cleared in both export paths. For the exact retired
+names and safe credential handoff, see
+[provider-key migration](docs/legacy-migrations.md#provider-owned-credentials).
+Running processes retain their inherited environments until restarted.
 
 ## Maintenance
 
@@ -276,7 +246,7 @@ before overwriting a provider key. Re-encrypt the store and privately review
 chezmoi diff                              # preview rendered changes
 chezmoi apply                             # deploy them
 python update_externals.py --dry-run      # check external pins and checksums
-python -m unittest discover -s tests      # test the updater
+python -B -m unittest discover -s tests    # run the repository test suite
 python dot_config/statusline/statusline.py test
 ```
 
@@ -307,6 +277,17 @@ its checksum is bumped. A plain diff can then report a SHA-256 mismatch even whe
 fresh upstream bytes match the pin. Refresh the cache rather than replacing the
 reviewed checksum with the stale cached content's hash. This does not deploy files.
 
-The tests cover the updater with mocked HTTP and compare real chezmoi-rendered
-manifests against a pre-refactor deployment baseline. Rendering tests use isolated
-temporary config/state and skip explicitly if chezmoi is unavailable.
+The repository suite covers external updates and rendered manifests, shared-skill
+publication and rollback, agent/provider configuration, PowerShell launch and
+environment behavior, HerdR/RTK ownership, and Lazygit diff routing. The statusline
+has a separate in-file suite, invoked above.
+
+Use Python 3.11+ for the repository suite. Full validation needs Windows, chezmoi,
+PowerShell, Node.js, RTK, Claude CLI, and directory-symlink support. Missing tools
+or platforms cause explicit skips; check the summary before treating a run as
+full validation. Native Claude acceptance fails rather than skips if its CLI is
+available but symlinks cannot be created. Tests use temporary homes and stubbed
+services rather than deploying to the real home or calling upstream APIs. The manifest fixture records reviewed targets, extraction options, and pin
+IDs across theme/platform cases; pin values come from current `.chezmoidata.toml`.
+Review that fixture when intentionally changing deployment layout, not for
+ordinary pin refreshes.

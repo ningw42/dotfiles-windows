@@ -33,9 +33,9 @@ renders into `$HOME`; they are not the deployed files themselves.
 ```powershell
 chezmoi diff                       # preview all rendered changes
 chezmoi apply                      # deploy interactively
-chezmoi cat ~/.gitconfig                 # render one managed target
+chezmoi cat ~/.gitconfig           # render one managed target
 Get-Content -Raw f.tmpl | chezmoi execute-template
-chezmoi doctor                           # check the environment
+chezmoi doctor                     # check the environment
 chezmoi ignored                    # inspect ignored targets
 ```
 
@@ -56,8 +56,8 @@ Automated or agent-driven applies that may touch pi must use
 | `.chezmoiscripts/run_after_*` | Run after each apply |
 | `*.age` | Age-encrypted source |
 
-`.chezmoi.toml.tmpl` is the source of truth for prompted data, provider choices,
-and the derived Claude Code base URL. Do not duplicate those lists elsewhere.
+`.chezmoi.toml.tmpl` is the source of truth for prompted data and Codex provider
+choices. Claude Code uses subscription authentication, not a templated base URL.
 `.chezmoidata.toml` holds pinned external-release metadata. Templates load
 secrets with `include "secrets.yaml.age" | decrypt | fromYaml`; referencing an
 undeclared data variable makes apply fail.
@@ -124,7 +124,7 @@ Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
 - Keep shared MCP server definitions aligned in `dot_codex/config.toml.tmpl`,
   `dot_copilot/mcp-config.json`, `dot_config/opencode/opencode.json.tmpl`,
   `dot_config/claude-code-chezmoi/plugins/user-mcps/dot_mcp.json`, and pi's
-  `dot_pi/agent/readonly_mcp.json`, which Pi's built-in MCP owns. Copilot
+  `dot_pi/agent/readonly_mcp.json`, which Pi's built-in MCP reads. Copilot
   intentionally omits GitHub.
 - `dot_config/statusline/statusline.py` serves Claude Code and Copilot via the
   `claude` and `copilot` dispatch arguments.
@@ -137,7 +137,8 @@ Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
   explicit include stays nonempty, and exclude wins. Matt follows its upstream
   manifest; HumanLayer intentionally remains show-me-only. The publisher never
   adopts foreign outputs. See README's shared-skills section for selection,
-  recovery, deployment, and the human-only legacy handoff.
+  recovery, and deployment. For pre-publisher installations, follow the
+  [human-only legacy handoff](docs/legacy-migrations.md#shared-skills-publisher).
 - `.chezmoiscripts/run_after_shared-agent-skills.ps1.tmpl` invokes the publisher
   with Scoop's managed Python 3.11+ after apply. Changes to skill selection,
   publication, acquisition, or lifecycle must run `tests/test_agent_skills.py`,
@@ -149,8 +150,6 @@ Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
   OpenCode. Its Copilot SessionStart hook coexists with RTK's independently
   generated PreToolUse hook. Do not add those generated outputs as chezmoi
   sources or edit their deployed copies.
-- Keep `.github/copilot-instructions.md` aligned if the non-negotiable rules
-  change.
 
 ### RTK ownership
 
@@ -195,9 +194,9 @@ The global pi-subagents and pi-tasks defaults live in
 `dot_pi/agent/{subagents.json,tasks-config.json}`. Built-in agent overrides are
 generated after every apply by
 `.chezmoiscripts/run_after_pi-subagents-agents.ps1.tmpl` from the installed,
-pinned pi-subagents sources: `Explore` uses GPT-5.6 Sol Fast, `Plan` uses GPT-6
-Astra, and `general-purpose` has no pin so callers or the parent choose its
-model. Keep all three as generated deployed files; do not add
+pinned pi-subagents sources. Its `$agentModels` mapping owns the Explore/Plan
+model pins; `general-purpose` inherits the caller or parent model. Keep all
+three as generated deployed files; do not add
 `dot_pi/agent/agents/*.md` sources.
 
 Pi also rewrites `settings.json` at runtime (for package/theme/version state), so
@@ -235,7 +234,8 @@ Run the checks relevant to the change; do not deploy merely to validate.
 | :--- | :--- |
 | Any template/config | `chezmoi diff` |
 | External URLs or pins | `python update_externals.py --dry-run` |
-| External updater | `python -m unittest discover -s tests` |
+| Repository docs/tests or cross-cutting changes | `python -B -m unittest discover -s tests` |
+| External updater | `python -B -m unittest discover -s tests -p test_update_externals.py` |
 | Shared skill publication | `python -B -m unittest discover -s tests -p test_agent_skills.py -v` |
 | Shared status line | `python dot_config/statusline/statusline.py test` |
 | Chezmoi environment | `chezmoi doctor` |

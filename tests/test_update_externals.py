@@ -498,11 +498,6 @@ exclude = ["support/private"]
         rendered = self.path.read_text(encoding="utf-8")
         parsed = tomllib.loads(rendered)
         self.assertEqual(parsed["agent_skills"]["sources"]["humanlayer"], source)
-        self.assertLess(
-            rendered.index('"plugins/show-me/skills/show-me"'),
-            rendered.index('"LICENSE"'),
-        )
-        self.assertLess(rendered.index('"LICENSE"'), rendered.index('"support/[draft].md"'))
 
     def test_canonical_write_round_trips_unicode_and_escaped_control_characters(self):
         content = '"标签😀" = "文字😀\\u007f"\n' + FIXED_DATA

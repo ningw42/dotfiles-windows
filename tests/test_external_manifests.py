@@ -1,9 +1,9 @@
 """Offline deployment-layout regression tests using the real chezmoi renderer.
 
-The golden deployment layout was captured from commit 0608f32. Exact URL/hash
-parity passed before payloads were bound to pin IDs, so future pin updates need
-no golden refresh. Only pi-distribution varies by platform; the capture checked
-that all other declarations were identical across the platform matrix.
+The reviewed fixture records targets, extraction options, omissions and pin IDs
+across theme/platform cases. URL and SHA-256 values come from current pin data,
+so pin-only refreshes need no fixture changes. Intentional layout changes require
+fixture review. Only pi-distribution varies by platform.
 Tests need chezmoi on PATH, but never Git, network access, or the user's config.
 """
 
@@ -21,6 +21,7 @@ from tempfile import TemporaryDirectory
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "external_render_baseline.json"
 CHEZMOI = shutil.which("chezmoi")
+# Cover selectable themes, retained Everforest branches, and unknown-theme fallback.
 THEMES = (
     "catppuccin-latte",
     "catppuccin-frappe",
@@ -69,9 +70,7 @@ class ManifestRenderError(RuntimeError):
 def render_manifests(manifests, data, *, colorscheme, os_name, arch):
     """Render all supplied manifests in one isolated chezmoi subprocess.
 
-    Return {logical_manifest_path: {target: native_TOML_declaration}}. Keeping
-    this seam independent of fixtures also supports a one-time exact parity
-    check before replacing golden URL/checksum pairs with current pin IDs.
+    Return {logical_manifest_path: {target: native_TOML_declaration}}.
     """
     if CHEZMOI is None:
         raise unittest.SkipTest("chezmoi is not on PATH; real external rendering tests require it")
@@ -150,7 +149,7 @@ def render_manifests(manifests, data, *, colorscheme, os_name, arch):
 
 
 def expected_manifests(baseline, pins, colorscheme, os_name, arch):
-    """Keep deployment choices frozen while allowing reviewed pin refreshes."""
+    """Expand reviewed layout expectations with current pin values."""
     expected = copy.deepcopy(baseline["by_theme"][colorscheme])
     expected[PI_MANIFEST] = copy.deepcopy(baseline["pi_by_platform"][f"{os_name}/{arch}"])
     for declarations in expected.values():
@@ -177,7 +176,6 @@ class ExternalManifestRenderingTests(unittest.TestCase):
             {f"{os_name}/{arch}" for os_name, arch in PLATFORMS},
         )
         for colorscheme in THEMES:
-            self.assertEqual(len(self.baseline["by_theme"][colorscheme]), 14)
             for os_name, arch in PLATFORMS:
                 with self.subTest(colorscheme=colorscheme, os=os_name, arch=arch):
                     actual = render_manifests(

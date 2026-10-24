@@ -124,7 +124,7 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
                 )
 
     @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
-    def test_provider_fields_export_distinct_keys_not_legacy_credentials(self):
+    def test_copilotd_field_exports_provider_key_not_legacy_credentials(self):
         for path in TEMPLATES:
             with self.subTest(path=path):
                 actual = self.evaluate(path, secrets={
@@ -138,7 +138,7 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
                 self.assertFalse(actual["PI_API_KEY"])
                 self.assertFalse(actual["OPENCODE_API_KEY"])
 
-    def test_missing_provider_fields_render_without_legacy_fallback(self):
+    def test_missing_copilotd_field_renders_without_legacy_fallback(self):
         for path in TEMPLATES:
             for secrets in ({}, {
                 "codex_api_key": "fixture-legacy-codex-key",
@@ -155,7 +155,7 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
                         self.assertNotIn(variable, rendered)
 
     @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
-    def test_unprovisioned_providers_preserve_external_keys_but_never_copy_legacy_keys(self):
+    def test_unprovisioned_copilotd_preserves_external_key_but_never_copies_legacy_keys(self):
         for path in TEMPLATES:
             for external in (False, True):
                 with self.subTest(path=path, external=external):
@@ -188,7 +188,7 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
                         self.assertFalse(actual[name])
 
     @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
-    def test_provider_credentials_are_literal_powershell_strings(self):
+    def test_copilotd_credential_is_a_literal_powershell_string(self):
         value = "fixture-$env:USERPROFILE-`n-\"-'quoted'"
         for path in TEMPLATES:
             with self.subTest(path=path):
