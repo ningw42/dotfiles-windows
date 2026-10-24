@@ -491,7 +491,8 @@ properties:
           @{ Result = if ($null -ne (Get-Module -ListAvailable -Name PSFzf)) { 'Installed' } else { 'NotInstalled' } }
 
     # ============================================================
-    # WinGet GUI Apps
+    # WinGet GUI Apps — every WinGetPackage resource sets useLatest, so apply
+    # upgrades to the newest manifest version; a stale manifest hash fails here.
     # ============================================================
 
     # PowerShell (pwsh)
@@ -503,6 +504,7 @@ properties:
       settings:
         id: Microsoft.PowerShell
         source: winget
+        useLatest: true
 
     # WezTerm — nightly channel; stable `wez.wezterm` is still 20240203 and
     # shares its product code, so it reports a nightly as satisfied forever.
@@ -515,6 +517,7 @@ properties:
       settings:
         id: wez.wezterm.nightly
         source: winget
+        useLatest: true
 
     # Alacritty
     - resource: Microsoft.WinGet.DSC/WinGetPackage
@@ -525,6 +528,7 @@ properties:
       settings:
         id: Alacritty.Alacritty
         source: winget
+        useLatest: true
 
     # Rio
     - resource: Microsoft.WinGet.DSC/WinGetPackage
@@ -535,6 +539,7 @@ properties:
       settings:
         id: raphamorim.rio
         source: winget
+        useLatest: true
 
     # Neovide
     - resource: Microsoft.WinGet.DSC/WinGetPackage
@@ -545,6 +550,7 @@ properties:
       settings:
         id: Neovide.Neovide
         source: winget
+        useLatest: true
 
     # Windows Terminal Preview
     - resource: Microsoft.WinGet.DSC/WinGetPackage
@@ -555,6 +561,7 @@ properties:
       settings:
         id: Microsoft.WindowsTerminal.Preview
         source: winget
+        useLatest: true
 
     # Everything (voidtools) — instant file-name search
     - resource: Microsoft.WinGet.DSC/WinGetPackage
@@ -565,6 +572,7 @@ properties:
       settings:
         id: voidtools.Everything
         source: winget
+        useLatest: true
 
     # ============================================================
     # Fonts (per-user, no admin required)
