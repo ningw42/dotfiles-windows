@@ -504,14 +504,16 @@ properties:
         id: Microsoft.PowerShell
         source: winget
 
-    # WezTerm
+    # WezTerm — nightly channel; stable `wez.wezterm` is still 20240203 and
+    # shares its product code, so it reports a nightly as satisfied forever.
+    # A hash mismatch just means the winget bot lags the floating installer URL.
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: WinGetWezTerm
       directives:
-        description: Install WezTerm terminal emulator
+        description: Install WezTerm nightly terminal emulator
         allowPrerelease: true
       settings:
-        id: wez.wezterm
+        id: wez.wezterm.nightly
         source: winget
 
     # Alacritty
