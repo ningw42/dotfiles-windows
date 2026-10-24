@@ -168,23 +168,23 @@ repository = "mattpocock/skills"
 tag = "v1.3.1"
 
 [external_resources.pins.pi_distribution_windows_arm64]
-url = "https://github.com/ningw42/pi-distribution/releases/download/v26.10.28/pi-distribution-v26.10.28-windows-arm64.tgz"
-sha256 = "98638f078ee8c59f8522c1902e9c01955f9b029bd7f827cd6bf525ac4b30e75d"
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.10.31/pi-distribution-v26.10.31-windows-arm64.tgz"
+sha256 = "1567e8b1bafb623be06462681c02a28ee7bf36cf4deee9fb1ee5e5e2e111102d"
 
 [external_resources.pins.pi_distribution_windows_arm64.update]
 type = "github_release"
 repository = "ningw42/pi-distribution"
-tag = "v26.10.28"
+tag = "v26.10.31"
 asset = "pi-distribution-{tag}-windows-arm64.tgz"
 
 [external_resources.pins.pi_distribution_windows_x64]
-url = "https://github.com/ningw42/pi-distribution/releases/download/v26.10.28/pi-distribution-v26.10.28-windows-x64.tgz"
-sha256 = "98638f078ee8c59f8522c1902e9c01955f9b029bd7f827cd6bf525ac4b30e75d"
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.10.31/pi-distribution-v26.10.31-windows-x64.tgz"
+sha256 = "1567e8b1bafb623be06462681c02a28ee7bf36cf4deee9fb1ee5e5e2e111102d"
 
 [external_resources.pins.pi_distribution_windows_x64.update]
 type = "github_release"
 repository = "ningw42/pi-distribution"
-tag = "v26.10.28"
+tag = "v26.10.31"
 asset = "pi-distribution-{tag}-windows-x64.tgz"
 
 [external_resources.pins.yazi_everforest_medium_flavor]
@@ -262,8 +262,4 @@ tag = "v0.25.0"
 asset = "zjstatus.wasm"
 
 [herdr]
-# HerdR's `integration status` still requires the V1-shaped OpenCode TUI
-# registration even for a V2-only install. Set to true once HerdR validates a
-# cli.json-only setup: run_onchange_herdr-integrations.ps1 stops publishing
-# .config/opencode/tui.jsonc and .chezmoiremove deletes the obsolete marker.
 opencode_pure_v2 = false
