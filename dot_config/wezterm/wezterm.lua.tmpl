@@ -521,7 +521,16 @@ config.font_rules = {
   { intensity = 'Half', italic = true, font = font_italic },
 }
 config.font_size = 14.0
+-- Font-rendered blocks had row seams at 1.0. Built-ins fixed them but made Berkeley's
+-- progress symbols too thick; underline tuning couldn't match both bars and borders.
+-- Keep font glyphs and tighten rows: at 14pt/192 DPI, 1.0 gives 45px rows (seams),
+-- 0.96-0.98 gives 44px (half-pixel baseline), and 0.95 gives 43px (gapless, integer
+-- baseline; tested text/progress pixels match 1.0 after row alignment). 0.959 is
+-- identical here; recheck after font/size/DPI changes rather than chasing decimals.
+-- Progress replacements: https://github.com/wezterm/wezterm/pull/6875
+-- Selective built-ins still pending: https://github.com/wezterm/wezterm/issues/1957
 config.line_height = 0.95
+config.custom_block_glyphs = false
 -- Greyscale AA, not the "HorizontalLcd" subpixel target this used to carry: every
 -- display here is HiDPI, where the subpixel triads are far below the point of
 -- buying real horizontal resolution and mostly show up as colour fringing on the
@@ -532,19 +541,6 @@ config.line_height = 0.95
 -- `fonts.antialias` PR #1718 is still unmerged as of 0.5.5, and crossfont
 -- hardcodes DWRITE_TEXTURE_CLEARTYPE_3x1).
 config.freetype_load_target = "Light"
-
--- Off so U+2500 box drawing, powerline separators and the U+EE00-EE02 progress bar all
--- come from the font, matching WT and rio glyph-for-glyph. Note this is the opposite
--- setting from theirs -- WT sets `builtinGlyphs: true` and rio `use-drawable-chars =
--- true`, i.e. both self-draw -- but wezterm nightly ALSO self-draws the Nerd Fonts
--- progress and git-branch ranges, which those two do not, and the toggle is all-or-
--- nothing (no per-range control exists). Safe only because of the chain above: the
--- ExtraCondensed cut ships 25 of the 128 box glyphs and 4 of 8 powerline separators,
--- and Symbols Nerd Font Berkeley Mono backfills both at 128/128 and 8/8. Braille
--- (U+2800) is the one gap -- neither Berkeley face nor the symbols font has any, so it
--- lands on Sarasa at 0.5 em against a 0.4880 em cell. Flip back to true if that or the
--- mixed box-drawing design bites.
-config.custom_block_glyphs = false
 
 -- The symbols font draws icon ink far wider than its own advance -- U+F015 is 0.9750 em
 -- of ink on a 0.4878 em advance, a clean 2.00x, and half the icons measured are between
