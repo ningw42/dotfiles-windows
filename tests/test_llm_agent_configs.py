@@ -506,6 +506,30 @@ class PiRuntimeConfigTests(unittest.TestCase):
 
 
 class AgentDefaultTests(unittest.TestCase):
+    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for launcher tests")
+    def test_herdr_shortcut_forwards_arguments_like_nixfiles_alias(self):
+        profile = (
+            REPO_ROOT
+            / "readonly_Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl"
+        ).read_text(encoding="utf-8")
+        launcher = re.search(r"(?ms)^Function hdr\n\{.*?^\}", profile)
+        self.assertIsNotNone(launcher, "the hdr launcher is missing")
+        # Exercise only the launcher with a stub, never load the real profile
+        # (which renders secrets) or start an actual HerdR session.
+        result = subprocess.run(
+            [POWERSHELL, "-NoLogo", "-NoProfile", "-NonInteractive", "-Command",
+             "$ErrorActionPreference = 'Stop'\n"
+             "function herdr { ConvertTo-Json -InputObject @($args) -Compress }\n"
+             + launcher.group()
+             + "\nhdr --help 'a space' '' '路径; $(not-a-command)' '\"quoted\"'\n"],
+            capture_output=True, text=True, encoding="utf-8", timeout=10,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            json.loads(result.stdout),
+            ["--help", "a space", "", "路径; $(not-a-command)", '"quoted"'],
+        )
+
     def test_copilot_behavior_settings_match_nixfiles(self):
         settings = json.loads(
             (REPO_ROOT / "dot_copilot/settings.json.tmpl")
