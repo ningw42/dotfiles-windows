@@ -80,7 +80,11 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
         return result.stdout
 
     def evaluate(self, path, *, secrets, inherited=None):
-        rendered = self.render(path, secrets=secrets)
+        return self.evaluate_rendered(
+            path, self.render(path, secrets=secrets), inherited=inherited,
+        )
+
+    def evaluate_rendered(self, path, rendered, *, inherited=None):
         if path.startswith("readonly_Documents/"):
             # Do not execute interactive integrations or the rest of the profile.
             self.assertIn("#endregion Environment Variables", rendered)
@@ -118,7 +122,7 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
             with self.subTest(path=path):
                 rendered = self.render(path, secrets={})
                 self.assertNotIn("OPENCODE_DISABLE_EXTERNAL_SKILLS", rendered)
-                actual = self.evaluate(path, secrets={}, inherited={
+                actual = self.evaluate_rendered(path, rendered, inherited={
                     "OPENCODE_DISABLE_CLAUDE_CODE_SKILLS": "0",
                 })
                 self.assertEqual(actual["OPENCODE_DISABLE_CLAUDE_CODE_SKILLS"], "1")
@@ -244,7 +248,7 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
                     rendered = self.render(path, secrets=secrets)
                     for value in retired.values():
                         self.assertNotIn(value, rendered)
-                    actual = self.evaluate(path, secrets=secrets, inherited={
+                    actual = self.evaluate_rendered(path, rendered, inherited={
                         "LITELLM_API_KEY": "external-litellm-key",
                         "ROUTER_MAESTRO_API_KEY": "external-router-key",
                         "COPILOT_PROXY_API_KEY": "external-proxy-key",
