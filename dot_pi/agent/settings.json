@@ -14,6 +14,9 @@
     "magpie-responses/deepseek-flash:high",
     "magpie-responses/glm-5.3:max",
     "magpie-responses/glm-5.3-flash:max",
+    "magpie-messages/claude-haiku-5-5:medium",
+    "magpie-messages/claude-sonnet-5-5:high",
+    "magpie-messages/claude-opus-5-5:medium",
     "magpie-generative-ai/gemini-4-argon-contributor:medium"
   ],
   "hideThinkingBlock": true,

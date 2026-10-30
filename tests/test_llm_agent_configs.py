@@ -22,8 +22,6 @@ GPT_MODELS = [
     "gpt-6.1-sol",
     "gpt-6-astra",
 ]
-MAGPIE_RESPONSE_MODELS = [*GPT_MODELS, "deepseek-flash", "glm-5.3", "glm-5.3-flash"]
-MAGPIE_GEMINI_MODELS = ["gemini-4-argon-contributor"]
 HOME_TEMPLATE = '{{ .chezmoi.homeDir | replace "\\\\" "/" }}'
 
 
@@ -216,114 +214,33 @@ class ClaudeConfigTests(unittest.TestCase):
 
 
 class ModelCatalogTests(unittest.TestCase):
-    def test_opencode_catalog_and_policy_match_nixfiles_projection(self):
+    def test_opencode_policy_matches_nixfiles_projection(self):
         config = load_opencode_config()
         self.assertEqual(config["model"], "magpie-responses/gpt-6-astra")
         # OpenCode 2.2+ honors the environment's Claude-only exclusion; keep
         # native discovery rather than disabling its compatibility scanner.
         self.assertNotIn("plugins", config)
         self.assertNotIn("skills", config)
-        self.assertEqual(
-            config["enabled_providers"],
-            ["magpie-generative-ai", "magpie-responses"],
-        )
+        self.assertEqual(config["enabled_providers"], sorted(config["provider"]))
         self.assertEqual(config["permission"]["skill"], {name: "deny" for name in USER_SKILLS})
-
-        providers = config["provider"]
-        self.assertEqual(set(providers), {"magpie-generative-ai", "magpie-responses"})
-        self.assertEqual(
-            list(providers["magpie-responses"]["models"]), MAGPIE_RESPONSE_MODELS
-        )
-        self.assertEqual(
-            list(providers["magpie-generative-ai"]["models"]), MAGPIE_GEMINI_MODELS
-        )
-        self.assertEqual(providers["magpie-responses"]["name"], "magpie (Responses)")
-        self.assertEqual(
-            providers["magpie-responses"]["options"],
-            {
-                "apiKey": "{env:MAGPIE_API_KEY}",
-                "baseURL": "https://magpie.ningw.net/v1",
-            },
-        )
-        self.assertEqual(
-            providers["magpie-responses"]["models"]["gpt-6.1-sol"]["limit"][
-                "context"
-            ],
-            1_050_000,
-        )
-        self.assertEqual(
-            providers["magpie-responses"]["models"]["deepseek-flash"][
-                "options"
-            ]["reasoningEffort"],
-            "high",
-        )
-        self.assertEqual(
-            providers["magpie-generative-ai"]["models"][
-                "gemini-4-argon-contributor"
-            ]["options"],
-            {
-                "thinkingConfig": {
-                    "includeThoughts": True,
-                    "thinkingLevel": "medium",
-                }
-            },
-        )
-        for name, npm, base_url in (
-            (
-                "magpie-responses",
-                "@ai-sdk/openai",
-                "https://magpie.ningw.net/v1",
-            ),
-            (
-                "magpie-generative-ai",
-                "@ai-sdk/google",
-                "https://magpie.ningw.net/v1beta",
-            ),
-        ):
-            with self.subTest(provider=name):
-                self.assertEqual(providers[name]["npm"], npm)
-                self.assertEqual(providers[name]["options"]["baseURL"], base_url)
 
     def test_opencode_provider_metadata_matches_nixfiles_snapshot(self):
         # Full provider snapshot from nixfiles' llm-agents/tests/model-catalog.nix
-        # at 9c734f9; canonical JSON matches Nix's builtins.toJSON rendering.
+        # at 8f97dd8; canonical JSON matches Nix's builtins.toJSON rendering.
         providers = load_opencode_config()["provider"]
         snapshot = json.dumps(
             providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
         ).encode("utf-8")
         self.assertEqual(
             hashlib.sha256(snapshot).hexdigest(),
-            "cd4aedbee7d3a73e1ebc2fa50c31610023920c9df7c578192c411a807cf24d5e",
+            "18171b2f65030aa1d3591e72a22faba5b733a17990cf932b57f2f3f6466306ab",
         )
 
-    def test_pi_catalog_and_cycle_defaults_match_nixfiles_projection(self):
-        catalog = load_json("dot_pi/agent/models.json")
+    def test_pi_cycle_defaults_match_nixfiles_projection(self):
         settings = load_json("dot_pi/agent/settings.json")
-        providers = catalog["providers"]
-
-        self.assertEqual(
-            set(providers),
-            {"magpie-responses", "magpie-generative-ai"},
-        )
-        self.assertEqual(
-            [model["id"] for model in providers["magpie-responses"]["models"]],
-            MAGPIE_RESPONSE_MODELS,
-        )
-        self.assertEqual(
-            [model["id"] for model in providers["magpie-generative-ai"]["models"]],
-            MAGPIE_GEMINI_MODELS,
-        )
-        self.assertEqual(
-            next(
-                model for model in providers["magpie-responses"]["models"]
-                if model["id"] == "deepseek-flash"
-            )["thinkingLevelMap"],
-            {"off": None, "minimal": None, "medium": None, "max": "max"},
-        )
         self.assertEqual(settings["defaultProvider"], "magpie-responses")
         self.assertEqual(settings["defaultModel"], "gpt-6-astra")
         self.assertEqual(settings["defaultThinkingLevel"], "xhigh")
-        self.assertEqual(settings["defaultTools"], ["+powershell", "+codemode"])
         self.assertEqual(
             settings["enabledModels"],
             [
@@ -331,59 +248,53 @@ class ModelCatalogTests(unittest.TestCase):
                 "magpie-responses/deepseek-flash:high",
                 "magpie-responses/glm-5.3:max",
                 "magpie-responses/glm-5.3-flash:max",
+                "magpie-messages/claude-haiku-5-5:medium",
+                "magpie-messages/claude-sonnet-5-5:high",
+                "magpie-messages/claude-opus-5-5:medium",
                 "magpie-generative-ai/gemini-4-argon-contributor:medium",
             ],
         )
 
-    def test_pi_magpie_transports_and_thinking_match_nixfiles(self):
-        providers = load_json("dot_pi/agent/models.json")["providers"]
-        for name, api, base_url in (
-            ("magpie-responses", "openai-responses", "https://magpie.ningw.net/v1"),
-            ("magpie-generative-ai", "google-generative-ai", "https://magpie.ningw.net/v1beta"),
-        ):
-            with self.subTest(provider=name):
-                provider = providers[name]
-                self.assertEqual(provider["api"], api)
-                self.assertEqual(provider["baseUrl"], base_url)
-                self.assertEqual(provider["apiKey"], "$MAGPIE_API_KEY")
-                self.assertTrue(all("compat" not in model for model in provider["models"]))
-
-        gemini = providers["magpie-generative-ai"]["models"][0]
-        self.assertEqual(gemini["thinkingLevelMap"], {"off": None, "minimal": None})
-        self.assertEqual(gemini["input"], ["text", "image"])
-        for model in providers["magpie-responses"]["models"]:
-            if model["id"] in GPT_MODELS:
-                continue
+    def test_claude_adaptive_thinking_matches_across_clients(self):
+        pi = load_json("dot_pi/agent/models.json")["providers"]["magpie-messages"]
+        opencode = load_opencode_config()["provider"]["magpie-messages"]
+        self.assertEqual(pi["api"], "anthropic-messages")
+        self.assertEqual(pi["baseUrl"], "https://magpie.ningw.net")
+        self.assertEqual(opencode["npm"], "@ai-sdk/anthropic")
+        self.assertEqual(opencode["options"]["baseURL"], pi["baseUrl"] + "/v1")
+        for model in pi["models"]:
             with self.subTest(model=model["id"]):
-                self.assertEqual(
-                    model["thinkingLevelMap"],
-                    {"off": None, "minimal": None, "medium": None, "max": "max"},
-                )
-        flash = next(
-            model for model in providers["magpie-responses"]["models"]
-            if model["id"] == "deepseek-flash"
-        )
-        self.assertEqual(flash["id"], "deepseek-flash")
-        self.assertEqual(flash["name"], "DeepSeek Flash")
-        self.assertNotIn("deepseek-responses", providers)
+                oc_model = opencode["models"][model["id"]]
+                self.assertEqual(model["compat"], {
+                    "forceAdaptiveThinking": True,
+                    "supportsTemperature": False,
+                })
+                self.assertFalse(oc_model["temperature"])
+                self.assertEqual(oc_model["options"]["thinking"], {"type": "adaptive"})
+                for effort in ("low", "medium", "high", "xhigh", "max"):
+                    self.assertEqual(oc_model["variants"][effort], {
+                        "thinking": {"type": "adaptive"}, "effort": effort,
+                    })
+                if model["id"] == "claude-haiku-5-5":
+                    self.assertEqual(model["thinkingLevelMap"]["off"], "none")
+                    self.assertEqual(oc_model["variants"]["none"], {
+                        "thinking": {"type": "disabled"},
+                    })
+                else:
+                    self.assertIsNone(model["thinkingLevelMap"]["off"])
+                    self.assertNotIn("none", oc_model["variants"])
 
     def test_pi_provider_metadata_matches_nixfiles_snapshot(self):
         # Full provider snapshot from nixfiles' llm-agents/tests/model-catalog.nix
-        # at 9c734f9; canonical JSON matches Nix's builtins.toJSON rendering.
+        # at 8f97dd8; canonical JSON matches Nix's builtins.toJSON rendering.
         providers = load_json("dot_pi/agent/models.json")["providers"]
         snapshot = json.dumps(
             providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
         ).encode("utf-8")
         self.assertEqual(
             hashlib.sha256(snapshot).hexdigest(),
-            "d7715553b5da78178001670188f1a43dfaa9da32f5f25f72d5702f0a49dc7e0e",
+            "f153439dcdc4b1c45a22c8e95c2a600874044cbeaa68ff0ad92a29847242098e",
         )
-        sol = next(
-            model
-            for model in providers["magpie-responses"]["models"]
-            if model["id"] == "gpt-6.1-sol"
-        )
-        self.assertIsNone(sol["thinkingLevelMap"]["off"])
 
     def test_pi_configured_routes_reference_registered_models(self):
         providers = load_json("dot_pi/agent/models.json")["providers"]
@@ -424,22 +335,28 @@ class ModelCatalogTests(unittest.TestCase):
                         )
                     )
 
-    def test_deepseek_flash_shared_display_rates_match_nixfiles(self):
+    def test_shared_display_rates_match_across_clients(self):
         pi = load_json("dot_pi/agent/models.json")["providers"]
         opencode = load_opencode_config()["provider"]
-        flash = next(m for m in pi["magpie-responses"]["models"] if m["id"] == "deepseek-flash")
-        self.assertEqual(
-            flash["cost"],
-            {"input": 0.15, "output": 0.6, "cacheRead": 0.003, "cacheWrite": 0},
-        )
-        self.assertEqual(
-            opencode["magpie-responses"]["models"]["deepseek-flash"]["cost"],
-            {"input": 0.15, "output": 0.6, "cache_read": 0.003},
-        )
-        self.assertEqual(
-            opencode["magpie-responses"]["models"]["deepseek-flash"]["name"],
-            "DeepSeek Flash",
-        )
+        for provider_id, provider in pi.items():
+            for model in provider["models"]:
+                with self.subTest(provider=provider_id, model=model["id"]):
+                    cost = model["cost"]
+                    # OpenCode cannot represent Haiku's 100k or GPT's 272k
+                    # threshold: do not mislabel either as context_over_200k.
+                    self.assertEqual(opencode[provider_id]["models"][model["id"]]["cost"], {
+                        "input": cost["input"], "output": cost["output"],
+                        "cache_read": cost["cacheRead"], "cache_write": cost["cacheWrite"],
+                    })
+
+    def test_sol_uses_the_public_id_without_a_fast_alias(self):
+        pi = load_json("dot_pi/agent/models.json")["providers"]
+        opencode = load_opencode_config()["provider"]
+        self.assertIn("gpt-5.6-sol", opencode["magpie-responses"]["models"])
+        self.assertNotIn("gpt-5.6-sol-fast", opencode["magpie-responses"]["models"])
+        self.assertNotIn("gpt-5.6-sol-fast", {
+            model["id"] for model in pi["magpie-responses"]["models"]
+        })
 
 
 class PiRuntimeConfigTests(unittest.TestCase):

@@ -165,11 +165,14 @@ external rather than Nix store paths. MCP comes from Pi's built-in support
 reading the repo-managed `~/.pi/agent/mcp.json`.
 
 Pi and OpenCode use `https://magpie.ningw.net`: Responses for GPT, DeepSeek,
-and GLM, and Google's native Generative AI API for Gemini. Pi's generated
-Explore/Plan agents and all workflow tiers also use `magpie-responses`. GPT-5.6
-Sol sends the bare `gpt-5.6-sol` request ID; Magpie selects Copilot's fast tier
-internally. Pi, OpenCode, Codex, and Copilot CLI default to GPT-6 Astra at
-`xhigh` effort. Current defaults and model catalogs live in
+and GLM, Anthropic Messages for Claude Haiku/Sonnet/Opus 5.5, and Google's native
+Generative AI API for Gemini. Claude uses adaptive thinking, with
+medium/high/medium effort defaults respectively; this does not change Claude
+Code's subscription auth. Pi's generated Explore/Plan agents and all workflow
+tiers still use `magpie-responses`. GPT-5.6 Sol sends the bare `gpt-5.6-sol`
+request ID; Magpie selects Copilot's fast tier internally. Pi, OpenCode, Codex,
+and Copilot CLI default to GPT-6 Astra at `xhigh` effort. Current defaults and
+model catalogs live in
 `dot_pi/agent/{settings,models}.json` and
 `dot_config/opencode/opencode.json.tmpl`. Codex remains on Copilotd, Copilot CLI
 uses its native authentication, and Claude Code uses subscription authentication.
