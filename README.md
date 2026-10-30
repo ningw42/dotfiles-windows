@@ -267,6 +267,7 @@ chezmoi diff                              # preview rendered changes
 chezmoi apply                             # deploy them
 python update_externals.py --dry-run      # check external pins and checksums
 python -B -m unittest discover -s tests    # run the repository test suite
+python -B tests/acceptance_rtk.py -v       # check installed upstream RTK after upgrades
 python dot_config/statusline/statusline.py test
 ```
 
@@ -299,10 +300,14 @@ reviewed checksum with the stale cached content's hash. This does not deploy fil
 
 The repository suite covers external updates and rendered manifests, shared-skill
 publication and rollback, agent/provider configuration, PowerShell launch and
-environment behavior, HerdR/RTK ownership, and Lazygit diff routing. The statusline
-has a separate in-file suite, invoked above.
+environment behavior, HerdR/RTK ownership, and Lazygit diff routing. Upstream RTK
+hook rewriting and native OpenCode plugin compatibility live in the opt-in
+`tests/acceptance_rtk.py` suite, outside default discovery. Run it after RTK
+upgrades or when investigating compatibility. Repository-owned RTK integration
+checks remain in the default suite. The statusline has a separate in-file suite,
+invoked above.
 
-Use Python 3.11+ for the repository suite. Full validation needs Windows, chezmoi,
+Use Python 3.11+. Full validation across these suites needs Windows, chezmoi,
 PowerShell, Node.js, RTK, Claude CLI, and directory-symlink support. Missing tools
 or platforms cause explicit skips; check the summary before treating a run as
 full validation. Native Claude acceptance fails rather than skips if its CLI is
