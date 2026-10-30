@@ -1,8 +1,9 @@
-"""Codex RTK hook/trust and isolated awareness publication regressions."""
+"""RTK hook ownership, isolated initialization, and native plugin regressions."""
 
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -15,6 +16,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 CHEZMOI = shutil.which("chezmoi")
 POWERSHELL = shutil.which("pwsh")
 RTK = shutil.which("rtk")
+NODE = shutil.which("node")
 
 
 @unittest.skipUnless(CHEZMOI, "chezmoi is required for real template rendering")
@@ -229,6 +231,142 @@ class CodexRtkAwarenessTests(unittest.TestCase):
         self.assertEqual(instructions.read_bytes(), before)
         self.assertFalse((self.home / "RTK.md").exists())
         self.assertEqual(list(self.root.glob("chezmoi-rtk-codex-*")), [])
+
+
+@unittest.skipUnless(POWERSHELL, "PowerShell 7 is required")
+class OpenCodeRtkInitTests(unittest.TestCase):
+    def test_native_plugin_has_one_owner_and_the_legacy_adapter_is_retired(self):
+        self.assertFalse((REPO_ROOT / "dot_config/opencode/plugins/rtk.js").exists())
+        self.assertFalse((REPO_ROOT / "dot_config/opencode/plugins/rtk.ts").exists())
+        removals = (REPO_ROOT / ".chezmoiremove").read_text(encoding="utf-8").splitlines()
+        self.assertIn(".config/opencode/plugins/rtk.js", removals)
+        self.assertNotIn(".config/opencode/plugins/rtk.ts", removals)
+
+    def test_init_isolates_claude_restores_environment_and_cleans_up_on_failure(self):
+        source = (REPO_ROOT / ".chezmoiscripts/run_onchange_rtk-init.ps1.tmpl").read_text("utf-8")
+        function = source[
+            source.index("function Initialize-OpenCodeRtk("):
+            source.index("\nInitialize-OpenCodeRtk\n")
+        ]
+        for inherited in (False, True):
+            for exit_code in (0, 7):
+                with self.subTest(inherited=inherited, exit_code=exit_code):
+                    with tempfile.TemporaryDirectory(prefix="opencode rtk init ") as temporary:
+                        root = Path(temporary)
+                        protected = root / "real claude config"
+                        protected.mkdir()
+                        settings = protected / "settings.json"
+                        settings.write_bytes(b'{"fixture":"keep"}\n')
+                        env = os.environ.copy()
+                        env.pop("CLAUDE_CONFIG_DIR", None)
+                        env.update({"FIXTURE_PROTECTED": str(protected), "FIXTURE_EXIT": str(exit_code)})
+                        if inherited:
+                            env["CLAUDE_CONFIG_DIR"] = str(protected)
+                        script = (
+                            "$ErrorActionPreference = 'Stop'\n"
+                            "function Invoke-FixtureRtk {\n"
+                            "  if ($env:CLAUDE_CONFIG_DIR -eq $env:FIXTURE_PROTECTED) { throw 'Claude config was not isolated' }\n"
+                            "  $script:work = $env:CLAUDE_CONFIG_DIR\n"
+                            "  $script:arguments = @($args)\n"
+                            "  [IO.File]::WriteAllText((Join-Path $script:work 'CLAUDE.md'), '@RTK.md')\n"
+                            "  $global:LASTEXITCODE = [int]$env:FIXTURE_EXIT\n"
+                            "}\n"
+                            + function
+                            + "\n$failed = $false\n"
+                            "try { Initialize-OpenCodeRtk -RtkPath Invoke-FixtureRtk } catch {\n"
+                            "  if ($_ -notlike '*initialization failed*') { throw }\n"
+                            "  $failed = $true\n"
+                            "}\n"
+                            "@{ arguments = $script:arguments; failed = $failed; work = $script:work;\n"
+                            "   cleaned = -not (Test-Path -LiteralPath $script:work);\n"
+                            "   restored = $env:CLAUDE_CONFIG_DIR } | ConvertTo-Json -Compress\n"
+                        )
+                        result = subprocess.run(
+                            [POWERSHELL, "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script],
+                            cwd=root, env=env, capture_output=True, text=True, encoding="utf-8", timeout=30,
+                        )
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        actual = json.loads(result.stdout)
+                        self.assertEqual(actual["arguments"], ["init", "-g", "--opencode", "--no-patch"])
+                        self.assertEqual(actual["failed"], exit_code != 0)
+                        self.assertTrue(actual["cleaned"])
+                        self.assertTrue(Path(actual["work"]).name.startswith("chezmoi-rtk-opencode-"))
+                        self.assertEqual(actual["restored"], str(protected) if inherited else None)
+                        self.assertEqual(settings.read_bytes(), b'{"fixture":"keep"}\n')
+                        self.assertEqual([path.name for path in protected.iterdir()], ["settings.json"])
+
+
+@unittest.skipUnless(RTK and NODE, "RTK 1.1+ and Node.js with TypeScript support are required")
+class OpenCodeNativeRtkPluginTests(unittest.TestCase):
+    def test_native_plugin_registration_rewrites_and_permission_boundaries(self):
+        with tempfile.TemporaryDirectory(prefix="opencode native rtk ") as temporary:
+            root = Path(temporary)
+            env = os.environ.copy()
+            env.pop("RTK_DISABLED", None)
+            env.update({
+                "CLAUDE_CONFIG_DIR": str(root / "claude"),
+                "OPENCODE_CONFIG": str(root / "global.json"),
+            })
+            (root / "global.json").write_text("{}", encoding="utf-8")
+            # RTK ignores HOME overrides on Windows. Its verbose dry-run exposes
+            # the embedded artifact without deploying any files or initializing
+            # Claude. If already current, read the reported existing artifact.
+            preview = subprocess.run(
+                [RTK, "-v", "init", "-g", "--opencode", "--no-patch", "--dry-run"],
+                cwd=root, env=env, capture_output=True, text=True, encoding="utf-8", timeout=30,
+            )
+            self.assertEqual(preview.returncode, 0, preview.stderr)
+            match = re.search(
+                r"\[dry-run\] would (?:create|update) OpenCode plugin: [^\n]+\n"
+                r"\[dry-run\] content:\n(.*?)(?=\n\[dry-run\])",
+                preview.stdout, re.S,
+            )
+            if match:
+                plugin_source = match[1]
+            else:
+                match = re.search(r"OpenCode plugin already up to date: ([^\r\n]+)", preview.stderr)
+                self.assertIsNotNone(match, preview.stdout + preview.stderr)
+                plugin_source = Path(match[1]).read_text("utf-8")
+            self.assertIn('id: "rtk"', plugin_source)
+            plugin = root / "rtk.ts"
+            plugin.write_text(plugin_source, encoding="utf-8")
+            script = """
+import assert from "node:assert/strict";
+import { writeFileSync } from "node:fs";
+const { default: plugin } = await import(process.env.FIXTURE_PLUGIN);
+let handler;
+await plugin.setup({ tool: { hook: async (name, callback) => {
+  assert.equal(name, "execute.before");
+  handler = callback;
+} } });
+assert.equal(typeof handler, "function");
+const event = { tool: "shell", input: { command: "git status" } };
+await handler(event);
+assert.equal(event.input.command, "rtk git status");
+process.env.RTK_DISABLED = "1";
+const disabled = { tool: "shell", input: { command: "git status" } };
+await handler(disabled);
+assert.equal(disabled.input.command, "git status");
+delete process.env.RTK_DISABLED;
+writeFileSync("opencode.json", JSON.stringify({
+  agents: { restricted: { permissions: [
+    { action: "shell", resource: "git status", effect: "deny" },
+  ] } },
+}));
+const denied = { tool: "shell", agent: "restricted", input: { command: "git status" } };
+await handler(denied);
+assert.equal(denied.input.command, "git status");
+const otherTool = { tool: "read", input: { command: "git status" } };
+await handler(otherTool);
+assert.equal(otherTool.input.command, "git status");
+"""
+            result = subprocess.run(
+                [NODE, "--input-type=module", "-e", script],
+                cwd=root, env={**env, "FIXTURE_PLUGIN": plugin.as_uri()},
+                capture_output=True, text=True, encoding="utf-8", timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertFalse((root / "claude").exists(), "RTK dry-run wrote Claude files")
 
 
 if __name__ == "__main__":

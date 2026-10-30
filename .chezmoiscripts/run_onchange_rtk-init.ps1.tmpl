@@ -1,9 +1,9 @@
 {{ if eq .chezmoi.os "windows" -}}
-# Regenerate RTK-owned Codex awareness documents and the Copilot hook when
-# this script or the installed RTK version changes. Claude/Codex hook declarations
-# stay chezmoi-owned; only RTK generates its awareness content.
+# Regenerate RTK-owned Codex awareness documents, the Copilot hook, and the
+# OpenCode plugin when this script or the installed RTK version changes.
+# Claude/Codex hook declarations stay chezmoi-owned; RTK owns generated content.
 #
-# Claude Code is intentionally NOT initialized here: its PreToolUse hook
+# The real Claude config is intentionally NOT initialized here: its PreToolUse hook
 # (`rtk hook claude`, wired in dot_claude/settings.json.tmpl) transparently
 # rewrites every Bash call via `updatedInput`, so the RTK.md / CLAUDE.md prompt
 # injection is redundant. Mirrors nixfiles' hook-only claude-code module; the
@@ -80,6 +80,38 @@ function Initialize-CodexRtk([string]$CodexHome, [string]$RtkPath = 'rtk') {
 }
 
 Initialize-CodexRtk -CodexHome (Join-Path $env:USERPROFILE '.codex')
+
+# Scoop ships only rtk.exe, not Nix's loose hooks/opencode/rtk.ts artifact.
+# Let RTK emit its embedded native V2 plugin. --opencode also initializes Claude,
+# so redirect just that directory; --no-patch protects managed configuration.
+# Windows RTK resolves OpenCode from the real home, not HOME/XDG_CONFIG_HOME.
+function Initialize-OpenCodeRtk([string]$RtkPath = 'rtk') {
+    $ErrorActionPreference = 'Stop'
+    $work = Join-Path ([IO.Path]::GetTempPath()) ("chezmoi-rtk-opencode-{0}" -f [Guid]::NewGuid().ToString('N'))
+    $hadClaudeConfigDir = Test-Path Env:CLAUDE_CONFIG_DIR
+    $claudeConfigDir = $env:CLAUDE_CONFIG_DIR
+    try {
+        New-Item -ItemType Directory -Path $work -Force | Out-Null
+        $env:CLAUDE_CONFIG_DIR = $work
+        & $RtkPath init -g --opencode --no-patch | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "RTK OpenCode initialization failed (exit $LASTEXITCODE)."
+        }
+    }
+    finally {
+        if ($hadClaudeConfigDir) {
+            $env:CLAUDE_CONFIG_DIR = $claudeConfigDir
+        }
+        else {
+            Remove-Item Env:CLAUDE_CONFIG_DIR -ErrorAction SilentlyContinue
+        }
+        if (Test-Path -LiteralPath $work) {
+            Remove-Item -LiteralPath $work -Recurse -Force
+        }
+    }
+}
+
+Initialize-OpenCodeRtk
 
 # Copilot CLI: hook-only, same rationale as Claude. The Copilot path is
 # "deny-with-suggestion" (rtk's `rtk hook copilot` blocks the bare command and

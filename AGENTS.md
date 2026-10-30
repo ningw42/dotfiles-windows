@@ -166,8 +166,10 @@ copies.
   `.chezmoiremove`.
 - Copilot uses its generated `~/.copilot/hooks/rtk-rewrite.json`; the script
   deletes the redundant generated instruction file.
-- OpenCode 2 uses the repo-owned `dot_config/opencode/plugins/rtk.js` compatibility
-  adapter, which delegates all rewrite policy to the RTK executable on `PATH`.
+- OpenCode 2 uses RTK's generated native `~/.config/opencode/plugins/rtk.ts`.
+  The RTK script invokes `rtk init -g --opencode --no-patch` with an isolated
+  `CLAUDE_CONFIG_DIR`; the retired repo-owned adapter is removed by
+  `.chezmoiremove`.
 - Do not add pi to the RTK script. `pi-distribution` owns pi's RTK extension.
 
 ### pi ownership

@@ -40,6 +40,10 @@
 # cross-machine purge of any already-deployed copy.
 .copilot/copilot-instructions.md
 
+# RTK 1.1+ generates the native OpenCode V2 rtk.ts plugin. Remove the old
+# repo-owned adapter so OpenCode does not register two rewrite hooks.
+.config/opencode/plugins/rtk.js
+
 # HerdR still requires the V1-shaped OpenCode TUI registration for
 # `integration status` when only V2 is installed, so
 # run_onchange_herdr-integrations publishes HerdR's generated tui.jsonc. Set

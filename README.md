@@ -206,6 +206,13 @@ disabling the whole compatibility scanner. Existing processes need restarting
 after deployment to inherit the persistent setting. Repo-authored human-only
 skills retain their explicit commands and invocation permissions.
 
+RTK 1.1+ owns the native `~/.config/opencode/plugins/rtk.ts` plugin. Scoop ships
+only the executable, so the RTK apply hook generates the embedded plugin with
+`rtk init -g --opencode --no-patch`, temporarily redirecting `CLAUDE_CONFIG_DIR`
+to avoid recreating Claude awareness files or patching its managed settings.
+Chezmoi removes the old `rtk.js` adapter; the native plugin respects
+`RTK_DISABLED` and OpenCode's agent-scoped shell permissions.
+
 ## Claude/Copilot statusline
 
 `dot_config/statusline/statusline.py` shares the nixfiles implementation: session
