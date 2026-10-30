@@ -173,6 +173,9 @@ internally. Pi, OpenCode, Codex, and Copilot CLI default to GPT-6 Astra at
 `dot_pi/agent/{settings,models}.json` and
 `dot_config/opencode/opencode.json.tmpl`. Codex remains on Copilotd, Copilot CLI
 uses its native authentication, and Claude Code uses subscription authentication.
+Pi uses the below-editor FleetView list with its above-editor agent widget off;
+its workflow tiers and Explore/Plan model routes remain independent of the
+interactive default.
 
 Magpie authentication requires `MAGPIE_API_KEY`. Add `magpie_api_key` to
 `secrets.yaml.age` using the procedure below to publish it through both the

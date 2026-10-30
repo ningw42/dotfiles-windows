@@ -489,6 +489,16 @@ class PiRuntimeConfigTests(unittest.TestCase):
         self.assertEqual(settings["packages"], ["./packages/pi-distribution"])
         self.assertTrue(settings["shellPath"].endswith("\\bin\\bash.exe"))
 
+    def test_pi_fleet_view_replaces_the_above_editor_widget(self):
+        settings = load_json("dot_pi/agent/subagents.json")
+        self.assertTrue(settings["fleetView"])
+        self.assertEqual(settings["widgetMode"], "off")
+        self.assertFalse(settings["workflowsEnabled"])
+        self.assertEqual(settings["graceTurns"], 10)
+        self.assertTrue(settings["reportUsage"])
+        self.assertTrue(settings["showCost"])
+        self.assertTrue(settings["showModel"])
+
     def test_pi_cc_configuration_matches_nixfiles(self):
         self.assertEqual(
             load_json("dot_pi/agent/pi-cc-extensions.json"),

@@ -1,6 +1,7 @@
 {
   "workflowsEnabled": false,
-  "fleetView": false,
+  "fleetView": true,
+  "widgetMode": "off",
   "graceTurns": 10,
   "reportUsage": true,
   "showCost": true,
