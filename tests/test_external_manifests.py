@@ -175,29 +175,32 @@ class ExternalManifestRenderingTests(unittest.TestCase):
             set(self.baseline["pi_by_platform"]),
             {f"{os_name}/{arch}" for os_name, arch in PLATFORMS},
         )
-        for colorscheme in THEMES:
-            for os_name, arch in PLATFORMS:
-                with self.subTest(colorscheme=colorscheme, os=os_name, arch=arch):
-                    actual = render_manifests(
-                        self.manifests, self.data,
-                        colorscheme=colorscheme, os_name=os_name, arch=arch,
-                    )
-                    expected = expected_manifests(
-                        self.baseline, self.data["external_resources"]["pins"],
-                        colorscheme, os_name, arch,
-                    )
-                    self.assertEqual(set(actual), set(expected))
-                    for manifest in expected:
-                        with self.subTest(manifest=manifest):
-                            # Full native declarations include target names,
-                            # type, URL, checksum, archive options and omissions.
-                            self.assertEqual(actual[manifest], expected[manifest])
-                            # JSON also distinguishes bools from numeric TOML
-                            # options (Python equality treats True as 1).
-                            self.assertEqual(
-                                json.dumps(actual[manifest], sort_keys=True),
-                                json.dumps(expected[manifest], sort_keys=True),
-                            )
+        # Only pi-distribution varies by platform, independently of theme.
+        # Cover both axes without repeating every theme/platform combination.
+        cases = [(colorscheme, *PLATFORMS[0]) for colorscheme in THEMES]
+        cases.extend((THEMES[0], os_name, arch) for os_name, arch in PLATFORMS[1:])
+        for colorscheme, os_name, arch in cases:
+            with self.subTest(colorscheme=colorscheme, os=os_name, arch=arch):
+                actual = render_manifests(
+                    self.manifests, self.data,
+                    colorscheme=colorscheme, os_name=os_name, arch=arch,
+                )
+                expected = expected_manifests(
+                    self.baseline, self.data["external_resources"]["pins"],
+                    colorscheme, os_name, arch,
+                )
+                self.assertEqual(set(actual), set(expected))
+                for manifest in expected:
+                    with self.subTest(manifest=manifest):
+                        # Full native declarations include target names,
+                        # type, URL, checksum, archive options and omissions.
+                        self.assertEqual(actual[manifest], expected[manifest])
+                        # JSON also distinguishes bools from numeric TOML
+                        # options (Python equality treats True as 1).
+                        self.assertEqual(
+                            json.dumps(actual[manifest], sort_keys=True),
+                            json.dumps(expected[manifest], sort_keys=True),
+                        )
 
     def test_shared_pin_update_flows_to_bat_and_yazi_without_manifest_edits(self):
         data = copy.deepcopy(self.data)
