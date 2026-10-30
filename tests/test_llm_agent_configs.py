@@ -404,7 +404,8 @@ class PiRuntimeConfigTests(unittest.TestCase):
 
         # Preserve Windows-specific tools and the chezmoi-managed package path.
         self.assertEqual(settings["defaultTools"], ["+powershell", "+codemode"])
-        self.assertEqual(settings["packages"], ["./packages/pi-distribution"])
+        self.assertEqual(settings["packages"].count("./packages/pi-distribution"), 1)
+        self.assertFalse((REPO_ROOT / "dot_pi/agent/extensions/rtk.ts").exists())
         self.assertTrue(settings["shellPath"].endswith("\\bin\\bash.exe"))
 
     def test_pi_fleet_view_replaces_the_above_editor_widget(self):
