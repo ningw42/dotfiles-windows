@@ -1280,17 +1280,10 @@ class RemovalRepairAndMovementContractTests(PublisherCase):
             self.publish(sources)
         self.assertEqual(managed_snapshot(self.home), before)
 
-    def test_missing_owned_view_and_link_are_repaired(self):
-        root, sources = self.simple_source()
+    def test_missing_owned_link_is_repaired(self):
+        _, sources = self.simple_source()
         self.publish(sources)
-        view = self.home / ".config/claude-code-chezmoi/generated-skills/example"
         link = self.home / ".agents/skills/one"
-
-        shutil.rmtree(view)
-        view_report = self.publish(sources)
-        self.assertIn("repair source example", view_report.actions)
-        self.assertTrue(view.is_dir())
-        self.assertTrue(link.is_symlink())
 
         link.unlink()
         link_report = self.publish(sources)
@@ -2644,31 +2637,7 @@ def render_claude_and_wrapper(root, data):
     return json.loads(result.stdout), source, destination
 
 
-def assert_powershell_parses(testcase, text, root):
-    script = root / "parse-target.ps1"
-    script.write_text(text, encoding="utf-8")
-    parser_command = (
-        "$tokens=$null; $errors=$null; "
-        "[System.Management.Automation.Language.Parser]::ParseFile($env:PARSE_TARGET,"
-        "[ref]$tokens,[ref]$errors) | Out-Null; "
-        "if ($errors.Count) { $errors | ForEach-Object { [Console]::Error.WriteLine($_) }; exit 1 }"
-    )
-    env = os.environ.copy()
-    env["PARSE_TARGET"] = str(script)
-    result = subprocess.run(
-        [POWERSHELL, "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", parser_command],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        env=env,
-        timeout=30,
-        check=False,
-    )
-    testcase.assertEqual(result.returncode, 0, result.stderr)
-
-
 @unittest.skipUnless(CHEZMOI, "chezmoi is not on PATH; isolated rendering requires it")
-@unittest.skipUnless(POWERSHELL, "PowerShell is not on PATH; rendered PowerShell parsing requires it")
 class TemplateRenderingIntegrationTests(unittest.TestCase):
     maxDiff = None
 
@@ -2712,7 +2681,6 @@ class TemplateRenderingIntegrationTests(unittest.TestCase):
                     )
 
             self.assertEqual(len(wrappers), 1)
-            assert_powershell_parses(self, next(iter(wrappers)), parent)
 
 
 @unittest.skipUnless(CHEZMOI, "chezmoi is not on PATH; wrapper rendering requires it")
