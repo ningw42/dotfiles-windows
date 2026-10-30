@@ -207,6 +207,10 @@ class ClaudeConfigTests(unittest.TestCase):
             "ANTHROPIC_DEFAULT_SONNET_MODEL",
             "ANTHROPIC_DEFAULT_HAIKU_MODEL",
             "ANTHROPIC_DEFAULT_FABLE_MODEL",
+            "CLAUDE_CODE_SUBAGENT_MODEL",
+            "CLAUDE_CODE_EFFORT_LEVEL",
+            "CLAUDE_CODE_AUTO_COMPACT_WINDOW",
+            "YYLX_API_KEY",
         ):
             with self.subTest(key=key):
                 self.assertNotIn(key, settings["env"])

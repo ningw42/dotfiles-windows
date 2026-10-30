@@ -18,7 +18,15 @@ PROVIDER_SECRETS = {
 PROVIDER_ENVIRONMENT = {
     "COPILOTD_API_KEY": "fixture-copilotd-key",
 }
+CLAUDE_OWNED_VARIABLES = (
+    "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL",
+    "ANTHROPIC_MODEL", "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    "ANTHROPIC_DEFAULT_FABLE_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL",
+    "CLAUDE_CODE_EFFORT_LEVEL", "CLAUDE_CODE_AUTO_COMPACT_WINDOW", "YYLX_API_KEY",
+)
 OBSERVED_VARIABLES = [
+    *CLAUDE_OWNED_VARIABLES,
     *PROVIDER_ENVIRONMENT, "CODEX_API_KEY", "PI_API_KEY", "OPENCODE_API_KEY",
     "DEEPSEEK_API_KEY", "MAGPIE_API_KEY", "PI_STATUSLINE_STARSHIP",
     "ROUTER_MAESTRO_API_KEY", "COPILOT_PROXY_API_KEY", "LITELLM_API_KEY",
@@ -213,6 +221,21 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
                 })
                 for name in PROVIDER_ENVIRONMENT:
                     self.assertEqual(actual[name], value)
+
+    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
+    def test_claude_subscription_clears_owned_overrides_without_changing_magpie_auth(self):
+        for path in TEMPLATES:
+            with self.subTest(path=path):
+                actual = self.evaluate(path, secrets={
+                    "magpie_api_key": "fixture-magpie-key",
+                    "yylx_api_key": "fixture-retired-claude-key",
+                }, inherited={
+                    **{name: "fixture-stale-override" for name in CLAUDE_OWNED_VARIABLES},
+                    "MAGPIE_API_KEY": "external-magpie-key",
+                })
+                for name in CLAUDE_OWNED_VARIABLES:
+                    self.assertFalse(actual[name], name)
+                self.assertEqual(actual["MAGPIE_API_KEY"], "fixture-magpie-key")
 
     @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
     def test_deepseek_cleanup_and_magpie_external_key_policy_are_unchanged(self):
