@@ -218,7 +218,7 @@ class ClaudeConfigTests(unittest.TestCase):
 class ModelCatalogTests(unittest.TestCase):
     def test_opencode_catalog_and_policy_match_nixfiles_projection(self):
         config = load_opencode_config()
-        self.assertEqual(config["model"], "magpie-responses/gpt-6.1-sol")
+        self.assertEqual(config["model"], "magpie-responses/gpt-6-astra")
         self.assertEqual(
             config["plugins"], ["-opencode.config.compatibility"]
         )
@@ -324,7 +324,7 @@ class ModelCatalogTests(unittest.TestCase):
             {"off": None, "minimal": None, "medium": None, "max": "max"},
         )
         self.assertEqual(settings["defaultProvider"], "magpie-responses")
-        self.assertEqual(settings["defaultModel"], "gpt-6.1-sol")
+        self.assertEqual(settings["defaultModel"], "gpt-6-astra")
         self.assertEqual(settings["defaultThinkingLevel"], "xhigh")
         self.assertEqual(settings["defaultTools"], ["+powershell", "+codemode"])
         self.assertEqual(
@@ -565,10 +565,17 @@ class AgentDefaultTests(unittest.TestCase):
             / "readonly_Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl"
         ).read_text(encoding="utf-8")
 
-        self.assertEqual(opencode["model"], "magpie-responses/gpt-6.1-sol")
-        self.assertEqual(pi["defaultModel"], "gpt-6.1-sol")
-        self.assertEqual(copilot["model"], "gpt-6.1-sol")
-        self.assertRegex(codex, r'(?m)^model = "gpt-6\.1-sol"$')
+        self.assertEqual(opencode["model"], "magpie-responses/gpt-6-astra")
+        self.assertEqual(
+            opencode["provider"]["magpie-responses"]["models"]["gpt-6-astra"]["options"]["reasoningEffort"],
+            "xhigh",
+        )
+        self.assertEqual(pi["defaultModel"], "gpt-6-astra")
+        self.assertEqual(pi["defaultThinkingLevel"], "xhigh")
+        self.assertEqual(copilot["model"], "gpt-6-astra")
+        self.assertEqual(copilot["effortLevel"], "xhigh")
+        self.assertRegex(codex, r'(?m)^model = "gpt-6-astra"$')
+        self.assertRegex(codex, r'(?m)^model_reasoning_effort = "xhigh"$')
         self.assertIn('claude --model "claude-opus-5-5[1m]"', profile)
 
     def test_opencode_human_only_commands_cover_every_local_skill(self):

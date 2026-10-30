@@ -1,7 +1,7 @@
 {{- if ne .codex_provider "copilotd" -}}
 {{- fail (printf "Codex provider %q is retired; run chezmoi edit-config and select a current data.codex_provider from .chezmoi.toml.tmpl" .codex_provider) -}}
 {{- end -}}
-model = "gpt-6.1-sol"
+model = "gpt-6-astra"
 model_provider = "{{ .codex_provider }}"
 model_reasoning_effort = "xhigh"
 suppress_unstable_features_warning = true

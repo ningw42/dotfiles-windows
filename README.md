@@ -168,7 +168,8 @@ Pi and OpenCode use `https://magpie.ningw.net`: Responses for GPT, DeepSeek,
 and GLM, and Google's native Generative AI API for Gemini. Pi's generated
 Explore/Plan agents and all workflow tiers also use `magpie-responses`. GPT-5.6
 Sol sends the bare `gpt-5.6-sol` request ID; Magpie selects Copilot's fast tier
-internally. Current defaults and model catalogs live in
+internally. Pi, OpenCode, Codex, and Copilot CLI default to GPT-6 Astra at
+`xhigh` effort. Current defaults and model catalogs live in
 `dot_pi/agent/{settings,models}.json` and
 `dot_config/opencode/opencode.json.tmpl`. Codex remains on Copilotd, Copilot CLI
 uses its native authentication, and Claude Code uses subscription authentication.
