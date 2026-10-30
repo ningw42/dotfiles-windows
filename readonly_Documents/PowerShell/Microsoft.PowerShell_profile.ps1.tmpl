@@ -70,6 +70,9 @@ Remove-Item Env:DEEPSEEK_API_KEY -ErrorAction SilentlyContinue
 $Env:MAGPIE_API_KEY = "{{ $secrets.magpie_api_key }}"
 {{ end -}}
 
+# OpenCode 2.2+: keep native .agents/.opencode discovery, excluding Claude roots.
+$Env:OPENCODE_DISABLE_CLAUDE_CODE_SKILLS = "1"
+
 # pi: runtime behavior supplied by nixfiles' wrapper
 # Forward copies through terminals/multiplexers even without SSH detection.
 $Env:PI_CLIPBOARD_OSC52 = "1"

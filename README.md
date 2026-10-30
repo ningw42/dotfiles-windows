@@ -197,6 +197,15 @@ The NixOS Magpie server and Linux/macOS Moshi daemon/hooks are not deployed by
 this Windows configuration. Magpie remains a remote service; no local gateway
 installation is needed.
 
+## OpenCode
+
+OpenCode 2.2+ uses native discovery for global and project `.agents/skills` and
+OpenCode skill roots. The PowerShell profile and persistent user environment set
+`OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1` to exclude both Claude roots without
+disabling the whole compatibility scanner. Existing processes need restarting
+after deployment to inherit the persistent setting. Repo-authored human-only
+skills retain their explicit commands and invocation permissions.
+
 ## Claude/Copilot statusline
 
 `dot_config/statusline/statusline.py` shares the nixfiles implementation: session

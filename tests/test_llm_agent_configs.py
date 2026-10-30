@@ -219,13 +219,10 @@ class ModelCatalogTests(unittest.TestCase):
     def test_opencode_catalog_and_policy_match_nixfiles_projection(self):
         config = load_opencode_config()
         self.assertEqual(config["model"], "magpie-responses/gpt-6-astra")
-        self.assertEqual(
-            config["plugins"], ["-opencode.config.compatibility"]
-        )
-        self.assertEqual(
-            config["skills"],
-            ["C:/Users/fixture/.agents/skills", ".agents/skills"],
-        )
+        # OpenCode 2.2+ honors the environment's Claude-only exclusion; keep
+        # native discovery rather than disabling its compatibility scanner.
+        self.assertNotIn("plugins", config)
+        self.assertNotIn("skills", config)
         self.assertEqual(
             config["enabled_providers"],
             ["magpie-generative-ai", "magpie-responses"],

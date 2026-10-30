@@ -52,6 +52,9 @@ foreach ($name in @(
 [Environment]::SetEnvironmentVariable("MAGPIE_API_KEY", "{{ $secrets.magpie_api_key }}", "User")
 {{ end -}}
 
+# OpenCode 2.2+: keep native .agents/.opencode discovery, excluding Claude roots.
+[Environment]::SetEnvironmentVariable("OPENCODE_DISABLE_CLAUDE_CODE_SKILLS", "1", "User")
+
 # pi — runtime behavior supplied by nixfiles' wrapper
 # Forward copies through terminals/multiplexers even without SSH detection.
 [Environment]::SetEnvironmentVariable("PI_CLIPBOARD_OSC52", "1", "User")

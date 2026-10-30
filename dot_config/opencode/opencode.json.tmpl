@@ -1,13 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "magpie-responses/gpt-6-astra",
-  "plugins": [
-    "-opencode.config.compatibility"
-  ],
-  "skills": [
-    "{{ .chezmoi.homeDir | replace "\\" "/" }}/.agents/skills",
-    ".agents/skills"
-  ],
   "enabled_providers": [
     "magpie-generative-ai",
     "magpie-responses"

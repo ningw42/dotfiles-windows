@@ -22,6 +22,7 @@ OBSERVED_VARIABLES = [
     *PROVIDER_ENVIRONMENT, "CODEX_API_KEY", "PI_API_KEY", "OPENCODE_API_KEY",
     "DEEPSEEK_API_KEY", "MAGPIE_API_KEY", "PI_STATUSLINE_STARSHIP",
     "ROUTER_MAESTRO_API_KEY", "COPILOT_PROXY_API_KEY", "LITELLM_API_KEY",
+    "OPENCODE_DISABLE_CLAUDE_CODE_SKILLS",
 ]
 SECRET_LOADER = 'include "secrets.yaml.age" | decrypt | fromYaml'
 TEMPLATES = {
@@ -110,6 +111,17 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout)
+
+    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
+    def test_opencode_excludes_only_claude_skill_roots_in_both_export_paths(self):
+        for path in TEMPLATES:
+            with self.subTest(path=path):
+                rendered = self.render(path, secrets={})
+                self.assertNotIn("OPENCODE_DISABLE_EXTERNAL_SKILLS", rendered)
+                actual = self.evaluate(path, secrets={}, inherited={
+                    "OPENCODE_DISABLE_CLAUDE_CODE_SKILLS": "0",
+                })
+                self.assertEqual(actual["OPENCODE_DISABLE_CLAUDE_CODE_SKILLS"], "1")
 
     @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
     def test_starship_uses_scoop_current_binary_not_removed_shim(self):
