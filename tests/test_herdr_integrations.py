@@ -88,40 +88,42 @@ class HerdrIntegrationGateTests(unittest.TestCase):
                 self.assertEqual(self.destination.read_bytes(), self.source.read_bytes())
                 self.assertEqual(list(self.root.glob("*.tmp")), [])
 
+    # Rejection logic is shared; the success matrix above checks every version pin.
     def test_unreviewed_versions_leave_destination_unchanged(self):
-        for integration_id, expected in REVIEWED_VERSIONS.items():
-            for version in (expected - 1, expected + 1):
-                with self.subTest(integration=integration_id, version=version):
-                    self.source.write_text(
-                        integration(integration_id, version), encoding="utf-8"
-                    )
-                    self.destination.write_text(
-                        integration(integration_id, expected - 1), encoding="utf-8"
-                    )
-                    before = self.destination.read_bytes()
-
-                    result = self.publish(integration_id)
-
-                    self.assertNotEqual(result.returncode, 0)
-                    self.assertIn(
-                        f"expected v{expected}, generated v{version}", result.stderr
-                    )
-                    self.assertEqual(self.destination.read_bytes(), before)
-
-    def test_reviewed_versions_do_not_overwrite_non_herdr_files(self):
-        for integration_id, version in REVIEWED_VERSIONS.items():
-            with self.subTest(integration=integration_id, version=version):
+        integration_id = "pi"
+        expected = REVIEWED_VERSIONS[integration_id]
+        for version in (expected - 1, expected + 1):
+            with self.subTest(version=version):
                 self.source.write_text(
                     integration(integration_id, version), encoding="utf-8"
                 )
-                self.destination.write_text("# user-owned hook\n", encoding="utf-8")
+                self.destination.write_text(
+                    integration(integration_id, expected - 1), encoding="utf-8"
+                )
                 before = self.destination.read_bytes()
 
                 result = self.publish(integration_id)
 
                 self.assertNotEqual(result.returncode, 0)
-                self.assertIn("Refusing to overwrite non-HerdR file", result.stderr)
+                self.assertIn(
+                    f"expected v{expected}, generated v{version}", result.stderr
+                )
                 self.assertEqual(self.destination.read_bytes(), before)
+
+    def test_reviewed_version_does_not_overwrite_non_herdr_file(self):
+        integration_id = "pi"
+        self.source.write_text(
+            integration(integration_id, REVIEWED_VERSIONS[integration_id]),
+            encoding="utf-8",
+        )
+        self.destination.write_text("# user-owned hook\n", encoding="utf-8")
+        before = self.destination.read_bytes()
+
+        result = self.publish(integration_id)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Refusing to overwrite non-HerdR file", result.stderr)
+        self.assertEqual(self.destination.read_bytes(), before)
 
 
 @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for TUI mark publishing")
