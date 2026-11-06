@@ -353,12 +353,11 @@ class ModelCatalogTests(unittest.TestCase):
                         "cache_read": cost["cacheRead"], "cache_write": cost["cacheWrite"],
                     })
 
-    def test_sol_uses_the_public_id_without_a_fast_alias(self):
+    def test_sol_uses_the_public_id(self):
         pi = load_json("dot_pi/agent/models.json")["providers"]
         opencode = load_opencode_config()["provider"]
         self.assertIn("gpt-5.6-sol", opencode["magpie-responses"]["models"])
-        self.assertNotIn("gpt-5.6-sol-fast", opencode["magpie-responses"]["models"])
-        self.assertNotIn("gpt-5.6-sol-fast", {
+        self.assertIn("gpt-5.6-sol", {
             model["id"] for model in pi["magpie-responses"]["models"]
         })
 

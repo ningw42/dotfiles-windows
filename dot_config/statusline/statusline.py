@@ -735,13 +735,7 @@ class CopilotStatusline(Statusline):
         (anything with a digit) verbatim, upcase `gpt`, and title-case the rest.
         GPT labels keep the prefix/version hyphen (`GPT-5.5`) but space-join
         qualifiers (`GPT-5.6 Sol`); others are fully space-joined (`Opus 5`).
-        The `gpt-5.6-sol-fast` wire ID deliberately shares the `GPT-5.6 Sol`
-        presentation label.
         """
-        normalized = re.sub(r"[-_\s]+", "-", value.strip().lower())
-        if normalized == "gpt-5.6-sol-fast":
-            return "GPT-5.6 Sol"
-
         tokens = [tok for tok in re.split(r"[-_]+", value.strip()) if tok]
         if tokens and tokens[0].lower() == "claude":
             tokens = tokens[1:]
@@ -916,8 +910,7 @@ def _run_tests():
             self.assertEqual(f("claude-opus-5.5"), "Opus 5.5")
             self.assertEqual(f("gpt-5.5"), "GPT-5.5")
             self.assertEqual(f("gpt-5.6-sol"), "GPT-5.6 Sol")
-            self.assertEqual(f("gpt-5.6-sol-fast"), "GPT-5.6 Sol")
-            self.assertEqual(f("GPT-5.6 Sol Fast"), "GPT-5.6 Sol")
+            self.assertEqual(f("GPT-5.6 Sol"), "GPT-5.6 Sol")
             self.assertEqual(f("gpt-6-luna"), "GPT-6 Luna")
             self.assertEqual(f("gpt-6.1-sol"), "GPT-6.1 Sol")
             self.assertEqual(f("gpt-6-astra"), "GPT-6 Astra")
