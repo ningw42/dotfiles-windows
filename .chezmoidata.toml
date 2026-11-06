@@ -168,23 +168,23 @@ repository = "mattpocock/skills"
 tag = "v1.3.2"
 
 [external_resources.pins.pi_distribution_windows_arm64]
-url = "https://github.com/ningw42/pi-distribution/releases/download/v26.11.1/pi-distribution-v26.11.1-windows-arm64.tgz"
-sha256 = "543217131e8fa611d9da417f757fd8151a93f14a893b0b3ed5e749f4f534c7a3"
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.11.4/pi-distribution-v26.11.4-windows-arm64.tgz"
+sha256 = "103a6a7dab712fae107c199764f8c1c987080fecb0cda92db649257e263d0311"
 
 [external_resources.pins.pi_distribution_windows_arm64.update]
 type = "github_release"
 repository = "ningw42/pi-distribution"
-tag = "v26.11.1"
+tag = "v26.11.4"
 asset = "pi-distribution-{tag}-windows-arm64.tgz"
 
 [external_resources.pins.pi_distribution_windows_x64]
-url = "https://github.com/ningw42/pi-distribution/releases/download/v26.11.1/pi-distribution-v26.11.1-windows-x64.tgz"
-sha256 = "543217131e8fa611d9da417f757fd8151a93f14a893b0b3ed5e749f4f534c7a3"
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.11.4/pi-distribution-v26.11.4-windows-x64.tgz"
+sha256 = "103a6a7dab712fae107c199764f8c1c987080fecb0cda92db649257e263d0311"
 
 [external_resources.pins.pi_distribution_windows_x64.update]
 type = "github_release"
 repository = "ningw42/pi-distribution"
-tag = "v26.11.1"
+tag = "v26.11.4"
 asset = "pi-distribution-{tag}-windows-x64.tgz"
 
 [external_resources.pins.yazi_everforest_medium_flavor]
