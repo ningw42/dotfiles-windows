@@ -84,12 +84,15 @@ for (const [name, model] of agentModels) {
   const builtin = DEFAULT_AGENTS.get(name);
   if (!builtin) throw new Error(`pi-subagents has no built-in ${name} agent`);
 
-  const agent = { ...builtin };
+  // Frontmatter is authoritative: even a foreground caller stays detached.
+  const agent = { ...builtin, runInBackground: true };
   if (model === null) delete agent.model;
   else agent.model = model;
   const serialized = serializeAgentFile(agent);
   const modelLine = serialized.match(/^model: (.*)$/m)?.[1] ?? null;
   if (modelLine !== model) throw new Error(`${name} model pin was not applied`);
+  const backgroundLine = serialized.match(/^run_in_background: (.*)$/m)?.[1];
+  if (backgroundLine !== "true") throw new Error(`${name} background execution pin was not applied`);
   generated[name] = serialized;
 }
 process.stdout.write(JSON.stringify(generated));
