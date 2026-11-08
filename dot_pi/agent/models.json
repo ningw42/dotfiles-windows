@@ -8,12 +8,12 @@
         {
           "contextWindow": 1048576,
           "cost": {
-            "cacheRead": 0.2,
+            "cacheRead": 0.1,
             "cacheWrite": 0,
-            "input": 4,
-            "output": 20
+            "input": 2,
+            "output": 10
           },
-          "id": "gemini-4-argon-contributor",
+          "id": "gemini-4-argon",
           "input": [
             "text",
             "image"

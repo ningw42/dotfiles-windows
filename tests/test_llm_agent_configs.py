@@ -232,14 +232,14 @@ class ModelCatalogTests(unittest.TestCase):
 
     def test_opencode_provider_metadata_matches_nixfiles_snapshot(self):
         # Full provider snapshot from nixfiles' llm-agents/tests/model-catalog.nix
-        # at 8f97dd8; canonical JSON matches Nix's builtins.toJSON rendering.
+        # at 0a4c01a; canonical JSON matches Nix's builtins.toJSON rendering.
         providers = load_opencode_config()["provider"]
         snapshot = json.dumps(
             providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
         ).encode("utf-8")
         self.assertEqual(
             hashlib.sha256(snapshot).hexdigest(),
-            "18171b2f65030aa1d3591e72a22faba5b733a17990cf932b57f2f3f6466306ab",
+            "18e3b14eb7f5dbaf1df78691b2905f5fd52be761e10ed21de7d9d8144462c42f",
         )
 
     def test_pi_cycle_defaults_match_nixfiles_projection(self):
@@ -257,7 +257,7 @@ class ModelCatalogTests(unittest.TestCase):
                 "magpie-messages/claude-haiku-5-5:medium",
                 "magpie-messages/claude-sonnet-5-5:high",
                 "magpie-messages/claude-opus-5-5:medium",
-                "magpie-generative-ai/gemini-4-argon-contributor:medium",
+                "magpie-generative-ai/gemini-4-argon:medium",
             ],
         )
 
@@ -292,14 +292,14 @@ class ModelCatalogTests(unittest.TestCase):
 
     def test_pi_provider_metadata_matches_nixfiles_snapshot(self):
         # Full provider snapshot from nixfiles' llm-agents/tests/model-catalog.nix
-        # at 8f97dd8; canonical JSON matches Nix's builtins.toJSON rendering.
+        # at 0a4c01a; canonical JSON matches Nix's builtins.toJSON rendering.
         providers = load_json("dot_pi/agent/models.json")["providers"]
         snapshot = json.dumps(
             providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
         ).encode("utf-8")
         self.assertEqual(
             hashlib.sha256(snapshot).hexdigest(),
-            "f153439dcdc4b1c45a22c8e95c2a600874044cbeaa68ff0ad92a29847242098e",
+            "a6fe72e8b127fc7c1a7516404963686c78cebab208cf473715ca6e8407604ef8",
         )
 
     def test_pi_configured_routes_reference_registered_models(self):
