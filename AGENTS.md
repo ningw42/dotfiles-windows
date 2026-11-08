@@ -196,10 +196,13 @@ The global pi-subagents and pi-tasks defaults live in
 `dot_pi/agent/{subagents.json,tasks-config.json}`. Built-in agent overrides are
 generated after every apply by
 `.chezmoiscripts/run_after_pi-subagents-agents.ps1.tmpl` from the installed,
-pinned pi-subagents sources. Its `$agentModels` mapping owns the Explore/Plan
-model pins; `general-purpose` inherits the caller or parent model. Keep all
-three as generated deployed files; do not add
-`dot_pi/agent/agents/*.md` sources.
+pinned pi-subagents sources. Customize them centrally in its
+`$builtinAgentOverrides` mapping using camelCase `AgentConfig` fields: omitted
+fields inherit upstream, values replace (including lists), and `$null` removes
+a field. Keep canonical agent IDs as keys; use `displayName` for cosmetic names.
+Keep all three as generated deployed files; do not add
+`dot_pi/agent/agents/*.md` sources. Validate generator changes with
+`tests/test_pi_subagents.py`, which uses isolated sources and output files.
 
 Pi also rewrites `settings.json` at runtime (for package/theme/version state), so
 interactive apply may ask whether to overwrite it. This is expected: overwrite

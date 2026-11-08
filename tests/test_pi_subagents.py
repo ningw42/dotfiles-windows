@@ -44,8 +44,10 @@ export function serializeAgentFile(cfg: AgentConfig): string {
     `tools: ${cfg.builtinToolNames.join(", ")}`,
     `prompt_mode: ${cfg.promptMode}`,
   ];
+  if (cfg.displayName) fields.push(`display_name: ${cfg.displayName}`);
   if (cfg.model) fields.push(`model: ${cfg.model}`);
   if (cfg.thinking) fields.push(`thinking: ${cfg.thinking}`);
+  if (cfg.extensions === false) fields.push("extensions: false");
   if (cfg.runInBackground !== undefined) fields.push(`run_in_background: ${cfg.runInBackground}`);
   return `---\\n${fields.join("\\n")}\\n---\\n\\n${cfg.systemPrompt}\\n`;
 }
@@ -131,6 +133,63 @@ class PiBuiltinAgentGenerationTests(unittest.TestCase):
         self.assertEqual(third.returncode, 0, third.stderr)
         for path in paths:
             self.assertIn("updated prompt", path.read_text(encoding="utf-8"))
+
+    def customize_explore(self, fields):
+        self.template, count = re.subn(
+            r"(?ms)^    Explore = @\{\n.*?^    \}",
+            "    Explore = @{\n" + fields + "    }",
+            self.template,
+        )
+        self.assertEqual(count, 1)
+        self.write_generator()
+
+    def test_overrides_replace_lists_remove_fields_and_preserve_false(self):
+        self.customize_explore(
+            "        displayName = 'Scout'\n"
+            "        model = $null\n"
+            "        thinking = $null\n"
+            "        builtinToolNames = @('find')\n"
+            "        extensions = $false\n"
+            "        runInBackground = $false\n"
+        )
+        result = self.generate()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        content = (self.output / "Explore.md").read_text(encoding="utf-8")
+        self.assertIn("display_name: Scout\n", content)
+        self.assertIn("tools: find\n", content)
+        self.assertIn("extensions: false\n", content)
+        self.assertIn("run_in_background: false\n", content)
+        self.assertNotRegex(content, r"(?m)^(model|thinking):")
+        self.assertIn("Explore upstream prompt\n", content)
+        self.assertFalse((self.output / "Scout.md").exists())
+
+    def test_omitted_fields_inherit_and_empty_lists_replace_upstream(self):
+        self.customize_explore("        builtinToolNames = @()\n")
+        result = self.generate()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        content = (self.output / "Explore.md").read_text(encoding="utf-8")
+        self.assertIn("model: upstream/model\n", content)
+        self.assertIn("thinking: high\n", content)
+        self.assertIn("run_in_background: false\n", content)
+        self.assertIn("tools: \n", content)
+
+    def test_null_background_override_removes_upstream_pin(self):
+        self.customize_explore("        runInBackground = $null\n")
+        result = self.generate()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        content = (self.output / "Explore.md").read_text(encoding="utf-8")
+        self.assertNotRegex(content, r"(?m)^run_in_background:")
+        self.assertIn("model: upstream/model\n", content)
+
+    def test_missing_model_serialization_fails_before_publishing(self):
+        self.serializer.write_text(
+            SERIALIZER.replace('  if (cfg.model) fields.push(`model: ${cfg.model}`);\n', ""),
+            encoding="utf-8",
+        )
+        result = self.generate()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("model pin was not applied", result.stderr)
+        self.assertFalse(self.output.exists())
 
     def test_missing_background_serialization_fails_before_publishing(self):
         self.serializer.write_text(

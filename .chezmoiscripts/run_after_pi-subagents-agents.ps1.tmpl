@@ -20,13 +20,24 @@ if (-not (Test-Path -LiteralPath $node -PathType Leaf)) {
     throw "Node.js was not found at '$node'. Install the Scoop nodejs dependency before applying this source."
 }
 
-# Frontmatter pins outrank Agent tool model parameters. Keep the fast explorer
-# and large planner explicit while allowing general-purpose to inherit caller
-# selection or the parent model.
-$agentModels = [ordered]@{
-    Explore = 'magpie-responses/gpt-5.6-sol'
-    Plan = 'magpie-responses/gpt-6-astra'
-    'general-purpose' = $null
+# Central customization using the serializer's camelCase AgentConfig fields.
+# Omitted fields inherit upstream; overrides replace (including lists), and
+# $null removes a field. Keys stay canonical type IDs; displayName is cosmetic.
+# Frontmatter pins outrank Agent tool parameters, including foreground requests.
+$builtinAgentOverrides = [ordered]@{
+    Explore = @{
+        model = 'magpie-responses/gpt-5.6-sol'
+        runInBackground = $true
+    }
+    Plan = @{
+        model = 'magpie-responses/gpt-6-astra'
+        runInBackground = $true
+    }
+    'general-purpose' = @{
+        # Allow caller model selection or parent inheritance.
+        model = $null
+        runInBackground = $true
+    }
 }
 
 $work = Join-Path ([IO.Path]::GetTempPath()) ("chezmoi-pi-agents-{0}" -f [Guid]::NewGuid().ToString('N'))
@@ -78,21 +89,22 @@ try {
 const { DEFAULT_AGENTS } = await import("./src/default-agents.ts");
 const { serializeAgentFile } = await import("./src/agent-file-toggle.ts");
 
-const agentModels = new Map(Object.entries(JSON.parse(process.env.AGENT_MODELS_JSON)));
+const agentOverrides = JSON.parse(process.env.AGENT_OVERRIDES_JSON);
 const generated = {};
-for (const [name, model] of agentModels) {
+for (const [name, overrides] of Object.entries(agentOverrides)) {
   const builtin = DEFAULT_AGENTS.get(name);
   if (!builtin) throw new Error(`pi-subagents has no built-in ${name} agent`);
 
-  // Frontmatter is authoritative: even a foreground caller stays detached.
-  const agent = { ...builtin, runInBackground: true };
-  if (model === null) delete agent.model;
-  else agent.model = model;
+  const agent = Object.fromEntries(
+    Object.entries({ ...builtin, ...overrides }).filter(([, value]) => value !== null),
+  );
   const serialized = serializeAgentFile(agent);
   const modelLine = serialized.match(/^model: (.*)$/m)?.[1] ?? null;
-  if (modelLine !== model) throw new Error(`${name} model pin was not applied`);
-  const backgroundLine = serialized.match(/^run_in_background: (.*)$/m)?.[1];
-  if (backgroundLine !== "true") throw new Error(`${name} background execution pin was not applied`);
+  if (modelLine !== (agent.model ?? null)) throw new Error(`${name} model pin was not applied`);
+  const backgroundLine = serialized.match(/^run_in_background: (.*)$/m)?.[1] ?? null;
+  if (backgroundLine !== (agent.runInBackground?.toString() ?? null)) {
+    throw new Error(`${name} background execution pin was not applied`);
+  }
   generated[name] = serialized;
 }
 process.stdout.write(JSON.stringify(generated));
@@ -106,7 +118,7 @@ process.stdout.write(JSON.stringify(generated));
     $startInfo.UseShellExecute = $false
     $startInfo.RedirectStandardOutput = $true
     $startInfo.RedirectStandardError = $true
-    $startInfo.Environment['AGENT_MODELS_JSON'] = ($agentModels | ConvertTo-Json -Compress)
+    $startInfo.Environment['AGENT_OVERRIDES_JSON'] = ($builtinAgentOverrides | ConvertTo-Json -Depth 20 -Compress)
     $startInfo.ArgumentList.Add('--no-warnings')
     $startInfo.ArgumentList.Add('--experimental-strip-types')
     $startInfo.ArgumentList.Add($generatorPath)
@@ -127,12 +139,12 @@ process.stdout.write(JSON.stringify(generated));
     catch {
         throw "The pi-subagents serializer produced invalid JSON: $($_.Exception.Message)"
     }
-    if (@($generatedAgents.PSObject.Properties).Count -ne $agentModels.Count) {
+    if (@($generatedAgents.PSObject.Properties).Count -ne $builtinAgentOverrides.Count) {
         throw 'The pi-subagents serializer returned an unexpected set of agents.'
     }
 
     New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
-    foreach ($entry in $agentModels.GetEnumerator()) {
+    foreach ($entry in $builtinAgentOverrides.GetEnumerator()) {
         $property = $generatedAgents.PSObject.Properties[$entry.Key]
         if ($null -eq $property) {
             throw "The pi-subagents serializer omitted '$($entry.Key)'."
@@ -140,16 +152,6 @@ process.stdout.write(JSON.stringify(generated));
         $serialized = [string]$property.Value
         if ([string]::IsNullOrWhiteSpace($serialized)) {
             throw "The pi-subagents serializer produced empty output for '$($entry.Key)'."
-        }
-
-        $modelMatch = [regex]::Match($serialized, '(?m)^model: (.*)$')
-        if ($null -eq $entry.Value) {
-            if ($modelMatch.Success) {
-                throw "The generated '$($entry.Key)' agent unexpectedly contains a model pin."
-            }
-        }
-        elseif (-not $modelMatch.Success -or $modelMatch.Groups[1].Value -cne $entry.Value) {
-            throw "The generated '$($entry.Key)' agent has an unexpected model pin."
         }
 
         $outputPath = Join-Path $OutputDirectory "$($entry.Key).md"

@@ -40,7 +40,9 @@ def load_pi_builtin_agent_routes():
     generator = (
         REPO_ROOT / ".chezmoiscripts/run_after_pi-subagents-agents.ps1.tmpl"
     ).read_text(encoding="utf-8")
-    return dict(re.findall(r"(?m)^\s*(Explore|Plan) = '([^']+)'$", generator))
+    return dict(re.findall(
+        r"(?m)^    (Explore|Plan) = @\{\n\s*model = '([^']+)'$", generator
+    ))
 
 
 @unittest.skipUnless(CHEZMOI, "chezmoi is required for real template rendering")
@@ -541,7 +543,10 @@ class AgentDefaultTests(unittest.TestCase):
             "Explore": "magpie-responses/gpt-5.6-sol",
             "Plan": "magpie-responses/gpt-6-astra",
         })
-        self.assertRegex(generator, r"(?m)^\s*'general-purpose' = \$null$")
+        self.assertRegex(
+            generator,
+            r"(?m)^    'general-purpose' = @\{\n(?:\s*#[^\n]*\n)*\s*model = \$null$",
+        )
 
     def test_pi_workflow_tiers_match_nixfiles(self):
         self.assertEqual(load_json("dot_pi/workflows/model-tiers.json"), {
