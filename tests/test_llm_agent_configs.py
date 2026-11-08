@@ -409,10 +409,10 @@ class PiRuntimeConfigTests(unittest.TestCase):
         self.assertFalse((REPO_ROOT / "dot_pi/agent/extensions/rtk.ts").exists())
         self.assertTrue(settings["shellPath"].endswith("\\bin\\bash.exe"))
 
-    def test_pi_fleet_view_replaces_the_above_editor_widget(self):
+    def test_pi_background_widget_replaces_fleet_view_like_nixfiles(self):
         settings = load_json("dot_pi/agent/subagents.json")
-        self.assertTrue(settings["fleetView"])
-        self.assertEqual(settings["widgetMode"], "off")
+        self.assertFalse(settings["fleetView"])
+        self.assertEqual(settings["widgetMode"], "background")
         self.assertFalse(settings["workflowsEnabled"])
         self.assertEqual(settings["graceTurns"], 10)
         self.assertTrue(settings["reportUsage"])
