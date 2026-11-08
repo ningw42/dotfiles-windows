@@ -6,13 +6,13 @@ disable-model-invocation: true
 
 # Close Code Review
 
-Run this in the reviewer's session after review comments exist. The reviewer owns findings and acceptance; the implementer owns revisions and implementation-side verification. Either may ask the human for context, priorities, risk acceptance, or a decision at any point. Consensus means a shared final ledger that incorporates those answers, not that the agents settle everything unaided.
+Run this in the reviewer's session after review comments exist. The reviewer owns findings and acceptance; the implementer owns revisions and implementation-side verification. Either may ask the human for context, priorities, risk acceptance, or a decision at any point.
 
 Invocation authorizes Herdr for this loop. Invoke and follow the `herdr` skill before issuing Herdr commands.
 
 ## Sender identity
 
-Begin every agent-authored message in this loop with `[agent:<role> herdr:<sender-id>]`, including Herdr prompts, replies, progress updates, and questions or reports to the human. Use `reviewer` or `implementer` for the role and the sender's current pane ID from live Herdr state for the ID, for example `[agent:reviewer herdr:w1:p2]`. Keep relayed human answers explicitly attributed to the human.
+Begin every message to the other agent with `[agent:<role> herdr:<sender-id>]`, whether a Herdr prompt or a reply for it to read: Herdr input arrives as if a human typed it, so the header marks it as agent-authored. Use `reviewer` or `implementer` for the role and the sender's current pane ID from live Herdr state for the ID, for example `[agent:reviewer herdr:w1:p2]`. Address the human in your own session directly, without the header. Keep relayed human answers explicitly attributed to the human.
 
 ## 1. Establish the ledger
 
@@ -41,8 +41,8 @@ Checkpoint: every entry has an evidence-backed disposition, and every open entry
 ## 4. Iterate and confirm
 
 1. Send only open and new entries and repeat sections 2–3.
-2. Ask the human whenever either agent requests input or the agents repeat positions without new evidence. Record the decision as a required fix, withdrawal, or waiver, then continue.
+2. Ask the human when the agents repeat positions without new evidence. Record the decision as a required fix, withdrawal, or waiver, then continue.
 3. When no entry is open, send the final ledger to the implementer for explicit confirmation. Reopen any mismatch.
-4. Verify the final diff, revision commits, and checks, then report all dispositions, human decisions, verification, and repository state. Beyond the required feature-branch revision commits, leave squashing, pushing, and pull-request actions to the surrounding workflow.
+4. Verify the final diff, revision commits, and checks, then report all dispositions, human decisions, verification, and repository state. Leave squashing, pushing, and pull-request actions to the surrounding workflow.
 
 Checkpoint: reviewer and implementer accept the same human-informed ledger, no entry remains open, and the reported repository state matches the verified implementation.
