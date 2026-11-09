@@ -27,6 +27,7 @@ local function berkeley(weight, style)
     weight = weight,
     stretch = 'ExtraCondensed',
     style = style,
+    freetype_load_flags = 'FORCE_AUTOHINT',
     harfbuzz_features = { 'ss02=1' },
   }
 end
@@ -42,7 +43,6 @@ local function font_stack(weight, style)
     berkeley(weight, style),
     'Symbols Nerd Font Berkeley Mono',
     'Sarasa Fixed SC',
-    'PragmataPro Mono',
   }
 end
 
@@ -520,16 +520,13 @@ config.font_rules = {
   { intensity = 'Half', italic = false, font = font_regular },
   { intensity = 'Half', italic = true, font = font_italic },
 }
-config.font_size = 14.0
--- Font-rendered blocks had row seams at 1.0. Built-ins fixed them but made Berkeley's
--- progress symbols too thick; underline tuning couldn't match both bars and borders.
--- Keep font glyphs and tighten rows: at 14pt/192 DPI, 1.0 gives 45px rows (seams),
--- 0.96-0.98 gives 44px (half-pixel baseline), and 0.95 gives 43px (gapless, integer
--- baseline; tested text/progress pixels match 1.0 after row alignment). 0.959 is
--- identical here; recheck after font/size/DPI changes rather than chasing decimals.
--- Progress replacements: https://github.com/wezterm/wezterm/pull/6875
--- Selective built-ins still pending: https://github.com/wezterm/wezterm/issues/1957
-config.line_height = 0.95
+-- Berkeley-only auto-hinting and this font size were tuned for glyph alignment
+-- at 192 DPI; recheck after font, renderer, DPI, or zoom changes.
+config.font_size = 14.0625
+-- Target 44px rows at 200%, matching WT's 14pt/cellHeight="1.18".
+-- WT also gives 33px at 150%: 22 logical pixels at both scales.
+-- WezTerm's match at 150% has not been verified.
+config.line_height = 0.975
 config.custom_block_glyphs = false
 -- Greyscale AA, not the "HorizontalLcd" subpixel target this used to carry: every
 -- display here is HiDPI, where the subpixel triads are far below the point of

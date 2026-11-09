@@ -59,8 +59,9 @@
             "font":
             {
                 "builtinGlyphs": true,
+                "cellHeight": "1.18",
                 "colorGlyphs": true,
-                "face": "'Berkeley Mono Retina', 'Berkeley Mono', 'Symbols Nerd Font Berkeley Mono', 'Sarasa Fixed SC', 'PragmataPro Mono'",
+                "face": "'Berkeley Mono Retina', 'Berkeley Mono', 'Symbols Nerd Font Berkeley Mono', 'Sarasa Fixed SC'",
                 "features": {
                     "ss02": 1
                 },
