@@ -17,10 +17,8 @@ winget configure -f ~/.local/share/chezmoi/configuration.dsc.yaml
 ```
 
 Place the age identity at `~/.config/chezmoi/key.txt`, then preview and deploy the
-dotfiles. Existing installations that predate the shared-skill publisher or
-provider-owned credentials must review the [legacy handoff](docs/legacy-migrations.md).
-Existing plaintext credential exports also require the
-[human-only protected-credential handoff](docs/llm-configuration.md#human-only-migration):
+dotfiles. Existing plaintext credential exports require manual cleanup after
+verifying the protected credential setup:
 
 ```powershell
 chezmoi diff
@@ -126,9 +124,7 @@ do not receive an atomic multi-file snapshot.
 ### Deployment
 
 `chezmoi apply` runs the publisher after acquiring the configured snapshots.
-For pre-publisher installations, complete the
-[human-only legacy handoff](docs/legacy-migrations.md#shared-skills-publisher)
-first. Keep an existing receipt and validate its recorded outputs; stop competing
+Keep an existing receipt and validate its recorded outputs; stop competing
 applies before switching checkouts.
 
 To preview publication separately, explicitly select the checkout and acquire
@@ -187,9 +183,7 @@ CurrentUser-DPAPI-protected store published during `chezmoi apply`. Selected
 providers require `copilotd_api_key` and `magpie_api_key` in `secrets.yaml.age`.
 Rendering/diffing does not decrypt secrets. OpenCode protected authentication is
 out of scope: its environment references remain, but credentials are no longer
-exported by the profile or setup. See [LLM configuration and credential
-lifecycle](docs/llm-configuration.md) for declaration ownership, prerequisites,
-rotation, and the required human-only environment/login handoff.
+exported by the profile or setup.
 
 DeepSeek Flash uses the bare `deepseek-flash` ID through Magpie's Responses
 endpoint, which supplies gateway routing and failover; neither Pi nor OpenCode
@@ -252,9 +246,8 @@ Codex/Pi provider fields and has no environment fallback.
 
 No credentials—including MCP keys—are exported by the PowerShell profile or
 persistent-environment setup anymore. Existing environment entries are **not
-removed automatically**. Use the preview-first, human-only
-[cleanup script](docs/cleanup-llm-environment.ps1) after following the
-[credential handoff](docs/llm-configuration.md#human-only-migration).
+removed automatically**. After verifying Codex/Pi credential retrieval, manually
+remove obsolete environment entries and restart affected applications.
 OpenCode and MCP environment references remain externally supplied; native
 Claude/Copilot login stores remain client-owned.
 

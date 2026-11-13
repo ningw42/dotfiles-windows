@@ -1,7 +1,7 @@
 {{ if eq .chezmoi.os "windows" -}}
 # Persistent non-secret behavior flags only. Credential publication is owned by
 # run_before_llm-credentials; existing environment credentials are a human-only
-# migration (docs/cleanup-llm-environment.ps1), never removed during setup.
+# migration, never removed during setup.
 
 # OpenCode 2.2+: keep native .agents/.opencode discovery, excluding Claude roots.
 [Environment]::SetEnvironmentVariable("OPENCODE_DISABLE_CLAUDE_CODE_SKILLS", "1", "User")

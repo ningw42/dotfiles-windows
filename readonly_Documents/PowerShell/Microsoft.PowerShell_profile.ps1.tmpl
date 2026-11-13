@@ -23,7 +23,6 @@ $Env:LG_CONFIG_FILE = "$Env:LOCALAPPDATA\lazygit\config.yml,$Env:LOCALAPPDATA\la
 # Credentials are never exported or cleaned up by this profile. Codex and Pi
 # retrieve provider keys through the chezmoi-managed DPAPI helper. Native logins
 # remain client-owned; OpenCode/MCP environment credentials are externally supplied.
-# See docs/llm-configuration.md in the source repo for the human-only handoff.
 
 # OpenCode 2.2+: keep native .agents/.opencode discovery, excluding Claude roots.
 $Env:OPENCODE_DISABLE_CLAUDE_CODE_SKILLS = "1"

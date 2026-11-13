@@ -112,10 +112,9 @@ dry-run still uses the network. Inspect upstream changes before accepting pins.
   credentials to a Windows CurrentUser-DPAPI store. Profiles and persistent user
   environment hooks contain only non-secret settings. Existing environment keys
   are a human-only migration, never automatic cleanup.
-- Before changing LLM declarations, rendering, credentials, or lifecycle, read
-  [`docs/llm-configuration.md`](docs/llm-configuration.md). Keep Python rendering
-  secret-free; only the apply hook decrypts. Test with fixture keys and isolated
-  homes, never real credentials.
+- Keep Python rendering secret-free; only the apply hook decrypts. Test LLM
+  configuration and credential changes with fixture keys and isolated homes,
+  never real credentials.
 
 ```powershell
 age -d -i ~/.config/chezmoi/key.txt -o secrets.yaml secrets.yaml.age
@@ -144,8 +143,7 @@ Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
   explicit include stays nonempty, and exclude wins. Matt follows its upstream
   manifest; HumanLayer intentionally remains show-me-only. The publisher never
   adopts foreign outputs. See README's shared-skills section for selection,
-  recovery, and deployment. For pre-publisher installations, follow the
-  [human-only legacy handoff](docs/legacy-migrations.md#shared-skills-publisher).
+  recovery, and deployment.
 - `.chezmoiscripts/run_after_shared-agent-skills.ps1.tmpl` invokes the publisher
   with Scoop's managed Python 3.11+ after apply. Changes to skill selection,
   publication, acquisition, or lifecycle must run `tests/test_agent_skills.py`,

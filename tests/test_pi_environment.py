@@ -74,17 +74,6 @@ class PiEnvironmentTemplateTests(unittest.TestCase):
                 for name, value in {**inherited, **BEHAVIOR}.items():
                     self.assertEqual(actual[name], value, name)
 
-    def test_manual_cleanup_is_not_invoked_by_setup(self):
-        cleanup = (REPO_ROOT / "docs/cleanup-llm-environment.ps1").read_text("utf-8")
-        self.assertIn("[switch]$Apply", cleanup)
-        self.assertIn("SupportsShouldProcess", cleanup)
-        self.assertIn("if (-not $Apply)", cleanup)
-        self.assertNotIn("GetEnvironmentVariables(", cleanup)
-        for path in (REPO_ROOT / ".chezmoiscripts").glob("*"):
-            for line in path.read_text("utf-8").splitlines():
-                if "cleanup-llm-environment.ps1" in line:
-                    self.assertTrue(line.lstrip().startswith("#"))
-
 
 if __name__ == "__main__":
     unittest.main()
