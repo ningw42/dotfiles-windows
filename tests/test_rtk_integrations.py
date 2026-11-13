@@ -9,6 +9,9 @@ import tempfile
 import tomllib
 import unittest
 from pathlib import Path
+import sys
+
+from llm_test_support import prepare_source
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -24,6 +27,7 @@ class CodexRtkConfigTests(unittest.TestCase):
             root = Path(temporary)
             source = root / "source"
             source.mkdir()
+            prepare_source(source)
             home = root / "home with spaces"
             home.mkdir()
             config = root / "chezmoi.json"
@@ -38,8 +42,9 @@ class CodexRtkConfigTests(unittest.TestCase):
                         "--cache", str(root / "cache"), "--no-tty", "--no-pager",
                         "--refresh-externals=never", "--override-data",
                         json.dumps({
-                            "chezmoi": {"homeDir": str(home)},
-                            "codex_provider": "copilotd",
+                            "chezmoi": {"homeDir": str(home), "destDir": str(home)},
+                            "llm_python": sys.executable,
+                            "llm_pwsh": POWERSHELL or "C:/Program Files/PowerShell/7/pwsh.exe",
                         }),
                     ],
                     input=(REPO_ROOT / "dot_codex" / f"{name}.tmpl").read_text(
@@ -105,7 +110,7 @@ class CodexRtkConfigTests(unittest.TestCase):
             self.assertEqual(settings["model_provider"], "copilotd")
             self.assertEqual(
                 settings["model_providers"]["copilotd"]["auth"]["args"][-1],
-                "[Console]::Out.Write($env:COPILOTD_API_KEY)",
+                "copilotd",
             )
 
 

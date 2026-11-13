@@ -4,6 +4,9 @@ CLAUDE.md
 configuration.dsc.yaml
 update_externals.py
 manage_skills.py
+render_llm_config.py
+# Machine/user-bound ciphertext is published by the credential hook, not a source.
+.config/llm/store/
 secrets.yaml
 secrets.yaml.age
 docs/

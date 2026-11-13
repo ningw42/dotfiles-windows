@@ -1,0 +1,25 @@
+{
+  "defaultTools": [
+    "+powershell",
+    "+codemode"
+  ],
+  "hideThinkingBlock": true,
+  "httpIdleTimeoutMs": 600000,
+  "markdown": {
+    "mermaid": "final"
+  },
+  "packages": [
+    "./packages/pi-distribution"
+  ],
+  "quietStartup": "header",
+  "retry": {
+    "provider": {
+      "timeoutMs": 1200000
+    }
+  },
+  "showCacheMissNotices": true,
+  "showHardwareCursor": false,
+  "theme": "catppuccin-mocha",
+  "tuiMode": "fullscreen",
+  "shellPath": "C:\\Users\\ningw\\scoop\\apps\\git\\current\\bin\\bash.exe"
+}

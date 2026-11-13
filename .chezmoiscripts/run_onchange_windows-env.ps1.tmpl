@@ -1,56 +1,7 @@
 {{ if eq .chezmoi.os "windows" -}}
-{{- $secrets := include "secrets.yaml.age" | decrypt | fromYaml -}}
-# Set persistent user-level environment variables so GUI/desktop apps can access them.
-# Rendered secret values are embedded below, so any rotation changes the file
-# content and triggers chezmoi to re-run this script automatically.
-
-# claude — subscription auth must not inherit custom API routing or model pins
-foreach ($name in @(
-    "ANTHROPIC_API_KEY",
-    "ANTHROPIC_AUTH_TOKEN",
-    "ANTHROPIC_BASE_URL",
-    "ANTHROPIC_MODEL",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
-    "ANTHROPIC_DEFAULT_FABLE_MODEL",
-    "CLAUDE_CODE_SUBAGENT_MODEL",
-    "CLAUDE_CODE_EFFORT_LEVEL",
-    "CLAUDE_CODE_AUTO_COMPACT_WINDOW",
-    "YYLX_API_KEY"
-)) {
-    [Environment]::SetEnvironmentVariable($name, $null, "User")
-}
-
-# Provider-owned credentials; copilotd remains Codex's provider.
-# Missing fields preserve external keys (unused providers need no secret).
-# Legacy harness-named fields are ignored; no credential aliases or fallbacks.
-{{ range $field, $variable := dict
-    "copilotd_api_key" "COPILOTD_API_KEY"
--}}
-{{ if hasKey $secrets $field -}}
-[Environment]::SetEnvironmentVariable("{{ $variable }}", '{{ index $secrets $field | replace "'" "''" }}', "User")
-{{ end -}}
-{{ end -}}
-# Retired harness names and removed providers must not leave stale credentials.
-[Environment]::SetEnvironmentVariable("CODEX_API_KEY", $null, "User")
-[Environment]::SetEnvironmentVariable("PI_API_KEY", $null, "User")
-[Environment]::SetEnvironmentVariable("OPENCODE_API_KEY", $null, "User")
-[Environment]::SetEnvironmentVariable("ROUTER_MAESTRO_API_KEY", $null, "User")
-[Environment]::SetEnvironmentVariable("COPILOT_PROXY_API_KEY", $null, "User")
-[Environment]::SetEnvironmentVariable("LITELLM_API_KEY", $null, "User")
-
-# DeepSeek is optional until deepseek_api_key is added to secrets.yaml.age.
-{{ if hasKey $secrets "deepseek_api_key" -}}
-[Environment]::SetEnvironmentVariable("DEEPSEEK_API_KEY", "{{ $secrets.deepseek_api_key }}", "User")
-{{ else -}}
-[Environment]::SetEnvironmentVariable("DEEPSEEK_API_KEY", $null, "User")
-{{ end -}}
-
-# Magpie: prefer the encrypted secret when present; otherwise keep an external key.
-{{ if hasKey $secrets "magpie_api_key" -}}
-[Environment]::SetEnvironmentVariable("MAGPIE_API_KEY", "{{ $secrets.magpie_api_key }}", "User")
-{{ end -}}
+# Persistent non-secret behavior flags only. Credential publication is owned by
+# run_before_llm-credentials; existing environment credentials are a human-only
+# migration (docs/cleanup-llm-environment.ps1), never removed during setup.
 
 # OpenCode 2.2+: keep native .agents/.opencode discovery, excluding Claude roots.
 [Environment]::SetEnvironmentVariable("OPENCODE_DISABLE_CLAUDE_CODE_SKILLS", "1", "User")
@@ -62,8 +13,4 @@ foreach ($name in @(
 [Environment]::SetEnvironmentVariable("PI_STATUSLINE_STARSHIP", "{{ .chezmoi.homeDir | replace "\\" "/" }}/scoop/apps/starship/current/starship.exe", "User")
 [Environment]::SetEnvironmentVariable("PI_SKIP_VERSION_CHECK", "1", "User")
 [Environment]::SetEnvironmentVariable("PI_TELEMETRY", "0", "User")
-
-# mcps
-[Environment]::SetEnvironmentVariable("CONTEXT7_API_KEY", "{{ $secrets.context7_api_key }}", "User")
-[Environment]::SetEnvironmentVariable("GITHUB_PERSONAL_ACCESS_TOKEN", "{{ $secrets.github_personal_access_token }}", "User")
 {{ end -}}

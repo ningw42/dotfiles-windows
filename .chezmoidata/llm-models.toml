@@ -1,0 +1,194 @@
+# Route-independent model metadata; prices are per million tokens.
+# Preserve arbitrary price thresholds for Pi; OpenCode V1 cannot represent them.
+
+[llm.models."gemini-4-argon"]
+name = "Gemini 4 Argon"
+context_window = 1048576
+max_output = 65536
+thinking = true
+vision = true
+effort = { levels = ["low","medium","high"], default = "medium" }
+
+[llm.models."gemini-4-argon".cost]
+cache_read = 0.1
+cache_write = 0
+input = 2
+output = 10
+
+[llm.models."claude-haiku-5-5"]
+name = "Claude Haiku 5.5"
+context_window = 1000000
+max_output = 128000
+thinking = true
+vision = true
+temperature = false
+effort = { levels = ["none","low","medium","high","xhigh","max"], default = "medium" }
+
+[llm.models."claude-haiku-5-5".cost]
+cache_read = 0.01
+cache_write = 0.125
+input = 0.1
+output = 0.5
+
+[[llm.models."claude-haiku-5-5".cost.tiers]]
+cache_read = 0.05
+cache_write = 0.625
+input = 0.5
+input_tokens_above = 100000
+output = 2.5
+
+[llm.models."claude-sonnet-5-5"]
+name = "Claude Sonnet 5.5"
+context_window = 1000000
+max_output = 128000
+thinking = true
+vision = true
+temperature = false
+effort = { levels = ["low","medium","high","xhigh","max"], default = "high" }
+
+[llm.models."claude-sonnet-5-5".cost]
+cache_read = 0.1
+cache_write = 2.5
+input = 2
+output = 10
+
+[llm.models."claude-opus-5-5"]
+name = "Claude Opus 5.5"
+context_window = 1000000
+max_output = 128000
+thinking = true
+vision = true
+temperature = false
+effort = { levels = ["low","medium","high","xhigh","max"], default = "medium" }
+
+[llm.models."claude-opus-5-5".cost]
+cache_read = 0.2
+cache_write = 5
+input = 4
+output = 20
+
+[llm.models."gpt-6-luna"]
+name = "GPT-6 Luna"
+context_window = 1000000
+max_output = 128000
+thinking = true
+vision = true
+effort = { levels = ["none","low","medium","high","xhigh","max"], default = "xhigh" }
+
+[llm.models."gpt-6-luna".cost]
+cache_read = 0.01
+cache_write = 0.125
+input = 0.1
+output = 0.5
+
+[[llm.models."gpt-6-luna".cost.tiers]]
+cache_read = 0.02
+cache_write = 0.25
+input = 0.2
+input_tokens_above = 272000
+output = 0.75
+
+[llm.models."gpt-5.6-sol"]
+name = "GPT-5.6 Sol"
+context_window = 1050000
+max_output = 128000
+thinking = true
+vision = true
+effort = { levels = ["none","low","medium","high","xhigh","max"], default = "xhigh" }
+
+[llm.models."gpt-5.6-sol".cost]
+cache_read = 0.4
+cache_write = 5
+input = 4
+output = 20
+
+[[llm.models."gpt-5.6-sol".cost.tiers]]
+cache_read = 0.8
+cache_write = 10
+input = 8
+input_tokens_above = 272000
+output = 30
+
+[llm.models."gpt-6.1-sol"]
+name = "GPT-6.1 Sol"
+context_window = 1050000
+max_output = 128000
+thinking = true
+vision = true
+effort = { levels = ["low","medium","high","xhigh","max"], default = "xhigh" }
+
+[llm.models."gpt-6.1-sol".cost]
+cache_read = 0.1
+cache_write = 2.5
+input = 2
+output = 10
+
+[[llm.models."gpt-6.1-sol".cost.tiers]]
+cache_read = 0.2
+cache_write = 5
+input = 4
+input_tokens_above = 272000
+output = 15
+
+[llm.models."gpt-6-astra"]
+name = "GPT-6 Astra"
+context_window = 1050000
+max_output = 128000
+thinking = true
+vision = true
+effort = { levels = ["low","medium","high","xhigh","max"], default = "xhigh" }
+
+[llm.models."gpt-6-astra".cost]
+cache_read = 1
+cache_write = 12.5
+input = 10
+output = 50
+
+[[llm.models."gpt-6-astra".cost.tiers]]
+cache_read = 2
+cache_write = 25
+input = 20
+input_tokens_above = 272000
+output = 75
+
+[llm.models."deepseek-flash"]
+name = "DeepSeek Flash"
+context_window = 1000000
+max_output = 384000
+thinking = true
+vision = true
+effort = { levels = ["low","high","max"], default = "high" }
+
+[llm.models."deepseek-flash".cost]
+cache_read = 0.003
+cache_write = 0
+input = 0.15
+output = 0.6
+
+[llm.models."glm-5.3"]
+name = "GLM-5.3"
+context_window = 1000000
+max_output = 131072
+thinking = true
+vision = false
+effort = { levels = ["low","high","max"], default = "max" }
+
+[llm.models."glm-5.3".cost]
+cache_read = 0.26
+cache_write = 0
+input = 1.4
+output = 4.4
+
+[llm.models."glm-5.3-flash"]
+name = "GLM-5.3-Flash"
+context_window = 1000000
+max_output = 131072
+thinking = true
+vision = true
+effort = { levels = ["low","high","max"], default = "max" }
+
+[llm.models."glm-5.3-flash".cost]
+cache_read = 0.03
+cache_write = 0
+input = 0.15
+output = 0.5

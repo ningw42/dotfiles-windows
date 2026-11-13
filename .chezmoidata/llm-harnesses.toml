@@ -1,0 +1,51 @@
+# Bindings are ordered, independent selections, not the endpoint inventory.
+# endpoint references provider.endpoint; ids and defaults use catalog IDs.
+# Optional wire_ids aliases map selected catalog IDs to their request IDs.
+# Optional runtime_id preserves a harness identity independently of the route.
+[llm.harnesses.codex]
+default = { endpoint = "copilotd.responses", model = "gpt-6-astra", effort = "xhigh" }
+stream_idle_timeout_ms = 600000
+
+[[llm.harnesses.codex.bindings]]
+endpoint = "copilotd.responses"
+runtime_id = "copilotd"
+ids = ["gpt-6-astra"]
+
+[llm.harnesses.pi]
+default = { endpoint = "magpie.responses", model = "gpt-6-astra", effort = "xhigh" }
+
+[llm.harnesses.pi.workflow_tiers]
+big = { endpoint = "magpie.responses", model = "gpt-6-astra", effort = "max" }
+medium = { endpoint = "magpie.responses", model = "gpt-6.1-sol", effort = "max" }
+small = { endpoint = "magpie.responses", model = "gpt-5.6-sol", effort = "max" }
+
+[llm.harnesses.pi.agent_models]
+Explore = { endpoint = "magpie.responses", model = "gpt-5.6-sol" }
+Plan = { endpoint = "magpie.responses", model = "gpt-6-astra" }
+
+[[llm.harnesses.pi.bindings]]
+endpoint = "magpie.responses"
+ids = ["gpt-6-luna", "gpt-5.6-sol", "gpt-6.1-sol", "gpt-6-astra", "deepseek-flash", "glm-5.3", "glm-5.3-flash"]
+
+[[llm.harnesses.pi.bindings]]
+endpoint = "magpie.messages"
+ids = ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"]
+
+[[llm.harnesses.pi.bindings]]
+endpoint = "magpie.generative-ai"
+ids = ["gemini-4-argon"]
+
+[llm.harnesses.opencode]
+default = { endpoint = "magpie.responses", model = "gpt-6-astra" }
+
+[[llm.harnesses.opencode.bindings]]
+endpoint = "magpie.responses"
+ids = ["gpt-6-luna", "gpt-5.6-sol", "gpt-6.1-sol", "gpt-6-astra", "deepseek-flash", "glm-5.3", "glm-5.3-flash"]
+
+[[llm.harnesses.opencode.bindings]]
+endpoint = "magpie.messages"
+ids = ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"]
+
+[[llm.harnesses.opencode.bindings]]
+endpoint = "magpie.generative-ai"
+ids = ["gemini-4-argon"]

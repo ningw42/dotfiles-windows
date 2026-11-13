@@ -1,25 +1,12 @@
-{{- if ne .codex_provider "copilotd" -}}
-{{- fail (printf "Codex provider %q is retired; run chezmoi edit-config and select a current data.codex_provider from .chezmoi.toml.tmpl" .codex_provider) -}}
-{{- end -}}
-model = "gpt-6-astra"
-model_provider = "{{ .codex_provider }}"
-model_reasoning_effort = "xhigh"
+{{- $llm := includeTemplate "llm/render.json.tmpl" (dict "root" . "target" "codex") | fromJson -}}
+model = {{ $llm.model | quote }}
+model_provider = {{ $llm.model_provider | quote }}
+model_reasoning_effort = {{ $llm.model_reasoning_effort | quote }}
 suppress_unstable_features_warning = true
 approval_policy = "on-request"
 approvals_reviewer = "auto_review"
 
-[model_providers.copilotd]
-name = "copilotd"
-base_url = "https://copilotd.ningw.net/openai/v1"
-wire_api = "responses"
-supports_websockets = true
-stream_idle_timeout_ms = 600000
-
-[model_providers.copilotd.auth]
-command = "pwsh"
-args = ["-NoProfile", "-NonInteractive", "-Command", "[Console]::Out.Write($env:COPILOTD_API_KEY)"]
-timeout_ms = 5000
-refresh_interval_ms = 0
+{{ dict "model_providers" $llm.model_providers | toToml }}
 
 [projects.'\\?\C:\Users\ningw\GitHub\Hypersonic']
 trust_level = "trusted"

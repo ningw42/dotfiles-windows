@@ -56,10 +56,12 @@ Automated or agent-driven applies that may touch pi must use
 | `.chezmoiscripts/run_after_*` | Run after each apply |
 | `*.age` | Age-encrypted source |
 
-`.chezmoi.toml.tmpl` is the source of truth for prompted data and Codex provider
-choices. Claude Code uses subscription authentication, not a templated base URL.
-`.chezmoidata.toml` holds pinned external-release metadata. Templates load
-secrets with `include "secrets.yaml.age" | decrypt | fromYaml`; referencing an
+`.chezmoi.toml.tmpl` is the source of truth for prompted machine data.
+`.chezmoidata/llm-*.toml` owns LLM providers, models, and harness bindings.
+Claude Code uses subscription authentication, not a templated base URL.
+`.chezmoidata.toml` holds pinned external-release metadata. Only the apply-time
+credential extractor loads secrets with `include "secrets.yaml.age" | decrypt |
+fromYaml`; ordinary target rendering stays secret-free. Referencing an
 undeclared data variable makes apply fail.
 
 ## Cross-cutting configuration
@@ -106,9 +108,14 @@ dry-run still uses the network. Inspect upstream changes before accepting pins.
 - Commit `secrets.yaml.age`, never plaintext `secrets.yaml`.
 - The age identity is `~/.config/chezmoi/key.txt`; the recipient is declared in
   `.chezmoi.toml.tmpl`.
-- After editing, re-encrypt the file. Changes cause
-  `.chezmoiscripts/run_onchange_windows-env.ps1.tmpl` to refresh persistent user
-  environment variables.
+- After editing, re-encrypt the file. Normal apply publishes required Codex/Pi
+  credentials to a Windows CurrentUser-DPAPI store. Profiles and persistent user
+  environment hooks contain only non-secret settings. Existing environment keys
+  are a human-only migration, never automatic cleanup.
+- Before changing LLM declarations, rendering, credentials, or lifecycle, read
+  [`docs/llm-configuration.md`](docs/llm-configuration.md). Keep Python rendering
+  secret-free; only the apply hook decrypts. Test with fixture keys and isolated
+  homes, never real credentials.
 
 ```powershell
 age -d -i ~/.config/chezmoi/key.txt -o secrets.yaml secrets.yaml.age
@@ -184,8 +191,9 @@ and skill are a separate generated integration owned by
 separate pi theme externals.
 
 The `pi-distribution` tag and architecture-specific asset checksums live in
-`.chezmoidata.toml`; `dot_pi/agent/settings.json` declares only its stable local
-package path. Refresh the pin with `update_externals.py`, and let
+`.chezmoidata.toml`; `.chezmoitemplates/llm/pi-settings-base.json` declares only
+its stable local package path, composed into `dot_pi/agent/settings.json.tmpl`.
+Refresh the pin with `update_externals.py`, and let
 `dot_pi/agent/packages/.chezmoiexternal.toml.tmpl` materialize it. Node.js, RTK,
 and starship are runtime dependencies installed by `configuration.dsc.yaml`.
 The PowerShell profile and persistent Windows environment set
@@ -196,7 +204,8 @@ The global pi-subagents and pi-tasks defaults live in
 `dot_pi/agent/{subagents.json,tasks-config.json}`. Built-in agent overrides are
 generated after every apply by
 `.chezmoiscripts/run_after_pi-subagents-agents.ps1.tmpl` from the installed,
-pinned pi-subagents sources. Customize them centrally in its
+pinned pi-subagents sources. Model routes come from
+`.chezmoidata/llm-harnesses.toml`; customize other fields in the generator's
 `$builtinAgentOverrides` mapping using camelCase `AgentConfig` fields: omitted
 fields inherit upstream, values replace (including lists), and `$null` removes
 a field. Keep canonical agent IDs as keys; use `displayName` for cosmetic names.

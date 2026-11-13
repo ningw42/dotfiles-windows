@@ -8,6 +8,9 @@ import tempfile
 import tomllib
 import unittest
 from pathlib import Path
+from functools import lru_cache
+
+from llm_test_support import render_template
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -25,21 +28,21 @@ GPT_MODELS = [
 HOME_TEMPLATE = '{{ .chezmoi.homeDir | replace "\\\\" "/" }}'
 
 
+@lru_cache(maxsize=None)
 def load_json(path):
-    return json.loads((REPO_ROOT / path).read_text(encoding="utf-8"))
+    source = REPO_ROOT / path
+    if source.exists():
+        return json.loads(source.read_text(encoding="utf-8"))
+    return json.loads(render_template(path + ".tmpl"))
 
 
+@lru_cache(maxsize=None)
 def load_opencode_config():
-    source = (REPO_ROOT / "dot_config/opencode/opencode.json.tmpl").read_text(
-        encoding="utf-8"
-    )
-    return json.loads(source.replace(HOME_TEMPLATE, "C:/Users/fixture"))
+    return json.loads(render_template("dot_config/opencode/opencode.json.tmpl"))
 
 
 def load_pi_builtin_agent_routes():
-    generator = (
-        REPO_ROOT / ".chezmoiscripts/run_after_pi-subagents-agents.ps1.tmpl"
-    ).read_text(encoding="utf-8")
+    generator = render_template(".chezmoiscripts/run_after_pi-subagents-agents.ps1.tmpl")
     return dict(re.findall(
         r"(?m)^    (Explore|Plan) = @\{\n\s*model = '([^']+)'$", generator
     ))
@@ -47,122 +50,41 @@ def load_pi_builtin_agent_routes():
 
 @unittest.skipUnless(CHEZMOI, "chezmoi is required for real template rendering")
 class CodexProviderRoutingTests(unittest.TestCase):
-    def render_config(self, provider="copilotd", *, path="dot_codex/config.toml.tmpl", expected_error=None):
-        with tempfile.TemporaryDirectory(prefix="codex-provider-render-") as temporary:
-            root = Path(temporary)
-            home = root / "home"
-            home.mkdir()
-            source = root / "source"
-            source.mkdir()
-            config = root / "chezmoi.toml"
-            data = {
-                "codex_provider": provider,
-                "colorscheme": "catppuccin-mocha",
-                "password_manager": "bitwarden",
-                "git_username": "Fixture User",
-                "git_useremail": "fixture@example.test",
-                "git_signingkey": "FIXTURE",
-            }
-            config.write_text(
-                "[data]\n" + "".join(f"{key} = {json.dumps(value)}\n" for key, value in data.items()),
-                encoding="utf-8",
-            )
-            template = (REPO_ROOT / path).read_text(encoding="utf-8")
-            initializing = path == ".chezmoi.toml.tmpl"
-            if initializing:
-                # promptChoiceOnce exists only during init, not execute-template.
-                # Init is confined to the fixture and never uses --apply.
-                (source / path).write_text(template, encoding="utf-8")
-                command = [CHEZMOI, "init"]
-            else:
-                command = [CHEZMOI, "execute-template", "--override-data", json.dumps({
-                    "chezmoi": {"homeDir": str(home)},
-                })]
-            result = subprocess.run(
-                [
-                    *command, "--config", str(config),
-                    "--source", str(source), "--destination", str(home),
-                    "--persistent-state", str(root / "state.boltdb"),
-                    "--cache", str(root / "cache"), "--no-tty", "--no-pager",
-                    "--refresh-externals=never",
-                ],
-                input=None if initializing else template,
-                capture_output=True, text=True, encoding="utf-8", timeout=30,
-                env={
-                    key: value for key, value in os.environ.items()
-                    if not key.upper().startswith("CHEZMOI_")
-                },
-                cwd=root,
-            )
-            if expected_error:
-                self.assertNotEqual(result.returncode, 0)
-                self.assertIn(expected_error, result.stderr)
-                self.assertIn("chezmoi edit-config", result.stderr)
-                return None
-            self.assertEqual(result.returncode, 0, result.stderr)
-            return tomllib.loads(config.read_text(encoding="utf-8") if initializing else result.stdout)
+    def render_config(self):
+        return tomllib.loads(render_template("dot_codex/config.toml.tmpl"))
 
-    def test_only_copilotd_is_registered_with_command_auth(self):
-        providers = self.render_config()["model_providers"]
+    def test_only_copilotd_is_registered_with_protected_command_auth(self):
+        config = self.render_config()
+        providers = config["model_providers"]
         self.assertEqual(set(providers), {"copilotd"})
         self.assertNotIn("env_key", providers["copilotd"])
-        self.assertEqual(providers["copilotd"]["auth"], {
-            "command": "pwsh",
-            "args": ["-NoProfile", "-NonInteractive", "-Command",
-                     "[Console]::Out.Write($env:COPILOTD_API_KEY)"],
-            "timeout_ms": 5000,
-            "refresh_interval_ms": 0,
-        })
+        auth = providers["copilotd"]["auth"]
+        self.assertTrue(Path(auth["command"]).is_absolute())
+        self.assertEqual(auth["args"], [
+            "-NoLogo", "-NoProfile", "-NonInteractive", "-File",
+            "C:/Users/fixture/.config/llm/credentials.ps1",
+            "-Action", "Get", "-Provider", "copilotd",
+        ])
+        self.assertEqual(auth["timeout_ms"], 5000)
+        self.assertEqual(auth["refresh_interval_ms"], 0)
+        self.assertNotIn("COPILOTD_API_KEY", json.dumps(config))
 
-    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture auth commands")
-    def test_auth_lookup_uses_provider_key_without_legacy_fallback(self):
-        auth = self.render_config()["model_providers"]["copilotd"]["auth"]
-        fixtures = {
-            "COPILOTD_API_KEY": "fixture-copilotd-key",
-            "LITELLM_API_KEY": "fixture-retired-litellm-key",
-            "ROUTER_MAESTRO_API_KEY": "fixture-retired-router-key",
-            "COPILOT_PROXY_API_KEY": "fixture-retired-proxy-key",
-            "CODEX_API_KEY": "fixture-legacy-codex-key",
-            "PI_API_KEY": "fixture-retired-pi-key",
-            "OPENCODE_API_KEY": "fixture-retired-opencode-key",
-        }
-        # Auth commands print credentials: never let one inherit a real key.
-        clean_env = {
-            key: value for key, value in os.environ.items()
-            if not key.upper().endswith("_API_KEY")
-        }
-        for present in (True, False):
-            with self.subTest(present=present):
-                env = {**clean_env, **fixtures}
-                if not present:
-                    del env["COPILOTD_API_KEY"]
-                result = subprocess.run(
-                    [POWERSHELL, *auth["args"]], env=env,
-                    capture_output=True, text=True, encoding="utf-8", timeout=10,
-                )
-                self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual(result.stdout, "fixture-copilotd-key" if present else "")
-
-    def test_saved_provider_selection_and_endpoint_are_preserved(self):
+    def test_registry_preserves_selected_endpoint(self):
         config = self.render_config()
         self.assertEqual(config["model_provider"], "copilotd")
+        self.assertEqual(config["model"], "gpt-6-astra")
         provider = config["model_providers"]["copilotd"]
         self.assertEqual(provider["base_url"], "https://copilotd.ningw.net/openai/v1")
         self.assertEqual(provider["wire_api"], "responses")
         self.assertEqual(provider["stream_idle_timeout_ms"], 600000)
         self.assertTrue(provider["supports_websockets"])
 
-    def test_retired_saved_provider_requires_explicit_reselection(self):
-        for path in ("dot_codex/config.toml.tmpl", ".chezmoi.toml.tmpl"):
-            for retired in ("litellm", "agent-maestro", "router-maestro", "copilot-proxy"):
-                with self.subTest(path=path, retired=retired):
-                    self.render_config(retired, path=path, expected_error="retired")
-
-    def test_init_choices_and_saved_active_provider_exclude_retired_providers(self):
-        source = (REPO_ROOT / ".chezmoi.toml.tmpl").read_text(encoding="utf-8")
-        self.assertIn('$codex_provider_choices := list "copilotd"', source)
-        config = self.render_config(path=".chezmoi.toml.tmpl")
-        self.assertEqual(config["data"]["codex_provider"], "copilotd")
+    def test_bindings_replace_the_retired_init_provider_choice(self):
+        source = (REPO_ROOT / ".chezmoi.toml.tmpl").read_text("utf-8")
+        self.assertNotIn("codex_provider", source)
+        # Old machine-local selection no longer overrides versioned bindings.
+        rendered = render_template("dot_codex/config.toml.tmpl", extra_data={"codex_provider": "retired"})
+        self.assertEqual(tomllib.loads(rendered)["model_provider"], "copilotd")
 
 
 @unittest.skipUnless(CHEZMOI, "chezmoi is required for real template rendering")
@@ -291,9 +213,11 @@ class ModelCatalogTests(unittest.TestCase):
                     self.assertNotIn("none", oc_model["variants"])
 
     def test_pi_provider_metadata_matches_nixfiles_snapshot(self):
-        # Full provider snapshot from nixfiles' llm-agents/tests/model-catalog.nix
-        # at 0a4c01a; canonical JSON matches Nix's builtins.toJSON rendering.
-        providers = load_json("dot_pi/agent/models.json")["providers"]
+        # Only credential retrieval changes; retain the reviewed model projection.
+        providers = json.loads(json.dumps(load_json("dot_pi/agent/models.json")["providers"]))
+        for provider in providers.values():
+            self.assertTrue(provider["apiKey"].startswith("!"))
+            provider["apiKey"] = "$MAGPIE_API_KEY"
         snapshot = json.dumps(
             providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
         ).encode("utf-8")
@@ -487,9 +411,7 @@ class AgentDefaultTests(unittest.TestCase):
             .read_text(encoding="utf-8")
             .replace(HOME_TEMPLATE, "C:/Users/fixture")
         )
-        codex = (REPO_ROOT / "dot_codex/config.toml.tmpl").read_text(
-            encoding="utf-8"
-        )
+        codex = render_template("dot_codex/config.toml.tmpl")
         profile = (
             REPO_ROOT
             / "readonly_Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl"

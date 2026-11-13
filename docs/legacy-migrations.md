@@ -40,7 +40,14 @@ Never delete the receipt to force adoption.
 
 ## Provider-owned credentials
 
-There are no credential compatibility aliases. The legacy fields `codex_api_key`,
+This section records the pre-DPAPI handoff. Current installations use the
+[protected-credential migration](llm-configuration.md#human-only-migration).
+The setup no longer exports or automatically clears credentials in the profile
+or persistent user environment; use the separate human-run cleanup script.
+
+### Historical behavior
+
+There were no credential compatibility aliases. The legacy fields `codex_api_key`,
 `pi_api_key`, and `opencode_api_key` are ignored; `CODEX_API_KEY`, `PI_API_KEY`, and
 `OPENCODE_API_KEY` are unconditionally cleared in both export paths, even if those
 fields remain in the encrypted store. Pi and OpenCode use the provider-owned

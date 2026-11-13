@@ -82,7 +82,8 @@ properties:
           $allInstalled = @($apps | ForEach-Object { Test-Path "$scoopApps\$_\current" } | Where-Object { -not $_ }).Count -eq 0
           @{ Result = if ($allInstalled) { 'Installed' } else { 'NotInstalled' } }
 
-    # Python 3.11+ is required by the shared-skill publisher and external updater.
+    # Python 3.11+ is required by LLM template rendering, the skill publisher,
+    # and the external updater. Provision before chezmoi diff/apply.
     - resource: PSDscResources/Script
       id: ScoopPython
       dependsOn:
@@ -399,7 +400,7 @@ properties:
           @{ Result = if (Test-Path "$env:USERPROFILE\scoop\apps\copilot-cli\current") { 'Installed' } else { 'NotInstalled' } }
 
     # pi (pi-coding-agent) — minimal terminal coding harness. Config lives at
-    # dot_pi/agent/{settings.json,models.json}; the extension / skill / theme set
+    # dot_pi/agent/{settings.json,models.json}.tmpl; the extension / skill / theme set
     # comes from the checksum-pinned ningw42/pi-distribution release external
     # under dot_pi/agent/packages. Its native artifact is selected by architecture.
     # Runtime prerequisites include rtk >= 0.23 (ScoopRtk) and starship

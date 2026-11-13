@@ -1,14 +1,6 @@
 {{- $colorscheme_choices := list "catppuccin-latte" "catppuccin-frappe" "catppuccin-macchiato" "catppuccin-mocha" "gruvbox-dark" -}}
 {{- $colorscheme := promptChoiceOnce . "colorscheme" "colorscheme to use" $colorscheme_choices -}}
 
-{{- $codex_provider_choices := list "copilotd" -}}
-{{- if hasKey . "codex_provider" -}}
-  {{- if not (has .codex_provider $codex_provider_choices) -}}
-    {{- fail (printf "Codex provider %q is retired; run chezmoi edit-config and set data.codex_provider to one of: %s" .codex_provider (join ", " $codex_provider_choices)) -}}
-  {{- end -}}
-{{- end -}}
-{{- $codex_provider := promptChoiceOnce . "codex_provider" "LLM provider for Codex" $codex_provider_choices -}}
-
 {{- $password_manager_choices := list "1password" "bitwarden" -}}
 {{- $password_manager := promptChoiceOnce . "password_manager" "password manager in use" $password_manager_choices -}}
 
@@ -27,7 +19,6 @@ encryption = "age"
   password_manager = {{ $password_manager | quote }}
   git_username = {{ $git_username | quote }}
   git_useremail = {{ $git_useremail | quote }}
-  codex_provider = {{ $codex_provider | quote }}
   git_signingkey = {{ $git_signingkey | quote }}
 
 [diff]

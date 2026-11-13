@@ -1,0 +1,54 @@
+# Provider identities own credential references, never credential values.
+# Endpoint names are independent of their wire contracts. SDK prefixes omit
+# trailing slashes; the OpenCode Messages projection appends /v1 itself.
+[llm.providers.copilotd]
+name = "copilotd"
+credential = { secret_field = "copilotd_api_key", env = "COPILOTD_API_KEY" }
+
+[llm.providers.copilotd.endpoints.messages]
+name = "copilotd (Messages)"
+contract = "anthropic-messages"
+base_url = "https://copilotd.ningw.net/anthropic"
+
+[llm.providers.copilotd.endpoints.responses]
+name = "copilotd (Responses)"
+contract = "openai-responses"
+base_url = "https://copilotd.ningw.net/openai/v1"
+supports_websockets = true
+
+# Optional direct routes: declaring them does not activate a client or secret.
+[llm.providers.deepseek]
+name = "DeepSeek"
+credential = { secret_field = "deepseek_api_key", env = "DEEPSEEK_API_KEY" }
+
+[llm.providers.deepseek.endpoints.messages]
+name = "DeepSeek (Messages)"
+contract = "anthropic-messages"
+base_url = "https://api.deepseek.com/anthropic"
+thinking_type = "enabled"
+
+[llm.providers.deepseek.endpoints.responses]
+name = "DeepSeek (Responses)"
+contract = "openai-responses"
+base_url = "https://api.deepseek.com"
+supports_websockets = false
+supports_developer_role = false
+
+[llm.providers.magpie]
+name = "magpie"
+credential = { secret_field = "magpie_api_key", env = "MAGPIE_API_KEY" }
+
+[llm.providers.magpie.endpoints.generative-ai]
+name = "magpie (Generative AI)"
+contract = "google-generative-ai"
+base_url = "https://magpie.ningw.net/v1beta"
+
+[llm.providers.magpie.endpoints.messages]
+name = "magpie (Messages)"
+contract = "anthropic-messages"
+base_url = "https://magpie.ningw.net"
+
+[llm.providers.magpie.endpoints.responses]
+name = "magpie (Responses)"
+contract = "openai-responses"
+base_url = "https://magpie.ningw.net/v1"

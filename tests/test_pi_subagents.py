@@ -8,6 +8,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from llm_test_support import CHEZMOI, render_template
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 GENERATOR = REPO_ROOT / ".chezmoiscripts/run_after_pi-subagents-agents.ps1.tmpl"
@@ -54,7 +56,7 @@ export function serializeAgentFile(cfg: AgentConfig): string {
 """
 
 
-@unittest.skipUnless(POWERSHELL and NODE, "PowerShell 7 and Node.js 22+ are required")
+@unittest.skipUnless(POWERSHELL and NODE and CHEZMOI, "PowerShell 7, Node.js 22+, and chezmoi are required")
 class PiBuiltinAgentGenerationTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="pi agents test ")
@@ -80,9 +82,7 @@ class PiBuiltinAgentGenerationTests(unittest.TestCase):
         # Render the Windows-only wrapper and home defaults into a temporary
         # fixture. Only dependency lookup changes: use PATH's Node instead of
         # requiring a real Scoop installation on the test host.
-        script = self.template.removeprefix('{{ if eq .chezmoi.os "windows" -}}\n')
-        script = script.removesuffix('{{ end -}}\n')
-        script = script.replace(HOME_TEMPLATE, self.root.as_posix())
+        script = render_template(str(GENERATOR), text=self.template, home=self.root.as_posix())
         node_assignment = "$node = Join-Path $env:USERPROFILE 'scoop/apps/nodejs/current/node.exe'"
         self.assertIn(node_assignment, script)
         script = script.replace(node_assignment, "$node = '" + NODE.replace("'", "''") + "'")

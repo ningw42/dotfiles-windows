@@ -1,5 +1,3 @@
-{{- $secrets := include "secrets.yaml.age" | decrypt | fromYaml }}
-
 #region Environment Variables
 
 # yazi: file(1) executable
@@ -22,53 +20,10 @@ $Env:MOOR = "--no-linenumbers --statusbar=bold --tab-size=2 --style=catppuccin-m
 # lazygit config
 $Env:LG_CONFIG_FILE = "$Env:LOCALAPPDATA\lazygit\config.yml,$Env:LOCALAPPDATA\lazygit\{{ .colorscheme }}-blue.yml";
 
-# claude: subscription auth must not inherit custom API routing or model pins
-foreach ($name in @(
-  "ANTHROPIC_API_KEY",
-  "ANTHROPIC_AUTH_TOKEN",
-  "ANTHROPIC_BASE_URL",
-  "ANTHROPIC_MODEL",
-  "ANTHROPIC_DEFAULT_OPUS_MODEL",
-  "ANTHROPIC_DEFAULT_SONNET_MODEL",
-  "ANTHROPIC_DEFAULT_HAIKU_MODEL",
-  "ANTHROPIC_DEFAULT_FABLE_MODEL",
-  "CLAUDE_CODE_SUBAGENT_MODEL",
-  "CLAUDE_CODE_EFFORT_LEVEL",
-  "CLAUDE_CODE_AUTO_COMPACT_WINDOW",
-  "YYLX_API_KEY"
-)) {
-  Remove-Item "Env:$name" -ErrorAction SilentlyContinue
-}
-
-# Provider-owned credentials; copilotd remains Codex's provider.
-# Missing fields preserve external keys (unused providers need no secret).
-# Legacy harness-named fields are ignored; no credential aliases or fallbacks.
-{{ range $field, $variable := dict
-  "copilotd_api_key" "COPILOTD_API_KEY"
--}}
-{{ if hasKey $secrets $field -}}
-$Env:{{ $variable }} = '{{ index $secrets $field | replace "'" "''" }}'
-{{ end -}}
-{{ end -}}
-# Retired harness names and removed providers must not leave stale credentials.
-Remove-Item Env:CODEX_API_KEY -ErrorAction SilentlyContinue
-Remove-Item Env:PI_API_KEY -ErrorAction SilentlyContinue
-Remove-Item Env:OPENCODE_API_KEY -ErrorAction SilentlyContinue
-Remove-Item Env:ROUTER_MAESTRO_API_KEY -ErrorAction SilentlyContinue
-Remove-Item Env:COPILOT_PROXY_API_KEY -ErrorAction SilentlyContinue
-Remove-Item Env:LITELLM_API_KEY -ErrorAction SilentlyContinue
-
-# DeepSeek is optional until deepseek_api_key is added to secrets.yaml.age.
-{{ if hasKey $secrets "deepseek_api_key" -}}
-$Env:DEEPSEEK_API_KEY = "{{ $secrets.deepseek_api_key }}"
-{{ else -}}
-Remove-Item Env:DEEPSEEK_API_KEY -ErrorAction SilentlyContinue
-{{ end -}}
-
-# Magpie: prefer the encrypted secret when present; otherwise keep an external key.
-{{ if hasKey $secrets "magpie_api_key" -}}
-$Env:MAGPIE_API_KEY = "{{ $secrets.magpie_api_key }}"
-{{ end -}}
+# Credentials are never exported or cleaned up by this profile. Codex and Pi
+# retrieve provider keys through the chezmoi-managed DPAPI helper. Native logins
+# remain client-owned; OpenCode/MCP environment credentials are externally supplied.
+# See docs/llm-configuration.md in the source repo for the human-only handoff.
 
 # OpenCode 2.2+: keep native .agents/.opencode discovery, excluding Claude roots.
 $Env:OPENCODE_DISABLE_CLAUDE_CODE_SKILLS = "1"
@@ -81,9 +36,6 @@ $Env:PI_STATUSLINE_STARSHIP = "{{ .chezmoi.homeDir | replace "\\" "/" }}/scoop/a
 $Env:PI_SKIP_VERSION_CHECK = "1"
 $Env:PI_TELEMETRY = "0"
 
-# mcp secrets
-$Env:CONTEXT7_API_KEY = "{{ $secrets.context7_api_key }}"
-$Env:GITHUB_PERSONAL_ACCESS_TOKEN = "{{ $secrets.github_personal_access_token }}"
 #endregion Environment Variables
 
 
@@ -145,7 +97,7 @@ Function oc
   opencode @args
 }
 
-# Pi launch boundary: keep the stored DeepSeek key for other clients, but do
+# Pi launch boundary: keep any external DeepSeek key for other clients, but do
 # not auto-enable Pi's native provider alongside the selected Magpie route.
 # Resolve the application explicitly to avoid recursing into this function.
 Function pi

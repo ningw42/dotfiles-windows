@@ -1,0 +1,42 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "brave-search": {
+      "enabled": true,
+      "type": "remote",
+      "url": "https://brave-search-mcp.ningw.net/mcp"
+    },
+    "context7": {
+      "enabled": true,
+      "headers": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      },
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "exa": {
+      "enabled": true,
+      "type": "remote",
+      "url": "https://mcp.exa.ai/mcp"
+    },
+    "github": {
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer {env:GITHUB_PERSONAL_ACCESS_TOKEN}"
+      },
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/"
+    }
+  },
+  "permission": {
+    "skill": {
+      "close-code-review": "deny",
+      "develop-and-squash": "deny",
+      "develop-and-submit-pr": "deny",
+      "simplification-review": "deny",
+      "subagent-parity": "deny",
+      "subagent-unlimited-turns": "deny",
+      "traceability": "deny"
+    }
+  }
+}

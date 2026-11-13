@@ -1,0 +1,3 @@
+{{- $base := includeTemplate "llm/pi-settings-base.json" . | fromJson -}}
+{{- $llm := includeTemplate "llm/render.json.tmpl" (dict "root" . "target" "pi-settings") | fromJson -}}
+{{- mergeOverwrite $base $llm | toPrettyJson }}

@@ -1,0 +1,7 @@
+{{- /* Pure source-side rendering: no credentials, deployed files, or network. */ -}}
+{{- $root := .root -}}
+{{- $python := joinPath $root.chezmoi.homeDir "scoop/apps/python/current/python.exe" -}}
+{{- if hasKey $root "llm_python" -}}{{- $python = $root.llm_python -}}{{- end -}}
+{{- $pwsh := "C:/Program Files/PowerShell/7/pwsh.exe" -}}
+{{- if hasKey $root "llm_pwsh" -}}{{- $pwsh = $root.llm_pwsh -}}{{- end -}}
+{{- output $python "-B" "-X" "utf8" (joinPath $root.chezmoi.sourceDir "render_llm_config.py") .target "--source" $root.chezmoi.sourceDir "--home" ($root.chezmoi.destDir | replace "\\" "/") "--pwsh" ($pwsh | replace "\\" "/") -}}

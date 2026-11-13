@@ -1,7 +1,8 @@
 {{ if eq .chezmoi.os "windows" -}}
+{{- $models := includeTemplate "llm/render.json.tmpl" (dict "root" . "target" "pi-agent-models") | fromJson -}}
 param(
-    [string]$PiDistributionRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.pi/agent/packages/pi-distribution',
-    [string]$OutputDirectory = '{{ .chezmoi.homeDir | replace "\\" "/" }}/.pi/agent/agents'
+    [string]$PiDistributionRoot = ([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{{ joinPath .chezmoi.destDir ".pi/agent/packages/pi-distribution" | replace "\\" "/" | b64enc }}'))),
+    [string]$OutputDirectory = ([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{{ joinPath .chezmoi.destDir ".pi/agent/agents" | replace "\\" "/" | b64enc }}')))
 )
 
 $ErrorActionPreference = 'Stop'
@@ -26,11 +27,11 @@ if (-not (Test-Path -LiteralPath $node -PathType Leaf)) {
 # Frontmatter pins outrank Agent tool parameters, including foreground requests.
 $builtinAgentOverrides = [ordered]@{
     Explore = @{
-        model = 'magpie-responses/gpt-5.6-sol'
+        model = '{{ $models.Explore | replace "'" "''" }}'
         runInBackground = $true
     }
     Plan = @{
-        model = 'magpie-responses/gpt-6-astra'
+        model = '{{ $models.Plan | replace "'" "''" }}'
         runInBackground = $true
     }
     'general-purpose' = @{

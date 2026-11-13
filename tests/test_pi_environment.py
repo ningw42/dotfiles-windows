@@ -1,303 +1,89 @@
-"""Render managed environment variables; execute only in child-process envs."""
+"""Non-secret shell flags only; no real user-environment writes or secret reads."""
 
 import json
 import os
 import shutil
 import subprocess
-import tempfile
 import unittest
 from pathlib import Path
 
+from llm_test_support import CHEZMOI, render_template
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CHEZMOI = shutil.which("chezmoi")
 POWERSHELL = shutil.which("pwsh")
-PROVIDER_SECRETS = {
-    "copilotd_api_key": "fixture-copilotd-key",
-}
-PROVIDER_ENVIRONMENT = {
-    "COPILOTD_API_KEY": "fixture-copilotd-key",
-}
-CLAUDE_OWNED_VARIABLES = (
-    "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL",
-    "ANTHROPIC_MODEL", "ANTHROPIC_DEFAULT_OPUS_MODEL",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL",
-    "ANTHROPIC_DEFAULT_FABLE_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL",
-    "CLAUDE_CODE_EFFORT_LEVEL", "CLAUDE_CODE_AUTO_COMPACT_WINDOW", "YYLX_API_KEY",
+TEMPLATES = (
+    "readonly_Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl",
+    ".chezmoiscripts/run_onchange_windows-env.ps1.tmpl",
 )
-OBSERVED_VARIABLES = [
-    *CLAUDE_OWNED_VARIABLES,
-    *PROVIDER_ENVIRONMENT, "CODEX_API_KEY", "PI_API_KEY", "OPENCODE_API_KEY",
-    "DEEPSEEK_API_KEY", "MAGPIE_API_KEY", "PI_STATUSLINE_STARSHIP",
-    "ROUTER_MAESTRO_API_KEY", "COPILOT_PROXY_API_KEY", "LITELLM_API_KEY",
-    "OPENCODE_DISABLE_CLAUDE_CODE_SKILLS",
-]
-SECRET_LOADER = 'include "secrets.yaml.age" | decrypt | fromYaml'
-TEMPLATES = {
-    "readonly_Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl":
-        '$Env:MAGPIE_API_KEY = "fixture-magpie-key"',
-    ".chezmoiscripts/run_onchange_windows-env.ps1.tmpl":
-        '[Environment]::SetEnvironmentVariable("MAGPIE_API_KEY", "fixture-magpie-key", "User")',
+CREDENTIAL_VARIABLES = (
+    "COPILOTD_API_KEY", "MAGPIE_API_KEY", "DEEPSEEK_API_KEY",
+    "CONTEXT7_API_KEY", "GITHUB_PERSONAL_ACCESS_TOKEN",
+    "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "YYLX_API_KEY",
+    "CODEX_API_KEY", "PI_API_KEY", "OPENCODE_API_KEY", "LITELLM_API_KEY",
+    "ROUTER_MAESTRO_API_KEY", "COPILOT_PROXY_API_KEY",
+)
+BEHAVIOR = {
+    "OPENCODE_DISABLE_CLAUDE_CODE_SKILLS": "1",
+    "PI_CLIPBOARD_OSC52": "1",
+    "PI_STATUSLINE_STARSHIP": "C:/Users/fixture/scoop/apps/starship/current/starship.exe",
+    "PI_SKIP_VERSION_CHECK": "1", "PI_TELEMETRY": "0",
 }
 
 
-@unittest.skipUnless(CHEZMOI, "chezmoi is required to render Pi environment templates")
+@unittest.skipUnless(CHEZMOI, "chezmoi is required")
 class PiEnvironmentTemplateTests(unittest.TestCase):
-    def render(self, path, *, magpie_key=False, secrets=None):
-        source = (REPO_ROOT / path).read_text(encoding="utf-8")
-        self.assertEqual(source.count(SECRET_LOADER), 1)
-        # Substitute only the secret-loading boundary. The actual template,
-        # including its optional-key guard, still runs through chezmoi's engine.
-        source = source.replace(SECRET_LOADER, ".fixtureSecrets")
-        fixture_secrets = {
-            "context7_api_key": "fixture-context7-key",
-            "github_personal_access_token": "fixture-github-token",
-        }
-        fixture_secrets.update(PROVIDER_SECRETS if secrets is None else secrets)
-        if magpie_key:
-            fixture_secrets["magpie_api_key"] = "fixture-magpie-key"
-
-        with tempfile.TemporaryDirectory(prefix="pi-env-render-") as temporary:
-            root = Path(temporary)
-            home = root / "home"
-            home.mkdir()
-            config = root / "config.json"
-            config.write_text("{}", encoding="utf-8")
-            env = {
-                key: value for key, value in os.environ.items()
-                if not key.upper().startswith("CHEZMOI_")
-            }
-            result = subprocess.run(
-                [
-                    CHEZMOI, "execute-template",
-                    "--config", str(config), "--config-format", "json",
-                    "--source", str(root), "--destination", str(home),
-                    "--persistent-state", str(root / "state.boltdb"),
-                    "--cache", str(root / "cache"),
-                    "--override-data", json.dumps({
-                        "colorscheme": "catppuccin-mocha",
-                        "fixtureSecrets": fixture_secrets,
-                        "chezmoi": {"os": "windows", "homeDir": "C:/Users/fixture"},
-                    }),
-                    "--refresh-externals=never", "--no-tty", "--no-pager",
-                ],
-                input=source, capture_output=True, text=True, encoding="utf-8",
-                cwd=root, env=env, timeout=30,
-            )
-        self.assertEqual(result.returncode, 0, result.stderr)
-        return result.stdout
-
-    def evaluate(self, path, *, secrets, inherited=None):
-        return self.evaluate_rendered(
-            path, self.render(path, secrets=secrets), inherited=inherited,
-        )
-
-    def evaluate_rendered(self, path, rendered, *, inherited=None):
+    def environment_section(self, path):
+        rendered = render_template(path)
         if path.startswith("readonly_Documents/"):
-            # Do not execute interactive integrations or the rest of the profile.
-            self.assertIn("#endregion Environment Variables", rendered)
-            script = rendered.split("#endregion Environment Variables", 1)[0]
-        else:
-            # Redirect every persistent write to this disposable child process.
-            # Refuse to execute if the template adds an unrecognized write shape.
-            self.assertEqual(
-                rendered.count("[Environment]::SetEnvironmentVariable("),
-                rendered.count(', "User")'),
-            )
-            script = rendered.replace(', "User")', ', "Process")')
-            self.assertNotIn('"User"', script)
-        env = {
-            key: value for key, value in os.environ.items()
-            if key.upper() not in OBSERVED_VARIABLES
-        }
-        env.update(inherited or {})
-        variables = ", ".join(f"'{name}'" for name in OBSERVED_VARIABLES)
-        result = subprocess.run(
-            [POWERSHELL, "-NoLogo", "-NoProfile", "-NonInteractive", "-Command",
-             "$ErrorActionPreference = 'Stop'\n" + script
-             + "\n$values = @{}\n"
-             + f"foreach ($name in @({variables})) {{\n"
-             + "  $values[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')\n"
-             + "}\n$values | ConvertTo-Json -Compress"],
-            env=env, capture_output=True, text=True, encoding="utf-8", timeout=30,
-        )
-        self.assertEqual(result.returncode, 0, result.stderr)
-        return json.loads(result.stdout)
+            return rendered.split("#endregion Environment Variables", 1)[0]
+        # Every registry operation is converted to a disposable process write.
+        self.assertEqual(rendered.count("[Environment]::SetEnvironmentVariable("), rendered.count(', "User")'))
+        return rendered.replace(', "User")', ', "Process")')
 
-    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
-    def test_opencode_excludes_only_claude_skill_roots_in_both_export_paths(self):
+    def test_templates_neither_decrypt_export_nor_clean_credentials(self):
         for path in TEMPLATES:
             with self.subTest(path=path):
-                rendered = self.render(path, secrets={})
-                self.assertNotIn("OPENCODE_DISABLE_EXTERNAL_SKILLS", rendered)
-                actual = self.evaluate_rendered(path, rendered, inherited={
-                    "OPENCODE_DISABLE_CLAUDE_CODE_SKILLS": "0",
-                })
-                self.assertEqual(actual["OPENCODE_DISABLE_CLAUDE_CODE_SKILLS"], "1")
+                source = (REPO_ROOT / path).read_text("utf-8")
+                self.assertNotIn("decrypt", source)
+                self.assertNotIn("$secrets", source)
+                section = self.environment_section(path)
+                for name in CREDENTIAL_VARIABLES:
+                    self.assertNotIn(name, section)
+                self.assertNotIn("Remove-Item Env:", section)
+                self.assertNotIn("$null", section)
 
-    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
-    def test_starship_uses_scoop_current_binary_not_removed_shim(self):
+    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required")
+    def test_non_secret_behavior_and_inherited_credentials_are_preserved(self):
+        observed = [*CREDENTIAL_VARIABLES, *BEHAVIOR, "ANTHROPIC_BASE_URL"]
+        inherited = {name: "fixture-inherited-value" for name in CREDENTIAL_VARIABLES}
+        inherited["ANTHROPIC_BASE_URL"] = "https://external.example.test"
         for path in TEMPLATES:
             with self.subTest(path=path):
-                actual = self.evaluate(path, secrets={}, inherited={
-                    "PI_STATUSLINE_STARSHIP": "C:/Users/fixture/scoop/shims/starship.exe",
-                })
-                self.assertEqual(
-                    actual["PI_STATUSLINE_STARSHIP"],
-                    "C:/Users/fixture/scoop/apps/starship/current/starship.exe",
+                script = self.environment_section(path)
+                names = ",".join("'" + name + "'" for name in observed)
+                result = subprocess.run(
+                    [POWERSHELL, "-NoLogo", "-NoProfile", "-NonInteractive", "-Command",
+                     "$ErrorActionPreference = 'Stop'\n" + script + "\n$values = @{}\n"
+                     + f"foreach ($name in @({names})) {{ $values[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }}\n"
+                     + "$values | ConvertTo-Json -Compress"],
+                    env={**os.environ, **inherited}, capture_output=True, text=True,
+                    encoding="utf-8", timeout=20,
                 )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                actual = json.loads(result.stdout)
+                for name, value in {**inherited, **BEHAVIOR}.items():
+                    self.assertEqual(actual[name], value, name)
 
-    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
-    def test_copilotd_field_exports_provider_key_not_legacy_credentials(self):
-        for path in TEMPLATES:
-            with self.subTest(path=path):
-                actual = self.evaluate(path, secrets={
-                    **PROVIDER_SECRETS,
-                    "pi_api_key": "fixture-retired-pi-key",
-                    "codex_api_key": "fixture-legacy-codex-key",
-                }, inherited={name: "fixture-stale-key" for name in OBSERVED_VARIABLES})
-                for name, value in PROVIDER_ENVIRONMENT.items():
-                    self.assertEqual(actual[name], value)
-                self.assertFalse(actual["CODEX_API_KEY"])
-                self.assertFalse(actual["PI_API_KEY"])
-                self.assertFalse(actual["OPENCODE_API_KEY"])
-
-    def test_missing_copilotd_field_renders_without_legacy_fallback(self):
-        for path in TEMPLATES:
-            for secrets in ({}, {
-                "codex_api_key": "fixture-legacy-codex-key",
-                "pi_api_key": "fixture-retired-pi-key",
-                "opencode_api_key": "fixture-retired-opencode-key",
-            }):
-                with self.subTest(path=path, legacy=bool(secrets)):
-                    rendered = self.render(path, secrets=secrets)
-                    self.assertNotIn("<no value>", rendered)
-                    self.assertNotIn("fixture-legacy-codex-key", rendered)
-                    self.assertNotIn("fixture-retired-pi-key", rendered)
-                    self.assertNotIn("fixture-retired-opencode-key", rendered)
-                    for variable in PROVIDER_ENVIRONMENT:
-                        self.assertNotIn(variable, rendered)
-
-    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
-    def test_unprovisioned_copilotd_preserves_external_key_but_never_copies_legacy_keys(self):
-        for path in TEMPLATES:
-            for external in (False, True):
-                with self.subTest(path=path, external=external):
-                    inherited = {
-                        name: f"external-{name}" for name in PROVIDER_ENVIRONMENT
-                    } if external else {}
-                    actual = self.evaluate(path, secrets={
-                        "codex_api_key": "fixture-legacy-codex-key",
-                        "pi_api_key": "fixture-retired-pi-key",
-                    }, inherited=inherited)
-                    self.assertEqual(actual["COPILOTD_API_KEY"], inherited.get("COPILOTD_API_KEY"))
-                    self.assertFalse(actual["CODEX_API_KEY"])
-                    self.assertFalse(actual["PI_API_KEY"])
-
-    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
-    def test_generic_export_is_cleared_with_or_without_legacy_secret(self):
-        for path in TEMPLATES:
-            for legacy in (False, True):
-                with self.subTest(path=path, legacy=legacy):
-                    secrets = dict(PROVIDER_SECRETS)
-                    if legacy:
-                        secrets["codex_api_key"] = "fixture-legacy-codex-key"
-                    actual = self.evaluate(path, secrets=secrets, inherited={
-                        name: "fixture-stale-key" for name in OBSERVED_VARIABLES
-                    })
-                    for name, value in PROVIDER_ENVIRONMENT.items():
-                        self.assertEqual(actual[name], value)
-                    # .NET's Process target can report a cleared variable as empty.
-                    for name in ("CODEX_API_KEY", "PI_API_KEY", "OPENCODE_API_KEY"):
-                        self.assertFalse(actual[name])
-
-    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
-    def test_copilotd_credential_is_a_literal_powershell_string(self):
-        value = "fixture-$env:USERPROFILE-`n-\"-'quoted'"
-        for path in TEMPLATES:
-            with self.subTest(path=path):
-                actual = self.evaluate(path, secrets={
-                    field: value for field in PROVIDER_SECRETS
-                })
-                for name in PROVIDER_ENVIRONMENT:
-                    self.assertEqual(actual[name], value)
-
-    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
-    def test_claude_subscription_clears_owned_overrides_without_changing_magpie_auth(self):
-        for path in TEMPLATES:
-            with self.subTest(path=path):
-                actual = self.evaluate(path, secrets={
-                    "magpie_api_key": "fixture-magpie-key",
-                    "yylx_api_key": "fixture-retired-claude-key",
-                }, inherited={
-                    **{name: "fixture-stale-override" for name in CLAUDE_OWNED_VARIABLES},
-                    "MAGPIE_API_KEY": "external-magpie-key",
-                })
-                for name in CLAUDE_OWNED_VARIABLES:
-                    self.assertFalse(actual[name], name)
-                self.assertEqual(actual["MAGPIE_API_KEY"], "fixture-magpie-key")
-
-    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
-    def test_deepseek_cleanup_and_magpie_external_key_policy_are_unchanged(self):
-        for path in TEMPLATES:
-            for present in (False, True):
-                with self.subTest(path=path, present=present):
-                    actual = self.evaluate(path, secrets={
-                        "deepseek_api_key": "fixture-deepseek-key",
-                        "magpie_api_key": "fixture-magpie-key",
-                    } if present else {}, inherited={
-                        "DEEPSEEK_API_KEY": "external-deepseek-key",
-                        "MAGPIE_API_KEY": "external-magpie-key",
-                    })
-                    if present:
-                        self.assertEqual(actual["DEEPSEEK_API_KEY"], "fixture-deepseek-key")
-                        self.assertEqual(actual["MAGPIE_API_KEY"], "fixture-magpie-key")
-                    else:
-                        self.assertFalse(actual["DEEPSEEK_API_KEY"])
-                        self.assertEqual(actual["MAGPIE_API_KEY"], "external-magpie-key")
-
-    @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required for fixture evaluation")
-    def test_retired_provider_keys_are_cleared_even_if_old_secret_fields_remain(self):
-        retired = {
-            "litellm_api_key": "fixture-retired-litellm-key",
-            "router_maestro_api_key": "fixture-retired-router-key",
-            "copilot_proxy_api_key": "fixture-retired-proxy-key",
-            "opencode_api_key": "fixture-retired-opencode-key",
-        }
-        for path in TEMPLATES:
-            for present in (False, True):
-                with self.subTest(path=path, old_fields=present):
-                    secrets = {**PROVIDER_SECRETS, **(retired if present else {})}
-                    rendered = self.render(path, secrets=secrets)
-                    for value in retired.values():
-                        self.assertNotIn(value, rendered)
-                    actual = self.evaluate_rendered(path, rendered, inherited={
-                        "LITELLM_API_KEY": "external-litellm-key",
-                        "ROUTER_MAESTRO_API_KEY": "external-router-key",
-                        "COPILOT_PROXY_API_KEY": "external-proxy-key",
-                        "OPENCODE_API_KEY": "external-opencode-key",
-                    })
-                    for name in (
-                        "LITELLM_API_KEY", "ROUTER_MAESTRO_API_KEY",
-                        "COPILOT_PROXY_API_KEY", "OPENCODE_API_KEY",
-                    ):
-                        self.assertFalse(actual[name])
-                    for name, value in PROVIDER_ENVIRONMENT.items():
-                        self.assertEqual(actual[name], value)
-
-    def test_magpie_secret_is_exported_to_shell_and_persistent_user_environment(self):
-        for path, statement in TEMPLATES.items():
-            with self.subTest(path=path):
-                rendered = self.render(path, magpie_key=True)
-                self.assertIn(statement, rendered)
-                self.assertEqual(rendered.count("MAGPIE_API_KEY"), 1)
-
-    def test_missing_magpie_secret_renders_without_overwriting_external_credentials(self):
-        for path in TEMPLATES:
-            with self.subTest(path=path):
-                rendered = self.render(path, magpie_key=False)
-                self.assertNotIn("MAGPIE_API_KEY", rendered)
-                self.assertNotIn("<no value>", rendered)
+    def test_manual_cleanup_is_not_invoked_by_setup(self):
+        cleanup = (REPO_ROOT / "docs/cleanup-llm-environment.ps1").read_text("utf-8")
+        self.assertIn("[switch]$Apply", cleanup)
+        self.assertIn("SupportsShouldProcess", cleanup)
+        self.assertIn("if (-not $Apply)", cleanup)
+        self.assertNotIn("GetEnvironmentVariables(", cleanup)
+        for path in (REPO_ROOT / ".chezmoiscripts").glob("*"):
+            for line in path.read_text("utf-8").splitlines():
+                if "cleanup-llm-environment.ps1" in line:
+                    self.assertTrue(line.lstrip().startswith("#"))
 
 
 if __name__ == "__main__":
