@@ -18,19 +18,19 @@ sha256 = "85da5eac732cb89ba0a1d334232b9e255e901f4978d3e5eb5512a71d14116ea7"
 
 [external_resources.pins.catppuccin_alacritty_frappe]
 url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-frappe.toml"
-sha256 = "bac9843f0f984f03928342369564527382aedd1d9f6b49273a2f3bf99e28124f"
+sha256 = "c528c34af5eb7ba219505b56083f0b9afc3dfbd9ead9ac8df1af56c994fe5e31"
 
 [external_resources.pins.catppuccin_alacritty_latte]
 url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-latte.toml"
-sha256 = "add4020af6910d8baa02bb765f6e12f631c38c092689815a2549d5acbdca3418"
+sha256 = "64852587bdb968898f8e120c71afdea85cca5f70cda3656bf3f1a46e32348347"
 
 [external_resources.pins.catppuccin_alacritty_macchiato]
 url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-macchiato.toml"
-sha256 = "fd06f991f47937a99331c2fa97aa9476c1b7db0a64a44487bb9aa35f7188507c"
+sha256 = "6f22bc566b268e9f7c0aa14f75a6f7a59da850203fc0e90f3f3c9b3dccea05af"
 
 [external_resources.pins.catppuccin_alacritty_mocha]
 url = "https://raw.githubusercontent.com/catppuccin/alacritty/main/catppuccin-mocha.toml"
-sha256 = "949cef17c3ec50420b82c70b22e3aa2ea0a5d27dfcc13284192bd5284b5db2c5"
+sha256 = "cda0517da7dddf864c03d3120d2f58e235ab69cd9cbf806ef6921b585819f234"
 
 [external_resources.pins.catppuccin_bat_frappe]
 url = "https://raw.githubusercontent.com/catppuccin/bat/main/themes/Catppuccin%20Frappe.tmTheme"
@@ -168,23 +168,23 @@ repository = "mattpocock/skills"
 tag = "v1.3.2"
 
 [external_resources.pins.pi_distribution_windows_arm64]
-url = "https://github.com/ningw42/pi-distribution/releases/download/v26.11.12/pi-distribution-v26.11.12-windows-arm64.tgz"
-sha256 = "fba4ec9da33bd49719748805827ac3634a748371a36f3296a341099a6959ae6d"
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.11.17/pi-distribution-v26.11.17-windows-arm64.tgz"
+sha256 = "538883cde5435bc2f5a3f02771d56a1f6679b9f77abf8c3032db076529377126"
 
 [external_resources.pins.pi_distribution_windows_arm64.update]
 type = "github_release"
 repository = "ningw42/pi-distribution"
-tag = "v26.11.12"
+tag = "v26.11.17"
 asset = "pi-distribution-{tag}-windows-arm64.tgz"
 
 [external_resources.pins.pi_distribution_windows_x64]
-url = "https://github.com/ningw42/pi-distribution/releases/download/v26.11.12/pi-distribution-v26.11.12-windows-x64.tgz"
-sha256 = "fba4ec9da33bd49719748805827ac3634a748371a36f3296a341099a6959ae6d"
+url = "https://github.com/ningw42/pi-distribution/releases/download/v26.11.17/pi-distribution-v26.11.17-windows-x64.tgz"
+sha256 = "538883cde5435bc2f5a3f02771d56a1f6679b9f77abf8c3032db076529377126"
 
 [external_resources.pins.pi_distribution_windows_x64.update]
 type = "github_release"
 repository = "ningw42/pi-distribution"
-tag = "v26.11.12"
+tag = "v26.11.17"
 asset = "pi-distribution-{tag}-windows-x64.tgz"
 
 [external_resources.pins.yazi_everforest_medium_flavor]
