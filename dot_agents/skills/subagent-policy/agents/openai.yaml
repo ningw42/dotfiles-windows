@@ -1,0 +1,6 @@
+interface:
+  display_name: "Subagent Policy"
+  short_description: "Match main model and effort; allow effectively unlimited turns"
+  default_prompt: "Use $subagent-policy when spawning or resuming subagents."
+policy:
+  allow_implicit_invocation: false

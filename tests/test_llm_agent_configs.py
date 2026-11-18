@@ -439,23 +439,22 @@ class AgentDefaultTests(unittest.TestCase):
             command = (command_dir / f"{name}.md.tmpl").read_text(encoding="utf-8")
             self.assertIn(f'dot_agents/skills/{name}/SKILL.md', command)
 
-    def test_subagent_unlimited_turns_rename_and_legacy_cleanup(self):
-        skill_dir = REPO_ROOT / "dot_agents/skills/subagent-unlimited-turns"
+    def test_subagent_policy_is_human_only_and_cleans_up_its_predecessors(self):
+        skill_dir = REPO_ROOT / "dot_agents/skills/subagent-policy"
         skill = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
-        self.assertIn("name: subagent-unlimited-turns\n", skill)
+        self.assertIn("name: subagent-policy\n", skill)
         self.assertIn("disable-model-invocation: true\n", skill)
         metadata = (skill_dir / "agents/openai.yaml").read_text(encoding="utf-8")
-        self.assertIn('display_name: "Subagent Unlimited Turns"', metadata)
-        self.assertIn("Use $subagent-unlimited-turns", metadata)
+        self.assertIn('display_name: "Subagent Policy"', metadata)
+        self.assertIn("Use $subagent-policy", metadata)
         self.assertIn("allow_implicit_invocation: false", metadata)
 
         removals = (REPO_ROOT / ".chezmoiremove").read_text(encoding="utf-8").splitlines()
-        for target in (
-            ".agents/skills/unlimited-subagent-turns",
-            ".config/opencode/commands/unlimited-subagent-turns.md",
-        ):
-            with self.subTest(target=target):
-                self.assertIn(target, removals)
+        for name in ("subagent-parity", "subagent-unlimited-turns", "unlimited-subagent-turns"):
+            with self.subTest(name=name):
+                self.assertNotIn(name, USER_SKILLS)
+                self.assertIn(f".agents/skills/{name}", removals)
+                self.assertIn(f".config/opencode/commands/{name}.md", removals)
 
     def test_pi_builtin_agent_routes_match_nixfiles(self):
         generator = (

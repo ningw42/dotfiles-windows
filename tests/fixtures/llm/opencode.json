@@ -40,8 +40,7 @@
       "develop-and-squash": "deny",
       "develop-and-submit-pr": "deny",
       "simplification-review": "deny",
-      "subagent-parity": "deny",
-      "subagent-unlimited-turns": "deny",
+      "subagent-policy": "deny",
       "traceability": "deny"
     }
   },

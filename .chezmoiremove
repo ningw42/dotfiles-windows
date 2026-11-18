@@ -66,8 +66,13 @@
 # file is no longer deployed; ~/.pi/agent/mcp.json is the single owner.
 .config/mcp/mcp.json
 
-# The human-only unlimited-turns skill and its OpenCode command were renamed.
+# subagent-policy supersedes the separate skills and their OpenCode commands,
+# including the original unlimited-subagent-turns spelling.
+.agents/skills/subagent-parity
+.agents/skills/subagent-unlimited-turns
 .agents/skills/unlimited-subagent-turns
+.config/opencode/commands/subagent-parity.md
+.config/opencode/commands/subagent-unlimited-turns.md
 .config/opencode/commands/unlimited-subagent-turns.md
 
 # Stale gruvbox-dark leftovers from when these were static sources. They are now
