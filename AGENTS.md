@@ -155,6 +155,11 @@ Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
   OpenCode. Its Copilot SessionStart hook coexists with RTK's independently
   generated PreToolUse hook. Do not add those generated outputs as chezmoi
   sources or edit their deployed copies.
+- HerdR Core is separate: DSC installs `main/herdr-core` (the `hc` CLI).
+  `run_after_herdr-core-skill.ps1.tmpl` wraps its installed `--skill` manual with
+  discovery metadata and the outside-session consent gate, then publishes its
+  skill and links. Keep these generated outputs out of source control and the
+  shared Python publisher; no separate Core skill pin is needed.
 
 ### RTK ownership
 

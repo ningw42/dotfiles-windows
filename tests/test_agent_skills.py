@@ -2249,6 +2249,20 @@ class CliReportingContractTests(PublisherCase):
         self.assertEqual(stderr.getvalue(), "")
         return stdout.getvalue()
 
+    def test_main_reserves_herdr_core_for_its_generated_integration(self):
+        write_skill(self.home / "inputs/example", "skills/herdr-core", "herdr-core")
+        before = snapshot_entry(self.home)
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            status = publisher.main([
+                "--home", str(self.home), "--config", str(self.config),
+                "--base", str(self.base), "--dry-run",
+            ])
+        self.assertEqual(status, 1)
+        self.assertIn("reserved", stderr.getvalue())
+        self.assertIn("herdr-core", stderr.getvalue())
+        self.assertEqual(snapshot_entry(self.home), before)
+
     def test_main_accepts_a_source_without_filters(self):
         self.config.write_text(
             '[agent_skills.sources.example]\ndirectory = "inputs/example"\n', encoding="utf-8",

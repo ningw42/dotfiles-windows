@@ -2365,7 +2365,7 @@ def publish(
 
 
 def _repository_reserved_names(repository_root: Path) -> tuple[str, ...]:
-    names = {"herdr"}
+    names = {"herdr", "herdr-core"}
     skills_root = repository_root / "dot_agents" / "skills"
     if os.path.lexists(skills_root):
         st = os.lstat(skills_root)

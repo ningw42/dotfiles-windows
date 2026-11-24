@@ -90,6 +90,16 @@ this filtered source remains show-me-only, not the whole marketplace. Its
 `allow_implicit_invocation: false` policy; the upstream snapshot stays unchanged.
 Review intentionally filtered sources separately when widening their scope.
 
+HerdR Core is separate from the HerdR TUI. `configuration.dsc.yaml` installs
+`main/herdr-core` through Scoop, exposing `hc`. After each apply,
+`run_after_herdr-core-skill.ps1.tmpl` captures the installed executable's
+`--skill` manual, adds discovery metadata and the outside-session consent gate,
+and publishes collision-checked links for all five harnesses. The generated
+`~/.local/share/herdr-core/skills/herdr-core/SKILL.md` stays matched to the
+installed binary on the next apply, without a separate skill source pin.
+Provision Core before applying; this does not install Herdr App or its GUI
+integrations.
+
 Each configured source keeps its existing generated plugin name and output path.
 An unfiltered marketplace source bundles declared plugins under their original
 relative paths, retains their normalized plugin metadata, and rebases agent,
