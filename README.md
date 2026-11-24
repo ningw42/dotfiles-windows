@@ -97,8 +97,7 @@ HerdR Core is separate from the HerdR TUI. `configuration.dsc.yaml` installs
 and publishes collision-checked links for all five harnesses. The generated
 `~/.local/share/herdr-core/skills/herdr-core/SKILL.md` stays matched to the
 installed binary on the next apply, without a separate skill source pin.
-Provision Core before applying; this does not install Herdr App or its GUI
-integrations.
+Provision Core before applying.
 
 Each configured source keeps its existing generated plugin name and output path.
 An unfiltered marketplace source bundles declared plugins under their original

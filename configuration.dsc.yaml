@@ -373,6 +373,29 @@ properties:
         GetScript: |
           @{ Result = if (Test-Path -LiteralPath "$env:USERPROFILE\scoop\apps\herdr-core\current\herdr-core.exe" -PathType Leaf) { 'Installed' } else { 'NotInstalled' } }
 
+    # Herdr App — the x64 desktop GUI. The Extras manifest depends on main/herdr-core.
+    - resource: PSDscResources/Script
+      id: ScoopHerdrApp
+      dependsOn:
+        - ScoopBucketExtras
+        - ScoopHerdrCore
+      directives:
+        description: "Install Herdr App (desktop GUI) via Scoop Extras"
+        allowPrerelease: true
+      settings:
+        TestScript: |
+          Test-Path -LiteralPath "$env:USERPROFILE\scoop\apps\herdr-app\current\herdr-app.exe" -PathType Leaf
+        SetScript: |
+          $executable = "$env:USERPROFILE\scoop\apps\herdr-app\current\herdr-app.exe"
+          if (Test-Path -LiteralPath $executable -PathType Leaf) { return }
+          & "$env:USERPROFILE\scoop\shims\scoop.cmd" install extras/herdr-app
+          if ($LASTEXITCODE -ne 0) { throw "Failed to install Herdr App via Scoop (exit $LASTEXITCODE)." }
+          if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
+            throw "Scoop did not create the managed Herdr App executable at '$executable'."
+          }
+        GetScript: |
+          @{ Result = if (Test-Path -LiteralPath "$env:USERPROFILE\scoop\apps\herdr-app\current\herdr-app.exe" -PathType Leaf) { 'Installed' } else { 'NotInstalled' } }
+
     # OpenCode 2 — opencode.json registers copilotd, DeepSeek, and Magpie models
     # and the shared MCP servers; HerdR's generated V2 plugin registration is
     # composed into cli.json by run_onchange_herdr-integrations.ps1.tmpl.
