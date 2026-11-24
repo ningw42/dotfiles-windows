@@ -223,7 +223,6 @@ class OpenCodeRtkInitTests(unittest.TestCase):
         self.assertFalse((REPO_ROOT / "dot_config/opencode/plugins/rtk.js").exists())
         self.assertFalse((REPO_ROOT / "dot_config/opencode/plugins/rtk.ts").exists())
         removals = (REPO_ROOT / ".chezmoiremove").read_text(encoding="utf-8").splitlines()
-        self.assertIn(".config/opencode/plugins/rtk.js", removals)
         self.assertNotIn(".config/opencode/plugins/rtk.ts", removals)
 
     def test_init_isolates_claude_restores_environment_and_cleans_up_on_failure(self):

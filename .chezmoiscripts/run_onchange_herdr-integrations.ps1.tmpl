@@ -278,11 +278,7 @@ function Get-HerdrOpenCodeTuiPluginSpecs([string]$Path) {
     return ,@($plugins | ForEach-Object { [string]$_ })
 }
 
-function Test-HerdrOpenCodeTuiConfig(
-    [string]$Path,
-    [string[]]$PluginSpecs,
-    [switch]$AllowEmptyResidue
-) {
+function Test-HerdrOpenCodeTuiConfig([string]$Path, [string[]]$PluginSpecs) {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
         return $false
     }
@@ -294,7 +290,7 @@ function Test-HerdrOpenCodeTuiConfig(
     }
 
     $properties = @($config.PSObject.Properties | Select-Object -ExpandProperty Name)
-    if ($AllowEmptyResidue -and $properties.Count -eq 0) {
+    if ($properties.Count -eq 0) {
         # HerdR's uninstaller leaves an empty managed config behind.
         return $true
     }
@@ -322,7 +318,7 @@ function Set-HerdrOpenCodeTuiConfig([string]$Source, [string]$Destination) {
     $plugins = Get-HerdrOpenCodeTuiPluginSpecs $Source
     if (
         (Test-Path -LiteralPath $Destination) -and
-        -not (Test-HerdrOpenCodeTuiConfig $Destination $plugins -AllowEmptyResidue)
+        -not (Test-HerdrOpenCodeTuiConfig $Destination $plugins)
     ) {
         throw "Refusing to overwrite non-managed OpenCode TUI config '$Destination'."
     }
@@ -331,17 +327,6 @@ function Set-HerdrOpenCodeTuiConfig([string]$Source, [string]$Destination) {
         plugin = @($plugins)
     }
     Set-TextFile -Path $Destination -Content (($definition | ConvertTo-Json -Depth 8) + "`n")
-}
-
-function Remove-HerdrLegacyOpenCodeTuiConfig([string]$Path, [string[]]$PluginSpecs) {
-    # The first iteration published this health-check marker as tui.json; drop
-    # only that managed shape so a user's own V1 TUI settings survive.
-    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-        return
-    }
-    if (Test-HerdrOpenCodeTuiConfig $Path $PluginSpecs) {
-        Remove-Item -LiteralPath $Path -Force
-    }
 }
 
 function Test-HerdrCopilotHookConfig([string]$Path) {
@@ -488,12 +473,6 @@ try {
         -Source (Join-Path $xdgConfig 'opencode/cli.json') `
         -Destination (Join-Path $HomeRoot '.config/opencode/cli.json')
 {{ if not .herdr.opencode_pure_v2 }}
-    # HerdR still validates the V1-shaped OpenCode TUI registration; publish the
-    # generated tui.jsonc and retire the earlier tui.json shim.
-    $tuiPluginSpecs = Get-HerdrOpenCodeTuiPluginSpecs (Join-Path $xdgConfig 'opencode/tui.jsonc')
-    Remove-HerdrLegacyOpenCodeTuiConfig `
-        -Path (Join-Path $HomeRoot '.config/opencode/tui.json') `
-        -PluginSpecs $tuiPluginSpecs
     Set-HerdrOpenCodeTuiConfig `
         -Source (Join-Path $xdgConfig 'opencode/tui.jsonc') `
         -Destination (Join-Path $HomeRoot '.config/opencode/tui.jsonc')

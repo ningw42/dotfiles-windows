@@ -1,84 +1,11 @@
-# chezmoi does not auto-remove the target of a deleted source, nor a target left
-# behind when a colorscheme-conditional external stops providing it. List such
-# orphaned targets here so `chezmoi apply` cleans them up.
-# (This file is always processed as a template.)
-
-# Superseded by the unified .config/statusline/statusline.py, which serves both
-# claude-code and copilot-cli.
-.config/claude-code-statusline.py
-
-# ccstatusline was replaced wholesale by .config/statusline/statusline.py.
-.config/ccstatusline
-
-# user-skills was removed from the chezmoi Claude Code marketplace. Purge its
-# former marketplace source; Claude's installed registry/cache remain manual.
-.config/claude-code-chezmoi/plugins/user-skills
-
-# eza config moved from XDG (~/.config/eza) to the Windows convention
-# (~/AppData/Roaming/eza); the old XDG copy is stale.
-.config/eza
-
-# Old lowercase/hyphenated bat theme files, superseded by the
-# colorscheme-conditional external that installs "Catppuccin <Variant>.tmTheme".
-.config/bat/themes/catppuccin-frappe.tmTheme
-.config/bat/themes/catppuccin-latte.tmTheme
-.config/bat/themes/catppuccin-macchiato.tmTheme
-.config/bat/themes/catppuccin-mocha.tmTheme
-.config/bat/themes/gruvbox-dark-n.tmTheme
-
-# Claude Code RTK awareness files: dropped in favor of the deterministic
-# `rtk hook claude` PreToolUse hook (dot_claude/settings.json.tmpl), which
-# rewrites every Bash call transparently — making the RTK.md prompt injection
-# redundant (mirrors nixfiles' hook-only claude-code setup). ~/.claude/CLAUDE.md
-# held nothing but the `@RTK.md` include, so it goes too.
-.claude/RTK.md
-.claude/CLAUDE.md
-
-# Copilot CLI is likewise hook-only (deny-with-suggestion `rtk hook copilot`),
-# so its bundled instruction file is redundant. run_onchange_rtk-init deletes it
-# after `rtk init --copilot` regenerates it; this entry is the idempotent
-# cross-machine purge of any already-deployed copy.
-.copilot/copilot-instructions.md
-
-# RTK 1.1+ generates the native OpenCode V2 rtk.ts plugin. Remove the old
-# repo-owned adapter so OpenCode does not register two rewrite hooks.
-.config/opencode/plugins/rtk.js
-
-# HerdR still requires the V1-shaped OpenCode TUI registration for
-# `integration status` when only V2 is installed, so
-# run_onchange_herdr-integrations publishes HerdR's generated tui.jsonc. Set
-# herdr.opencode_pure_v2 = true in .chezmoidata.toml once HerdR validates a
-# cli.json-only V2 setup: the publisher stops and this entry removes the
-# obsolete marker.
+# Stop publishing HerdR's OpenCode TUI marker only when HerdR supports a
+# cli.json-only setup. Keep this in sync with run_onchange_herdr-integrations.
 {{- if .herdr.opencode_pure_v2 }}
 .config/opencode/tui.jsonc
 {{- end }}
 
-# pi-distribution moved from Pi's git package store to a checksum-pinned chezmoi
-# external under ~/.pi/agent/packages.
-.pi/agent/git/github.com/ningw42/pi-distribution
-
-# pi-cc-extensions v0.9 renamed its fixed-path configuration. Remove the legacy
-# target now that dot_pi/agent/pi-cc-extensions.json owns the canonical path.
-.pi/agent/claude-code-style.json
-
-# Pi's built-in MCP replaced the retired pi-mcp-adapter, whose XDG-only server
-# file is no longer deployed; ~/.pi/agent/mcp.json is the single owner.
-.config/mcp/mcp.json
-
-# subagent-policy supersedes the separate skills and their OpenCode commands,
-# including the original unlimited-subagent-turns spelling.
-.agents/skills/subagent-parity
-.agents/skills/subagent-unlimited-turns
-.agents/skills/unlimited-subagent-turns
-.config/opencode/commands/subagent-parity.md
-.config/opencode/commands/subagent-unlimited-turns.md
-.config/opencode/commands/unlimited-subagent-turns.md
-
-# Stale gruvbox-dark leftovers from when these were static sources. They are now
-# provided by colorscheme-conditional externals, so only remove them when
-# gruvbox-dark is NOT the active colorscheme (otherwise we would fight the
-# external that legitimately installs them).
+# These externals are managed only while Gruvbox is selected. Remove them on
+# a switch to another scheme, never while they are active.
 {{- if ne .colorscheme "gruvbox-dark" }}
 AppData/Roaming/alacritty/themes/gruvbox-dark.toml
 AppData/Roaming/yazi/config/flavors/gruvbox-dark.yazi

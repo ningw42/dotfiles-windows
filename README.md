@@ -267,8 +267,8 @@ RTK 1.1+ owns the native `~/.config/opencode/plugins/rtk.ts` plugin. Scoop ships
 only the executable, so the RTK apply hook generates the embedded plugin with
 `rtk init -g --opencode --no-patch`, temporarily redirecting `CLAUDE_CONFIG_DIR`
 to avoid recreating Claude awareness files or patching its managed settings.
-Chezmoi removes the old `rtk.js` adapter; the native plugin respects
-`RTK_DISABLED` and OpenCode's agent-scoped shell permissions.
+The native plugin respects `RTK_DISABLED` and OpenCode's agent-scoped shell
+permissions.
 
 ## Claude/Copilot statusline
 

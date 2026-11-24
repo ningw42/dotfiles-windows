@@ -753,13 +753,10 @@ properties:
                 }
               }
 
-              # Best-effort reap of legacy font files (this/prior runs) plus any leftover
-              # legacy dirs from the old per-directory scheme. Files still mapped by a
-              # running app are delete-pending (FILE_SHARE_DELETE) and vanish on close.
+              # Reap renamed font files. Files still mapped by a running app are
+              # delete-pending (FILE_SHARE_DELETE) and vanish on close.
               Get-ChildItem -Path $packDir -File -Filter '*.legacy-*' -ErrorAction SilentlyContinue |
                 ForEach-Object { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue }
-              Get-ChildItem -Path $base -Directory -Filter "$Name.legacy-*" -ErrorAction SilentlyContinue |
-                ForEach-Object { Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }
             } finally {
               Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
             }
@@ -873,12 +870,9 @@ properties:
               }
             }
 
-            # Best-effort reap of legacy files plus any leftover legacy dirs from the old
-            # scheme; files still mapped are delete-pending and vanish when the app closes.
+            # Reap renamed font files; mapped files vanish when the app closes.
             Get-ChildItem -Path $packDir -File -Filter '*.legacy-*' -ErrorAction SilentlyContinue |
               ForEach-Object { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue }
-            Get-ChildItem -Path $base -Directory -Filter "$Name.legacy-*" -ErrorAction SilentlyContinue |
-              ForEach-Object { Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue }
           } finally {
             Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
           }

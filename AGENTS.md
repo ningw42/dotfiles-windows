@@ -169,15 +169,12 @@ copies.
   `run_onchange_rtk-init.ps1.tmpl` generates `~/.codex/{AGENTS,RTK}.md` in an
   isolated `CODEX_HOME`, preserving unrelated instructions and publishing only
   those awareness documents; RTK never patches the managed hooks or config.
-- Claude Code uses the `rtk hook claude` hook in
-  `dot_claude/settings.json.tmpl`; its old awareness files are removed through
-  `.chezmoiremove`.
+- Claude Code uses the `rtk hook claude` hook in `dot_claude/settings.json.tmpl`.
 - Copilot uses its generated `~/.copilot/hooks/rtk-rewrite.json`; the script
   deletes the redundant generated instruction file.
 - OpenCode 2 uses RTK's generated native `~/.config/opencode/plugins/rtk.ts`.
   The RTK script invokes `rtk init -g --opencode --no-patch` with an isolated
-  `CLAUDE_CONFIG_DIR`; the retired repo-owned adapter is removed by
-  `.chezmoiremove`.
+  `CLAUDE_CONFIG_DIR`.
 - Do not add pi to the RTK script. `pi-distribution` owns pi's RTK extension.
 
 ### pi ownership
