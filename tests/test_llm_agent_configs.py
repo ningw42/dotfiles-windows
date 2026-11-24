@@ -22,8 +22,8 @@ USER_SKILLS = {
 GPT_MODELS = [
     "gpt-6-luna",
     "gpt-5.6-sol",
-    "gpt-6.1-sol",
-    "gpt-6-astra",
+    "gpt-6.2-sol",
+    "gpt-6.2-astra",
 ]
 HOME_TEMPLATE = '{{ .chezmoi.homeDir | replace "\\\\" "/" }}'
 
@@ -144,7 +144,7 @@ class ClaudeConfigTests(unittest.TestCase):
 class ModelCatalogTests(unittest.TestCase):
     def test_opencode_policy_matches_nixfiles_projection(self):
         config = load_opencode_config()
-        self.assertEqual(config["model"], "magpie-responses/gpt-6-astra")
+        self.assertEqual(config["model"], "magpie-responses/gpt-6.2-astra")
         # OpenCode 2.2+ honors the environment's Claude-only exclusion; keep
         # native discovery rather than disabling its compatibility scanner.
         self.assertNotIn("plugins", config)
@@ -153,21 +153,21 @@ class ModelCatalogTests(unittest.TestCase):
         self.assertEqual(config["permission"]["skill"], {name: "deny" for name in USER_SKILLS})
 
     def test_opencode_provider_metadata_matches_nixfiles_snapshot(self):
-        # Full provider snapshot from nixfiles' llm-agents/tests/model-catalog.nix
-        # at 0a4c01a; canonical JSON matches Nix's builtins.toJSON rendering.
+        # Reviewed provider snapshot synchronized with nixfiles at a78379f.
+        # Canonical JSON matches Nix's builtins.toJSON rendering.
         providers = load_opencode_config()["provider"]
         snapshot = json.dumps(
             providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
         ).encode("utf-8")
         self.assertEqual(
             hashlib.sha256(snapshot).hexdigest(),
-            "18e3b14eb7f5dbaf1df78691b2905f5fd52be761e10ed21de7d9d8144462c42f",
+            "40b612d39425adcafaa286d8090c2065833228afb39aa2e79976746e7aea1239",
         )
 
     def test_pi_cycle_defaults_match_nixfiles_projection(self):
         settings = load_json("dot_pi/agent/settings.json")
         self.assertEqual(settings["defaultProvider"], "magpie-responses")
-        self.assertEqual(settings["defaultModel"], "gpt-6-astra")
+        self.assertEqual(settings["defaultModel"], "gpt-6.2-astra")
         self.assertEqual(settings["defaultThinkingLevel"], "xhigh")
         self.assertEqual(
             settings["enabledModels"],
@@ -213,7 +213,7 @@ class ModelCatalogTests(unittest.TestCase):
                     self.assertNotIn("none", oc_model["variants"])
 
     def test_pi_provider_metadata_matches_nixfiles_snapshot(self):
-        # Only credential retrieval changes; retain the reviewed model projection.
+        # Reviewed nixfiles a78379f projection; normalize only credential retrieval.
         providers = json.loads(json.dumps(load_json("dot_pi/agent/models.json")["providers"]))
         for provider in providers.values():
             self.assertTrue(provider["apiKey"].startswith("!"))
@@ -223,7 +223,7 @@ class ModelCatalogTests(unittest.TestCase):
         ).encode("utf-8")
         self.assertEqual(
             hashlib.sha256(snapshot).hexdigest(),
-            "a6fe72e8b127fc7c1a7516404963686c78cebab208cf473715ca6e8407604ef8",
+            "8bfa6913c119f790d49b0e6cda3993d62338b18e6b166b3aa71cc3cd14404dae",
         )
 
     def test_pi_configured_routes_reference_registered_models(self):
@@ -278,6 +278,22 @@ class ModelCatalogTests(unittest.TestCase):
                         "input": cost["input"], "output": cost["output"],
                         "cache_read": cost["cacheRead"], "cache_write": cost["cacheWrite"],
                     })
+
+    def test_gpt_62_replaces_old_pi_and_opencode_models(self):
+        pi = load_json("dot_pi/agent/models.json")["providers"]["magpie-responses"]
+        pi_models = {model["id"]: model for model in pi["models"]}
+        oc_models = load_opencode_config()["provider"]["magpie-responses"]["models"]
+        for retired in ("gpt-6.1-sol", "gpt-6-astra"):
+            self.assertNotIn(retired, pi_models)
+            self.assertNotIn(retired, oc_models)
+        for model_id in ("gpt-6.2-sol", "gpt-6.2-astra"):
+            with self.subTest(model=model_id):
+                self.assertIsNone(pi_models[model_id]["thinkingLevelMap"]["off"])
+                self.assertFalse(oc_models[model_id]["temperature"])
+                self.assertEqual(set(oc_models[model_id]["variants"]), {
+                    "low", "medium", "high", "xhigh", "max",
+                })
+                self.assertEqual(oc_models[model_id]["options"], {"reasoningEffort": "xhigh"})
 
     def test_sol_uses_the_public_id(self):
         pi = load_json("dot_pi/agent/models.json")["providers"]
@@ -417,12 +433,12 @@ class AgentDefaultTests(unittest.TestCase):
             / "readonly_Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl"
         ).read_text(encoding="utf-8")
 
-        self.assertEqual(opencode["model"], "magpie-responses/gpt-6-astra")
+        self.assertEqual(opencode["model"], "magpie-responses/gpt-6.2-astra")
         self.assertEqual(
-            opencode["provider"]["magpie-responses"]["models"]["gpt-6-astra"]["options"]["reasoningEffort"],
+            opencode["provider"]["magpie-responses"]["models"]["gpt-6.2-astra"]["options"]["reasoningEffort"],
             "xhigh",
         )
-        self.assertEqual(pi["defaultModel"], "gpt-6-astra")
+        self.assertEqual(pi["defaultModel"], "gpt-6.2-astra")
         self.assertEqual(pi["defaultThinkingLevel"], "xhigh")
         self.assertEqual(copilot["model"], "gpt-6-astra")
         self.assertEqual(copilot["effortLevel"], "xhigh")
@@ -462,7 +478,7 @@ class AgentDefaultTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertEqual(load_pi_builtin_agent_routes(), {
             "Explore": "magpie-responses/gpt-5.6-sol",
-            "Plan": "magpie-responses/gpt-6-astra",
+            "Plan": "magpie-responses/gpt-6.2-astra",
         })
         self.assertRegex(
             generator,
@@ -473,8 +489,8 @@ class AgentDefaultTests(unittest.TestCase):
         self.assertEqual(load_json("dot_pi/workflows/model-tiers.json"), {
             "tiers": {
                 "small": "magpie-responses/gpt-5.6-sol:max",
-                "medium": "magpie-responses/gpt-6.1-sol:max",
-                "big": "magpie-responses/gpt-6-astra:max",
+                "medium": "magpie-responses/gpt-6.2-sol:max",
+                "big": "magpie-responses/gpt-6.2-astra:max",
             },
         })
 

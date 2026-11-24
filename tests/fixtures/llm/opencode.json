@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "magpie-responses/gpt-6-astra",
+  "model": "magpie-responses/gpt-6.2-astra",
   "enabled_providers": [
     "magpie-generative-ai",
     "magpie-messages",
@@ -399,7 +399,7 @@
             }
           }
         },
-        "gpt-6.1-sol": {
+        "gpt-6.2-sol": {
           "cost": {
             "cache_read": 0.1,
             "cache_write": 2.5,
@@ -419,11 +419,12 @@
               "text"
             ]
           },
-          "name": "GPT-6.1 Sol",
+          "name": "GPT-6.2 Sol",
           "options": {
             "reasoningEffort": "xhigh"
           },
           "reasoning": true,
+          "temperature": false,
           "variants": {
             "low": {
               "reasoningEffort": "low"
@@ -442,12 +443,12 @@
             }
           }
         },
-        "gpt-6-astra": {
+        "gpt-6.2-astra": {
           "cost": {
-            "cache_read": 1,
-            "cache_write": 12.5,
-            "input": 10,
-            "output": 50
+            "cache_read": 0.4,
+            "cache_write": 10,
+            "input": 8,
+            "output": 40
           },
           "limit": {
             "context": 1050000,
@@ -462,11 +463,12 @@
               "text"
             ]
           },
-          "name": "GPT-6 Astra",
+          "name": "GPT-6.2 Astra",
           "options": {
             "reasoningEffort": "xhigh"
           },
           "reasoning": true,
+          "temperature": false,
           "variants": {
             "low": {
               "reasoningEffort": "low"

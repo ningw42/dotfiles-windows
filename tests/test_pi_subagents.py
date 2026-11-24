@@ -18,7 +18,7 @@ NODE = shutil.which("node")
 HOME_TEMPLATE = '{{ .chezmoi.homeDir | replace "\\\\" "/" }}'
 AGENT_MODELS = {
     "Explore": "magpie-responses/gpt-5.6-sol",
-    "Plan": "magpie-responses/gpt-6-astra",
+    "Plan": "magpie-responses/gpt-6.2-astra",
     "general-purpose": None,
 }
 

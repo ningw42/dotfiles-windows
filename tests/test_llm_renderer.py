@@ -1,4 +1,4 @@
-"""Read-only projection and validation tests; fixtures preserve pre-refactor JSON."""
+"""Read-only projection and validation tests; fixtures track reviewed nixfiles projections."""
 
 from __future__ import annotations
 
@@ -37,11 +37,11 @@ class RendererTests(unittest.TestCase):
         self.assertEqual(set(self.data), {"providers", "models", "harnesses"})
         self.assertEqual(set(self.data["providers"]), {"copilotd", "magpie", "deepseek"})
         self.assertEqual(sum(len(p["endpoints"]) for p in self.data["providers"].values()), 7)
-        self.assertEqual(len(self.data["models"]), 11)
+        self.assertEqual(len(self.data["models"]), 12)
         self.assertNotEqual(id(self.data["harnesses"]["pi"]["bindings"]),
                             id(self.data["harnesses"]["opencode"]["bindings"]))
 
-    def test_pi_snapshot_changes_only_auth(self):
+    def test_pi_snapshot_matches_nixfiles_except_auth(self):
         expected = json.loads((FIXTURES / "pi-models.json").read_text(encoding="utf-8"))
         actual = self.render("pi-models")
         self.assertEqual(sum(len(p["models"]) for p in actual["providers"].values()), 11)
@@ -50,7 +50,7 @@ class RendererTests(unittest.TestCase):
             provider["apiKey"] = expected["providers"][name]["apiKey"]
         self.assertEqual(actual, expected)
 
-    def test_opencode_snapshot_is_unchanged(self):
+    def test_opencode_snapshot_matches_nixfiles(self):
         expected = json.loads((FIXTURES / "opencode.json").read_text(encoding="utf-8"))
         expected = {key: expected[key] for key in ("provider", "enabled_providers", "model")}
         actual = self.render("opencode")
@@ -61,10 +61,10 @@ class RendererTests(unittest.TestCase):
 
     def test_pi_settings_tiers_and_agents_match_current_policy(self):
         self.assertEqual(self.render("pi-settings"), {
-            "defaultProvider": "magpie-responses", "defaultModel": "gpt-6-astra",
+            "defaultProvider": "magpie-responses", "defaultModel": "gpt-6.2-astra",
             "defaultThinkingLevel": "xhigh", "enabledModels": [
                 "magpie-responses/gpt-6-luna:xhigh", "magpie-responses/gpt-5.6-sol:xhigh",
-                "magpie-responses/gpt-6.1-sol:xhigh", "magpie-responses/gpt-6-astra:xhigh",
+                "magpie-responses/gpt-6.2-sol:xhigh", "magpie-responses/gpt-6.2-astra:xhigh",
                 "magpie-responses/deepseek-flash:high", "magpie-responses/glm-5.3:max",
                 "magpie-responses/glm-5.3-flash:max", "magpie-messages/claude-haiku-5-5:medium",
                 "magpie-messages/claude-sonnet-5-5:high", "magpie-messages/claude-opus-5-5:medium",
@@ -72,11 +72,11 @@ class RendererTests(unittest.TestCase):
             ],
         })
         self.assertEqual(self.render("pi-tiers"), {"tiers": {
-            "big": "magpie-responses/gpt-6-astra:max", "medium": "magpie-responses/gpt-6.1-sol:max",
+            "big": "magpie-responses/gpt-6.2-astra:max", "medium": "magpie-responses/gpt-6.2-sol:max",
             "small": "magpie-responses/gpt-5.6-sol:max",
         }})
         self.assertEqual(self.render("pi-agent-models"), {
-            "Explore": "magpie-responses/gpt-5.6-sol", "Plan": "magpie-responses/gpt-6-astra",
+            "Explore": "magpie-responses/gpt-5.6-sol", "Plan": "magpie-responses/gpt-6.2-astra",
         })
 
     def test_codex_auth_and_current_identity(self):
@@ -131,7 +131,7 @@ class RendererTests(unittest.TestCase):
     def test_runtime_identity_and_aliases_follow_all_pi_routes(self):
         binding = self.data["harnesses"]["pi"]["bindings"][0]
         binding["runtime_id"] = "alternate"
-        binding["wire_ids"] = {"gpt-6-astra": "group/astra", "gpt-5.6-sol": "group/sol"}
+        binding["wire_ids"] = {"gpt-6.2-astra": "group/astra", "gpt-5.6-sol": "group/sol"}
         settings = self.render("pi-settings")
         self.assertEqual(settings["defaultProvider"], "alternate")
         self.assertEqual(settings["defaultModel"], "group/astra")
@@ -139,11 +139,11 @@ class RendererTests(unittest.TestCase):
         self.assertEqual(self.render("pi-tiers")["tiers"]["big"], "alternate/group/astra:max")
         self.assertEqual(self.render("pi-agent-models")["Explore"], "alternate/group/sol")
         self.assertIn("group/astra", [m["id"] for m in self.render("pi-models")["providers"]["alternate"]["models"]])
-        self.assertEqual(self.render("opencode")["model"], "magpie-responses/gpt-6-astra")
+        self.assertEqual(self.render("opencode")["model"], "magpie-responses/gpt-6.2-astra")
 
     def test_opencode_alias_default_and_multiple_codex_responses(self):
         oc = self.data["harnesses"]["opencode"]
-        oc["bindings"][0]["wire_ids"] = {"gpt-6-astra": "alias/astra"}
+        oc["bindings"][0]["wire_ids"] = {"gpt-6.2-astra": "alias/astra"}
         output = self.render("opencode")
         self.assertEqual(output["model"], "magpie-responses/alias/astra")
         self.assertIn("alias/astra", output["provider"]["magpie-responses"]["models"])
@@ -236,10 +236,10 @@ class RendererTests(unittest.TestCase):
             ((), sentinel, True), (("providers", "deepseek"), sentinel, True),
             (("providers", "deepseek", "credential"), sentinel, True),
             (("providers", "deepseek", "endpoints", "responses"), sentinel, True),
-            (("models", "gpt-6-astra"), sentinel, True),
-            (("models", "gpt-6-astra", "effort"), sentinel, True),
-            (("models", "gpt-6-astra", "cost"), sentinel, True),
-            (("models", "gpt-6-astra", "cost", "tiers", 0), sentinel, True),
+            (("models", "gpt-6.2-astra"), sentinel, True),
+            (("models", "gpt-6.2-astra", "effort"), sentinel, True),
+            (("models", "gpt-6.2-astra", "cost"), sentinel, True),
+            (("models", "gpt-6.2-astra", "cost", "tiers", 0), sentinel, True),
             (("harnesses",), sentinel, True), (("harnesses", "pi"), sentinel, True),
             (("harnesses", "pi", "bindings", 0), sentinel, True),
             (("harnesses", "pi", "default"), sentinel, True),
@@ -260,7 +260,7 @@ class RendererTests(unittest.TestCase):
     def test_invalid_values_rejected(self):
         # All inventory entries are checked, including unused DeepSeek routes.
         endpoint = ("providers", "deepseek", "endpoints", "responses")
-        model = ("models", "gpt-6-astra")
+        model = ("models", "gpt-6.2-astra")
         binding = ("harnesses", "pi", "bindings", 0)
         cases = [
             (("providers",), {}), (("models",), []), (("harnesses",), {}),
@@ -292,14 +292,14 @@ class RendererTests(unittest.TestCase):
             (binding + ("endpoint",), "missing.responses"),
             (binding + ("endpoint",), "magpie.missing"),
             (binding + ("ids",), ["unknown"]), (binding + ("ids",), []),
-            (binding + ("ids",), ["gpt-6-astra", "gpt-6-astra"]),
+            (binding + ("ids",), ["gpt-6.2-astra", "gpt-6.2-astra"]),
             (binding + ("ids",), [""]), (binding + ("ids",), [True]),
             (binding + ("runtime_id",), ""), (binding + ("runtime_id",), "bad/id"),
             (binding + ("wire_ids",), {"unselected": "alias"}),
-            (binding + ("wire_ids",), {"gpt-6-astra": ""}),
-            (binding + ("wire_ids",), {"gpt-6-astra": "alias:high"}),
-            (binding + ("wire_ids",), {"gpt-6-astra": "../alias"}),
-            (binding + ("wire_ids",), {"gpt-6-astra": "gpt-5.6-sol"}),
+            (binding + ("wire_ids",), {"gpt-6.2-astra": ""}),
+            (binding + ("wire_ids",), {"gpt-6.2-astra": "alias:high"}),
+            (binding + ("wire_ids",), {"gpt-6.2-astra": "../alias"}),
+            (binding + ("wire_ids",), {"gpt-6.2-astra": "gpt-5.6-sol"}),
             (("harnesses", "codex", "stream_idle_timeout_ms"), True),
             (("harnesses", "pi", "default", "endpoint"), "copilotd.responses"),
             (("harnesses", "pi", "default", "model"), "claude-opus-5-5"),
@@ -337,7 +337,7 @@ class RendererTests(unittest.TestCase):
         for harness, endpoint, ids in (
             ("pi", "deepseek.messages", ["deepseek-flash"]),
             ("codex", "magpie.messages", ["claude-opus-5-5"]),
-            ("opencode", "magpie.generative-ai", ["gpt-6-astra"]),
+            ("opencode", "magpie.generative-ai", ["gpt-6.2-astra"]),
         ):
             with self.subTest(harness=harness, endpoint=endpoint):
                 self.data = copy.deepcopy(self.original)
@@ -345,7 +345,7 @@ class RendererTests(unittest.TestCase):
                 with self.assertRaises(renderer.ConfigError):
                     self.render("credentials")
         self.data = copy.deepcopy(self.original)
-        cost = self.data["models"]["gpt-6-astra"]["cost"]
+        cost = self.data["models"]["gpt-6.2-astra"]["cost"]
         cost["tiers"].append(copy.deepcopy(cost["tiers"][0]))
         with self.assertRaisesRegex(renderer.ConfigError, "increasing"):
             self.render("pi-models")

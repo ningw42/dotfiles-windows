@@ -180,9 +180,10 @@ Generative AI API for Gemini. Claude uses adaptive thinking, with
 medium/high/medium effort defaults respectively; this does not change Claude
 Code's subscription auth. Pi's generated Explore/Plan agents and all workflow
 tiers still use `magpie-responses`. GPT-5.6 Sol sends the bare `gpt-5.6-sol`
-request ID; Magpie selects Copilot's fast tier internally. Pi, OpenCode, Codex,
-and Copilot CLI default to GPT-6 Astra at `xhigh` effort. Shared model facts,
-defaults, and endpoint bindings live in `.chezmoidata/llm-*.toml`.
+request ID; Magpie selects Copilot's fast tier internally. Pi and OpenCode default
+to GPT-6.2 Astra at `xhigh` effort; Codex and Copilot CLI retain GPT-6 Astra at
+`xhigh`. Shared model facts, defaults, and endpoint bindings live in
+`.chezmoidata/llm-*.toml`.
 `render_llm_config.py` validates them and supplies the Pi, OpenCode, and Codex
 chezmoi templates. Codex remains on Copilotd, Copilot CLI
 uses its native authentication, and Claude Code uses subscription authentication.

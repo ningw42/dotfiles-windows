@@ -12,20 +12,20 @@ runtime_id = "copilotd"
 ids = ["gpt-6-astra"]
 
 [llm.harnesses.pi]
-default = { endpoint = "magpie.responses", model = "gpt-6-astra", effort = "xhigh" }
+default = { endpoint = "magpie.responses", model = "gpt-6.2-astra", effort = "xhigh" }
 
 [llm.harnesses.pi.workflow_tiers]
-big = { endpoint = "magpie.responses", model = "gpt-6-astra", effort = "max" }
-medium = { endpoint = "magpie.responses", model = "gpt-6.1-sol", effort = "max" }
+big = { endpoint = "magpie.responses", model = "gpt-6.2-astra", effort = "max" }
+medium = { endpoint = "magpie.responses", model = "gpt-6.2-sol", effort = "max" }
 small = { endpoint = "magpie.responses", model = "gpt-5.6-sol", effort = "max" }
 
 [llm.harnesses.pi.agent_models]
 Explore = { endpoint = "magpie.responses", model = "gpt-5.6-sol" }
-Plan = { endpoint = "magpie.responses", model = "gpt-6-astra" }
+Plan = { endpoint = "magpie.responses", model = "gpt-6.2-astra" }
 
 [[llm.harnesses.pi.bindings]]
 endpoint = "magpie.responses"
-ids = ["gpt-6-luna", "gpt-5.6-sol", "gpt-6.1-sol", "gpt-6-astra", "deepseek-flash", "glm-5.3", "glm-5.3-flash"]
+ids = ["gpt-6-luna", "gpt-5.6-sol", "gpt-6.2-sol", "gpt-6.2-astra", "deepseek-flash", "glm-5.3", "glm-5.3-flash"]
 
 [[llm.harnesses.pi.bindings]]
 endpoint = "magpie.messages"
@@ -36,11 +36,11 @@ endpoint = "magpie.generative-ai"
 ids = ["gemini-4-argon"]
 
 [llm.harnesses.opencode]
-default = { endpoint = "magpie.responses", model = "gpt-6-astra" }
+default = { endpoint = "magpie.responses", model = "gpt-6.2-astra" }
 
 [[llm.harnesses.opencode.bindings]]
 endpoint = "magpie.responses"
-ids = ["gpt-6-luna", "gpt-5.6-sol", "gpt-6.1-sol", "gpt-6-astra", "deepseek-flash", "glm-5.3", "glm-5.3-flash"]
+ids = ["gpt-6-luna", "gpt-5.6-sol", "gpt-6.2-sol", "gpt-6.2-astra", "deepseek-flash", "glm-5.3", "glm-5.3-flash"]
 
 [[llm.harnesses.opencode.bindings]]
 endpoint = "magpie.messages"

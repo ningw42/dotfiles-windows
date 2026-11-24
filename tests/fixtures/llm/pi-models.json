@@ -211,13 +211,13 @@
               }
             ]
           },
-          "id": "gpt-6.1-sol",
+          "id": "gpt-6.2-sol",
           "input": [
             "text",
             "image"
           ],
           "maxTokens": 128000,
-          "name": "GPT-6.1 Sol",
+          "name": "GPT-6.2 Sol",
           "reasoning": true,
           "thinkingLevelMap": {
             "max": "max",
@@ -229,27 +229,27 @@
         {
           "contextWindow": 1050000,
           "cost": {
-            "cacheRead": 1,
-            "cacheWrite": 12.5,
-            "input": 10,
-            "output": 50,
+            "cacheRead": 0.4,
+            "cacheWrite": 10,
+            "input": 8,
+            "output": 40,
             "tiers": [
               {
-                "cacheRead": 2,
-                "cacheWrite": 25,
-                "input": 20,
+                "cacheRead": 0.8,
+                "cacheWrite": 20,
+                "input": 16,
                 "inputTokensAbove": 272000,
-                "output": 75
+                "output": 60
               }
             ]
           },
-          "id": "gpt-6-astra",
+          "id": "gpt-6.2-astra",
           "input": [
             "text",
             "image"
           ],
           "maxTokens": 128000,
-          "name": "GPT-6 Astra",
+          "name": "GPT-6.2 Astra",
           "reasoning": true,
           "thinkingLevelMap": {
             "max": "max",
