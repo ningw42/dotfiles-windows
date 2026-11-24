@@ -2318,6 +2318,7 @@ class RepositoryDeclarationTests(unittest.TestCase):
             {
                 "directory": ".local/share/llm-agents/sources/humanlayer",
                 "include": ["plugins/show-me/skills/show-me", "LICENSE"],
+                "exclude": ["plugins/show-me/skills/show-me/agents/openai.yaml"],
             },
         )
         pins = self.data["external_resources"]["pins"]
@@ -2427,14 +2428,31 @@ class RepositoryDeclarationTests(unittest.TestCase):
                 entries.append({"name": name, "source": f"./plugins/{name}"})
             write_bytes(root / ".claude-plugin/marketplace.json", canonical_json_bytes({"plugins": entries}))
             write_bytes(root / "LICENSE", b"license\n")
-            publisher.publish(
-                home, {"humanlayer": declaration},
-                REPO_ROOT / "dot_config/claude-code-chezmoi/marketplace-base.json",
-            )
+            policy_path = "plugins/show-me/skills/show-me/agents/openai.yaml"
+            policy = b"policy:\n  allow_implicit_invocation: false\n"
+            write_bytes(root / policy_path, policy)
+            before = snapshot_entry(root)
+            base = REPO_ROOT / "dot_config/claude-code-chezmoi/marketplace-base.json"
             view = home / ".config/claude-code-chezmoi/generated-skills/humanlayer"
+            # Start with the previous selection to cover removal from an owned
+            # publication, not only a fresh installation.
+            previous = {key: value for key, value in declaration.items() if key != "exclude"}
+            publisher.publish(home, {"humanlayer": previous}, base)
+            self.assertEqual((view / policy_path).read_bytes(), policy)
+            previous_manifest = (view / ".claude-plugin/plugin.json").read_bytes()
+
+            publisher.publish(home, {"humanlayer": declaration}, base)
+
             self.assertEqual({path.name for path in (home / ".agents/skills").iterdir()}, {"show-me"})
             self.assertEqual((view / "LICENSE").read_bytes(), b"license\n")
             self.assertEqual((view / "plugins/show-me/skills/show-me/references/detail.md").read_bytes(), b"support\n")
+            skill_path = "plugins/show-me/skills/show-me/SKILL.md"
+            self.assertEqual((view / skill_path).read_bytes(), (root / skill_path).read_bytes())
+            self.assertFalse((view / policy_path).exists())
+            self.assertFalse((home / ".agents/skills/show-me/agents/openai.yaml").exists())
+            self.assertNotEqual((view / ".claude-plugin/plugin.json").read_bytes(), previous_manifest)
+            self.assertEqual(snapshot_entry(root), before)
+            self.assertEqual(publisher.publish(home, {"humanlayer": declaration}, base).actions, [])
             self.assertFalse((view / "plugins/rpi").exists())
             self.assertFalse((view / "plugins/other").exists())
 

@@ -141,9 +141,9 @@ Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
   and the separate HerdR integration retain their owners. Source filters are
   opt-in: omitted include selects upstream-declared/conventional skills, an
   explicit include stays nonempty, and exclude wins. Matt follows its upstream
-  manifest; HumanLayer intentionally remains show-me-only. The publisher never
-  adopts foreign outputs. See README's shared-skills section for selection,
-  recovery, and deployment.
+  manifest; HumanLayer remains show-me-only, excluding its Codex invocation
+  policy to match nixfiles. The publisher never adopts foreign outputs. See
+  README's shared-skills section for selection, recovery, and deployment.
 - `.chezmoiscripts/run_after_shared-agent-skills.ps1.tmpl` invokes the publisher
   with Scoop's managed Python 3.11+ after apply. Changes to skill selection,
   publication, acquisition, or lifecycle must run `tests/test_agent_skills.py`,

@@ -85,8 +85,10 @@ Matt Pocock intentionally has **no filters**: the pinned root plugin manifest
 defines the selection; unlisted skills stay out. New upstream declarations become
 available on a reviewed pin refresh without a separate allowlist edit. HumanLayer
 intentionally retains `include = ["plugins/show-me/skills/show-me", "LICENSE"]`:
-this filtered source remains show-me-only, not the whole marketplace. Review
-intentionally filtered sources separately when widening their scope.
+this filtered source remains show-me-only, not the whole marketplace. Its
+`agents/openai.yaml` is excluded to match nixfiles' omission of the Codex
+`allow_implicit_invocation: false` policy; the upstream snapshot stays unchanged.
+Review intentionally filtered sources separately when widening their scope.
 
 Each configured source keeps its existing generated plugin name and output path.
 An unfiltered marketplace source bundles declared plugins under their original

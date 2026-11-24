@@ -3,6 +3,7 @@
 
 [agent_skills.sources.humanlayer]
 directory = ".local/share/llm-agents/sources/humanlayer"
+exclude = ["plugins/show-me/skills/show-me/agents/openai.yaml"]
 include = ["plugins/show-me/skills/show-me", "LICENSE"]
 
 [agent_skills.sources.mattpocock-skills]
