@@ -1,0 +1,15 @@
+{{- $pin := .external_resources.pins.catppuccin_herdr_app -}}
+{{- range $flavor := list "latte" "frappe" "macchiato" "mocha" }}
+["catppuccin-{{ $flavor }}.json"]
+    type = "archive-file"
+    url = "{{ $pin.url }}"
+    checksum.sha256 = "{{ $pin.sha256 }}"
+    stripComponents = 1
+    path = "themes/catppuccin-{{ $flavor }}.json"
+{{ end }}
+["LICENSE-catppuccin.txt"]
+    type = "archive-file"
+    url = "{{ $pin.url }}"
+    checksum.sha256 = "{{ $pin.sha256 }}"
+    stripComponents = 1
+    path = "LICENSE"

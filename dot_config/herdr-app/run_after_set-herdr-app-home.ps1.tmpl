@@ -1,0 +1,7 @@
+{{ if eq .chezmoi.os "windows" -}}
+# Scoop's env_set can restore its own path on upgrade, even if the dotfiles did not change.
+$appHome = '{{ .chezmoi.homeDir | replace "\\" "/" | replace "'" "''" }}/.config/herdr-app'
+if ([Environment]::GetEnvironmentVariable('HERDR_APP_HOME', 'User') -ne $appHome) {
+    [Environment]::SetEnvironmentVariable('HERDR_APP_HOME', $appHome, 'User')
+}
+{{ end -}}

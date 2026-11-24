@@ -1,4 +1,38 @@
 {
+  "common": {
+    "dot_config/herdr-app/themes/.chezmoiexternal.toml": {
+      "catppuccin-latte.json": {
+        "type": "archive-file",
+        "stripComponents": 1,
+        "path": "themes/catppuccin-latte.json",
+        "pin": "catppuccin_herdr_app"
+      },
+      "catppuccin-frappe.json": {
+        "type": "archive-file",
+        "stripComponents": 1,
+        "path": "themes/catppuccin-frappe.json",
+        "pin": "catppuccin_herdr_app"
+      },
+      "catppuccin-macchiato.json": {
+        "type": "archive-file",
+        "stripComponents": 1,
+        "path": "themes/catppuccin-macchiato.json",
+        "pin": "catppuccin_herdr_app"
+      },
+      "catppuccin-mocha.json": {
+        "type": "archive-file",
+        "stripComponents": 1,
+        "path": "themes/catppuccin-mocha.json",
+        "pin": "catppuccin_herdr_app"
+      },
+      "LICENSE-catppuccin.txt": {
+        "type": "archive-file",
+        "stripComponents": 1,
+        "path": "LICENSE",
+        "pin": "catppuccin_herdr_app"
+      }
+    }
+  },
   "by_theme": {
     "catppuccin-latte": {
       "AppData/Local/glow/Config/.chezmoiexternal.toml": {

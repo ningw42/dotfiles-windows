@@ -101,6 +101,15 @@ sha256 = "0ed70dd1ce65628dce47825d5b64329fee12200b2a6eb4c71c0639e0d914e70c"
 url = "https://raw.githubusercontent.com/catppuccin/glamour/main/themes/catppuccin-mocha.json"
 sha256 = "e11c510590cedaf260f331d1c45a75ef6353f3a07ca1317b7cc01d0745f9c396"
 
+[external_resources.pins.catppuccin_herdr_app]
+url = "https://github.com/edsvo/herdr-catppuccin/archive/refs/tags/v1.0.0.tar.gz"
+sha256 = "36c3462b336fb8cf5a18b6bf18604a41a9753eaa0fcefce7ceaf7e3febba7e9b"
+
+[external_resources.pins.catppuccin_herdr_app.update]
+type = "github_release"
+repository = "edsvo/herdr-catppuccin"
+tag = "v1.0.0"
+
 [external_resources.pins.catppuccin_lazygit_frappe_blue]
 url = "https://raw.githubusercontent.com/catppuccin/lazygit/main/themes-mergable/frappe/blue.yml"
 sha256 = "bc905f7e570f6b26773251e2caf83bbaf4ba50fc936e2b5c383d56cb02d35ada"

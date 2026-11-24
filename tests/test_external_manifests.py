@@ -150,7 +150,7 @@ def render_manifests(manifests, data, *, colorscheme, os_name, arch):
 
 def expected_manifests(baseline, pins, colorscheme, os_name, arch):
     """Expand reviewed layout expectations with current pin values."""
-    expected = copy.deepcopy(baseline["by_theme"][colorscheme])
+    expected = copy.deepcopy(baseline["common"] | baseline["by_theme"][colorscheme])
     expected[PI_MANIFEST] = copy.deepcopy(baseline["pi_by_platform"][f"{os_name}/{arch}"])
     for declarations in expected.values():
         for declaration in declarations.values():

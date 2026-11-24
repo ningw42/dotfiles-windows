@@ -47,6 +47,49 @@ Five colorschemes are available: Catppuccin Latte, Frappé, Macchiato, and Mocha
 plus Gruvbox Dark. Templates and checksum-pinned chezmoi externals keep themes in
 sync across applications.
 
+## HerdR desktop app
+
+The desktop app uses `~/.config/herdr-app`, independently of the Scoop install.
+Edit [`dot_config/herdr-app/`](dot_config/herdr-app/) for `settings.json`,
+[`keys.json.tmpl`](dot_config/herdr-app/keys.json.tmpl), and the four Catppuccin
+themes. The template labels TUI additions, remapped shortcuts, and desktop
+defaults; HerdR reads the resulting comment-free `keys.json`. HerdR owns the other files it
+creates there, including layouts, mods, and window state.
+
+**Switching from Scoop's default:** Quit the desktop app first. To keep personal
+layouts, mods, or other UI state, copy the files you want from
+`~/scoop/persist/herdr-app/data/` to `~/.config/herdr-app/` before the first
+apply. Skip `herdr-app.sock`. Chezmoi does not migrate or delete the old home.
+
+`chezmoi apply ~/.config/herdr-app` installs the files and sets the Windows
+user variable `HERDR_APP_HOME` for both Start-menu and shell launches. Restart
+your terminal after applying; existing processes keep their old environment.
+If a Scoop update restores its own path, rerun the same apply command.
+
+The [community port](https://github.com/edsvo/herdr-catppuccin) is pinned as
+`catppuccin_herdr_app` in `.chezmoidata.toml`. `update_externals.py` refreshes
+all four flavors together.
+The main layout defaults to dark Mocha. Switch the appearance to Light for
+Latte, or use the theme picker for Frappé or Macchiato. Layout-specific theme
+choices take precedence over the defaults in `settings.json`.
+
+The shortcuts mirror the [TUI config](AppData/Roaming/herdr/config.toml):
+
+| Action | Desktop shortcut |
+| :--- | :--- |
+| Open the go-to picker | `Ctrl+B`, then `G` |
+| New tab | `Ctrl+B`, then `C`, or `Alt+N` |
+| Previous / next tab | `Ctrl+B`, then `P` / `N`, or `Alt+Left` / `Right` |
+| Previous / next space (TUI workspace) | `Alt+Up` / `Down` |
+| Previous / next agent | `Alt+Shift+Up` / `Down` |
+| Run lazygit in the focused pane's directory | `Ctrl+B`, then `Alt+G` |
+
+Lazygit opens in a right split rather than the TUI's 80% popup; quitting it
+closes the split. `Alt+H/J/K/L` still moves between panes. The app treats
+`keys.json` as a complete keymap, so compare it with the [upstream Windows
+defaults](https://github.com/herdrdev/herdr-app/blob/master/defaults/keys.json)
+when upgrading rather than assuming new shortcuts will be merged.
+
 ## Shared agent skills
 
 Chezmoi acquires immutable upstream snapshots, while `manage_skills.py` publishes
