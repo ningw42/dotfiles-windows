@@ -467,15 +467,15 @@ class CredentialApplyTests(unittest.TestCase):
         bin_directory = self.root / "pwsh ' ‘ ’ executable"
         bin_directory.mkdir()
         # Hard-linking only the executable is not enough for PowerShell's runtime;
-        # use a directory junction to its existing installation instead.
+        # use a directory junction to its existing installation instead. PWSH may
+        # be a WindowsApps execution alias, so obtain the runtime from $PSHOME.
         runtime = bin_directory / "runtime"
         command = (
-            "$p=$args[0]; $t=$args[1]; "
-            "New-Item -ItemType Junction -Path $p -Target $t | Out-Null"
+            "New-Item -ItemType Junction -Path $args[0] -Target $PSHOME | Out-Null"
         )
         create = self.root / "create-junction.ps1"
         create.write_text(command, encoding="utf-8")
-        result = subprocess.run([PWSH, "-NoProfile", "-File", str(create), str(runtime), str(Path(PWSH).parent)],
+        result = subprocess.run([PWSH, "-NoProfile", "-File", str(create), str(runtime)],
                                 capture_output=True, text=True, encoding="utf-8", timeout=20)
         if result.returncode:
             self.skipTest("Directory junction unavailable for executable-path test")
