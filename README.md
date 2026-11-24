@@ -133,7 +133,8 @@ this filtered source remains show-me-only, not the whole marketplace. Its
 `allow_implicit_invocation: false` policy; the upstream snapshot stays unchanged.
 Review intentionally filtered sources separately when widening their scope.
 
-HerdR Core is separate from the HerdR TUI. `configuration.dsc.yaml` installs
+The HerdR TUI and its agent lifecycle hooks remain installed, but its legacy
+`herdr` skill is no longer published. `configuration.dsc.yaml` separately installs
 `main/herdr-core` through Scoop, exposing `hc`. After each apply,
 `run_after_herdr-core-skill.ps1.tmpl` captures the installed executable's
 `--skill` manual, adds discovery metadata and the outside-session consent gate,
@@ -159,7 +160,7 @@ The publisher owns only outputs attested by
 - their absolute links under `~/.agents/skills/`; and
 - the generated `.claude-plugin/marketplace.json`.
 
-Raw snapshots, repo-authored skills, HerdR's generated skill, `plugins/user-mcps`,
+Raw snapshots, repo-authored skills, HerdR Core's generated skill, `plugins/user-mcps`,
 and Claude's plugin registry/cache keep their existing owners. A lock serializes
 writers, and foreign or modified outputs are refused rather than adopted. Plugin
 versions are derived from selected bytes, executable bits, normalized metadata,

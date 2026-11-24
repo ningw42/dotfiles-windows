@@ -20,8 +20,7 @@
 # HerdR version: {{ output $herdrPath "--version" | trim }}
 param(
     [string]$HerdrPath = '{{ $herdrPath }}',
-    [string]$HomeRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}',
-    [string]$SkillOutputPath = ''
+    [string]$HomeRoot = '{{ .chezmoi.homeDir | replace "\\" "/" }}'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -39,9 +38,6 @@ $expectedClaudeSessionStartMatcher = '^(startup|resume|clear|compact|fork)$'
 
 if (-not (Test-Path -LiteralPath $HerdrPath -PathType Leaf)) {
     throw "HerdR was not found at '$HerdrPath'. Run 'winget configure -f configuration.dsc.yaml' first."
-}
-if ([string]::IsNullOrWhiteSpace($SkillOutputPath)) {
-    $SkillOutputPath = Join-Path $HomeRoot '.local/share/herdr/skills/herdr/SKILL.md'
 }
 
 function Invoke-Herdr(
@@ -394,31 +390,6 @@ function Set-HerdrCopilotHookConfig([string]$Path, [string]$HookPath) {
     Set-TextFile -Path $Path -Content $content
 }
 
-function Set-HerdrSkillLink([string]$Path, [string]$Target) {
-    $normalizedTarget = [IO.Path]::GetFullPath($Target)
-    $existing = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
-    if ($null -ne $existing) {
-        $storedTargets = @(if ($null -eq $existing.LinkType) { @() } else { @($existing.LinkTarget) })
-        $owned = (
-            $existing.LinkType -eq 'SymbolicLink' -and
-            $existing.PSIsContainer -and
-            $storedTargets.Count -eq 1 -and
-            [IO.Path]::IsPathFullyQualified([string]$storedTargets[0]) -and
-            [IO.Path]::GetFullPath([string]$storedTargets[0]).Equals(
-                $normalizedTarget,
-                [StringComparison]::OrdinalIgnoreCase
-            )
-        )
-        if (-not $owned) {
-            throw "Refusing non-owned HerdR skill collision at '$Path'."
-        }
-        return
-    }
-
-    New-Item -ItemType Directory -Path (Split-Path -Parent $Path) -Force | Out-Null
-    New-Item -ItemType SymbolicLink -Path $Path -Target $normalizedTarget | Out-Null
-}
-
 $work = Join-Path ([IO.Path]::GetTempPath()) ("chezmoi-herdr-{0}" -f [Guid]::NewGuid().ToString('N'))
 try {
     $profile = Join-Path $work 'home'
@@ -530,25 +501,6 @@ try {
     Set-HerdrCopilotHookConfig `
         -Path (Join-Path $HomeRoot '.copilot/hooks/herdr.json') `
         -HookPath (Join-Path $HomeRoot '.copilot/hooks/herdr-agent-state.ps1')
-
-    $skill = Invoke-Herdr -Arguments @('--skill')
-    if ([string]::IsNullOrWhiteSpace($skill) -or $skill -notmatch '(?m)^name:\s*herdr\s*$') {
-        throw 'HerdR emitted an invalid or empty skill.'
-    }
-    Set-TextFile -Path $SkillOutputPath -Content $skill
-
-    # Pi discovers the cross-agent standard path; explicit links for Claude,
-    # Codex, Copilot, and OpenCode mirror nixfiles' per-program skill
-    # declarations and avoid relying on incidental cross-agent discovery.
-    foreach ($skillLink in @(
-        (Join-Path $HomeRoot '.agents/skills/herdr'),
-        (Join-Path $HomeRoot '.claude/skills/herdr'),
-        (Join-Path $HomeRoot '.codex/skills/herdr'),
-        (Join-Path $HomeRoot '.copilot/skills/herdr'),
-        (Join-Path $HomeRoot '.config/opencode/skills/herdr')
-    )) {
-        Set-HerdrSkillLink -Path $skillLink -Target (Split-Path -Parent $SkillOutputPath)
-    }
 }
 finally {
     if (Test-Path -LiteralPath $work) {

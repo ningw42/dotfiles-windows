@@ -11,7 +11,7 @@ Run this in the reviewer's session after review comments exist. The reviewer own
 ## 1. Establish the ledger
 
 1. Give every actionable comment a stable ID, source or review axis, code location, concern, and checkable acceptance criterion. If none exist, report the review closed and stop.
-2. Use the multiplexer the human names; otherwise use the one that unambiguously owns the reviewer's current session. An installed CLI alone is not evidence of an active session. If the choice is unclear, ask the human before contacting anyone. Load the matching skill (`herdr`, `herdr-core`, or `rex`) and follow its session and permission rules for discovery, messaging, and reading replies.
+2. Use the multiplexer the human names; otherwise use the one that unambiguously owns the reviewer's current session. An installed CLI alone is not evidence of an active session. Load the matching skill (`herdr-core` or `rex`) and follow its session and permission rules for discovery, messaging, and reading replies. If the choice is unclear or neither skill matches, ask the human before contacting anyone.
 3. Invocation authorizes communication with the **existing implementer** for this review. Verify the agent's identity and repository or worktree before sending the ledger. If you cannot identify the intended implementer, ask the human to identify it rather than starting a replacement.
 
 Checkpoint: every actionable comment is recorded, and the channel and implementer are identified.

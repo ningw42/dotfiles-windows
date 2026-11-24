@@ -2193,7 +2193,7 @@ class LegacyAndOtherOwnersContractTests(PublisherCase):
         self.assertEqual(normalized_link_target(legacy_link), os.path.normcase(str(new_target)))
         self.assertTrue(legacy_target.is_dir(), "publisher must not delete legacy backing data")
 
-    def test_repo_authored_skill_copies_and_herdr_entry_survive_publish_update_and_removal(self):
+    def test_repo_authored_skills_and_herdr_core_survive_publish_update_and_removal(self):
         source_skills = REPO_ROOT / "dot_agents" / "skills"
         actual_names = {path.name for path in source_skills.iterdir() if path.is_dir()}
         self.assertTrue(actual_names, "no repo-authored skills found")
@@ -2205,9 +2205,9 @@ class LegacyAndOtherOwnersContractTests(PublisherCase):
             shutil.copytree(source_skills / name, destination)
             owner_snapshots[name] = snapshot_entry(destination)
 
-        herdr_target = self.home / ".local/share/herdr/skills/herdr"
-        write_skill(herdr_target, ".", "herdr")
-        herdr_link = shared / "herdr"
+        herdr_target = self.home / ".local/share/herdr-core/skills/herdr-core"
+        write_skill(herdr_target, ".", "herdr-core")
+        herdr_link = shared / "herdr-core"
         os.symlink(str(herdr_target), str(herdr_link), target_is_directory=True)
         herdr_snapshot = snapshot_entry(herdr_link)
         herdr_target_snapshot = snapshot_entry(herdr_target)
