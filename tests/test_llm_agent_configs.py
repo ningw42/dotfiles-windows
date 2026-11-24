@@ -72,7 +72,7 @@ class CodexProviderRoutingTests(unittest.TestCase):
     def test_registry_preserves_selected_endpoint(self):
         config = self.render_config()
         self.assertEqual(config["model_provider"], "copilotd")
-        self.assertEqual(config["model"], "gpt-6-astra")
+        self.assertEqual(config["model"], "gpt-6.2-astra")
         provider = config["model_providers"]["copilotd"]
         self.assertEqual(provider["base_url"], "https://copilotd.ningw.net/openai/v1")
         self.assertEqual(provider["wire_api"], "responses")
@@ -419,7 +419,7 @@ class AgentDefaultTests(unittest.TestCase):
             ],
         )
 
-    def test_all_supported_agent_defaults_match_nixfiles(self):
+    def test_all_supported_agent_defaults_follow_launch_policy(self):
         opencode = load_opencode_config()
         pi = load_json("dot_pi/agent/settings.json")
         copilot = json.loads(
@@ -440,9 +440,9 @@ class AgentDefaultTests(unittest.TestCase):
         )
         self.assertEqual(pi["defaultModel"], "gpt-6.2-astra")
         self.assertEqual(pi["defaultThinkingLevel"], "xhigh")
-        self.assertEqual(copilot["model"], "gpt-6-astra")
+        self.assertEqual(copilot["model"], "gpt-6.2-astra")
         self.assertEqual(copilot["effortLevel"], "xhigh")
-        self.assertRegex(codex, r'(?m)^model = "gpt-6-astra"$')
+        self.assertRegex(codex, r'(?m)^model = "gpt-6.2-astra"$')
         self.assertRegex(codex, r'(?m)^model_reasoning_effort = "xhigh"$')
         self.assertIn('claude --model "claude-opus-5-5[1m]"', profile)
 

@@ -37,7 +37,7 @@ class RendererTests(unittest.TestCase):
         self.assertEqual(set(self.data), {"providers", "models", "harnesses"})
         self.assertEqual(set(self.data["providers"]), {"copilotd", "magpie", "deepseek"})
         self.assertEqual(sum(len(p["endpoints"]) for p in self.data["providers"].values()), 7)
-        self.assertEqual(len(self.data["models"]), 12)
+        self.assertEqual(len(self.data["models"]), 11)
         self.assertNotEqual(id(self.data["harnesses"]["pi"]["bindings"]),
                             id(self.data["harnesses"]["opencode"]["bindings"]))
 
@@ -81,7 +81,7 @@ class RendererTests(unittest.TestCase):
 
     def test_codex_auth_and_current_identity(self):
         self.assertEqual(self.render("codex"), {
-            "model": "gpt-6-astra", "model_provider": "copilotd", "model_reasoning_effort": "xhigh",
+            "model": "gpt-6.2-astra", "model_provider": "copilotd", "model_reasoning_effort": "xhigh",
             "model_providers": {"copilotd": {
                 "name": "copilotd", "base_url": "https://copilotd.ningw.net/openai/v1",
                 "wire_api": "responses", "supports_websockets": True,
@@ -113,7 +113,7 @@ class RendererTests(unittest.TestCase):
         # OpenCode still selects the provider.
         self.data["harnesses"]["pi"]["bindings"].pop()
         codex = self.data["harnesses"]["codex"]
-        codex["bindings"] = [{"endpoint": "magpie.responses", "ids": ["gpt-6-astra"]}]
+        codex["bindings"] = [{"endpoint": "magpie.responses", "ids": ["gpt-6.2-astra"]}]
         codex["default"]["endpoint"] = "magpie.responses"
         self.assertEqual(set(self.render("credentials")["providers"]), {"magpie"})
 
@@ -151,8 +151,8 @@ class RendererTests(unittest.TestCase):
         endpoint["base_url"] = "https://alternate.example/v1"
         self.data["providers"]["copilotd"]["endpoints"]["alternate"] = endpoint
         codex = self.data["harnesses"]["codex"]
-        codex["bindings"].append({"endpoint": "copilotd.alternate", "ids": ["gpt-6-astra"],
-                                  "wire_ids": {"gpt-6-astra": "group/astra"}})
+        codex["bindings"].append({"endpoint": "copilotd.alternate", "ids": ["gpt-6.2-astra"],
+                                  "wire_ids": {"gpt-6.2-astra": "group/astra"}})
         codex["default"]["endpoint"] = "copilotd.alternate"
         output = self.render("codex")
         self.assertEqual(set(output["model_providers"]), {"copilotd", "copilotd-alternate"})

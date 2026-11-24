@@ -914,6 +914,8 @@ def _run_tests():
             self.assertEqual(f("gpt-6-luna"), "GPT-6 Luna")
             self.assertEqual(f("gpt-6.1-sol"), "GPT-6.1 Sol")
             self.assertEqual(f("gpt-6-astra"), "GPT-6 Astra")
+            self.assertEqual(f("gpt-6.2-sol"), "GPT-6.2 Sol")
+            self.assertEqual(f("gpt-6.2-astra"), "GPT-6.2 Astra")
 
     class ClaudeAccessorTests(unittest.TestCase):
         def setUp(self):

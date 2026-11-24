@@ -153,28 +153,6 @@ input = 16
 input_tokens_above = 272000
 output = 60
 
-# Retained only for Codex's independent GPT-6 Astra selection.
-[llm.models."gpt-6-astra"]
-name = "GPT-6 Astra"
-context_window = 1050000
-max_output = 128000
-thinking = true
-vision = true
-effort = { levels = ["low","medium","high","xhigh","max"], default = "xhigh" }
-
-[llm.models."gpt-6-astra".cost]
-cache_read = 1
-cache_write = 12.5
-input = 10
-output = 50
-
-[[llm.models."gpt-6-astra".cost.tiers]]
-cache_read = 2
-cache_write = 25
-input = 20
-input_tokens_above = 272000
-output = 75
-
 [llm.models."deepseek-flash"]
 name = "DeepSeek Flash"
 context_window = 1000000

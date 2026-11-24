@@ -3,13 +3,13 @@
 # Optional wire_ids aliases map selected catalog IDs to their request IDs.
 # Optional runtime_id preserves a harness identity independently of the route.
 [llm.harnesses.codex]
-default = { endpoint = "copilotd.responses", model = "gpt-6-astra", effort = "xhigh" }
+default = { endpoint = "copilotd.responses", model = "gpt-6.2-astra", effort = "xhigh" }
 stream_idle_timeout_ms = 600000
 
 [[llm.harnesses.codex.bindings]]
 endpoint = "copilotd.responses"
 runtime_id = "copilotd"
-ids = ["gpt-6-astra"]
+ids = ["gpt-6.2-astra"]
 
 [llm.harnesses.pi]
 default = { endpoint = "magpie.responses", model = "gpt-6.2-astra", effort = "xhigh" }
