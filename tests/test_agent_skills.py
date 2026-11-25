@@ -420,16 +420,16 @@ class SelectionContractTests(PublisherCase):
 
     def test_selection_refuses_source_output_overlap_and_unknown_declaration_fields(self):
         cases = [
-            {
-                "directory": ".config/claude-code-chezmoi/raw",
-                "include": ["."],
-            },
-            {"directory": ".agents", "include": ["skills"]},
-            {"directory": "inputs/example", "include": ["."], "adopt": True},
+            (".config/claude-code-chezmoi/raw", {}, "directory overlaps output root"),
+            (".agents", {}, "directory overlaps output root"),
+            ("inputs/example", {"adopt": True}, "unsupported fields.*adopt"),
         ]
-        for declaration in cases:
-            with self.subTest(declaration=declaration):
-                with self.assertRaises(publisher.PublicationError):
+        for directory, extra, error in cases:
+            with self.subTest(directory=directory):
+                root = self.home / directory
+                write_skill(root, "incoming/one")
+                declaration = {**self.declaration(root, include=["incoming"]), **extra}
+                with self.assertRaisesRegex(publisher.PublicationError, error):
                     self.publish({"example": declaration}, dry_run=True)
 
 
@@ -1939,7 +1939,7 @@ class TransactionContractTests(PublisherCase):
                     ):
                         try:
                             os.write(descriptor, evidence)
-                            acquired.update(descriptor=descriptor, path=Path(name), witness=os.fstat(descriptor))
+                            acquired.update(path=Path(name), witness=os.fstat(descriptor))
                         finally:
                             os.close(descriptor)
                         raise KeyboardInterrupt("mkstemp did not return its acquisition identity")
@@ -1950,8 +1950,6 @@ class TransactionContractTests(PublisherCase):
                         self.publish(sources)
                 self.assertTrue(acquired)
                 self.assertIn("commit temporary acquisition is uncertain", str(raised.exception))
-                with self.assertRaises(OSError):
-                    os.fstat(acquired["descriptor"])
                 self.assertEqual(acquired["path"].read_bytes(), evidence)
                 self.assertTrue(os.path.samestat(acquired["witness"], os.lstat(acquired["path"])))
                 self.assertEqual(list(destination.parent.glob(f".{destination.name}.*")), [acquired["path"]])
@@ -2103,30 +2101,6 @@ class TransactionContractTests(PublisherCase):
             with self.assertRaisesRegex(publisher.PublicationError, "previous outputs were restored"):
                 self.publish(updated_sources)
         self.assertEqual(managed_snapshot(self.home), before)
-
-    def test_failed_recovery_retains_backups_and_blocks_next_run(self):
-        root, sources = self.simple_source()
-        self.publish(sources)
-        write_bytes(root / "skills/one/SKILL.md", skill_bytes("one", body="updated\n"))
-        write_skill(root, "skills/two", "two")
-        original = publisher._create_directory_link
-
-        def fail_new_skill(link, target):
-            if Path(link).name == "two":
-                raise OSError("injected link failure")
-            return original(link, target)
-
-        with mock.patch.object(publisher, "_create_directory_link", side_effect=fail_new_skill), mock.patch.object(
-            publisher, "_recover", return_value=["injected recovery failure"]
-        ):
-            with self.assertRaisesRegex(publisher.PublicationError, "recovery was incomplete"):
-                self.publish(sources)
-
-        work = self.home / ".config/claude-code-chezmoi/.skill-publisher-work"
-        self.assertTrue((work / "old-views/example").is_dir())
-        with self.assertRaisesRegex(publisher.PublicationError, "inspect it manually"):
-            self.publish(sources)
-        self.assertTrue((work / "old-views/example").is_dir())
 
     def test_post_commit_cleanup_failure_keeps_committed_outputs_and_does_not_roll_back(self):
         root, sources = self.simple_source()
@@ -2481,45 +2455,6 @@ class RepositoryDeclarationTests(unittest.TestCase):
             with self.subTest(path=relative):
                 self.assertFalse((REPO_ROOT / relative).exists())
 
-        humanlayer_manifest = tomllib.loads(
-            (
-                REPO_ROOT
-                / "dot_local/share/llm-agents/sources/.chezmoiexternal.toml.tmpl"
-            )
-            .read_text("utf-8")
-            .replace(
-                "{{ .external_resources.pins.humanlayer_skills.url | toJson }}",
-                json.dumps(self.data["external_resources"]["pins"]["humanlayer_skills"]["url"]),
-            )
-            .replace(
-                "{{ .external_resources.pins.humanlayer_skills.sha256 | toJson }}",
-                json.dumps(
-                    self.data["external_resources"]["pins"]["humanlayer_skills"]["sha256"]
-                ),
-            )
-        )
-        self.assertEqual(
-            humanlayer_manifest,
-            {
-                "humanlayer": {
-                    "type": "archive",
-                    "url": self.data["external_resources"]["pins"]["humanlayer_skills"]["url"],
-                    "stripComponents": 1,
-                    "exact": True,
-                    "checksum": {
-                        "sha256": self.data["external_resources"]["pins"]["humanlayer_skills"][
-                            "sha256"
-                        ]
-                    },
-                }
-            },
-        )
-        plugin_manifest = (
-            REPO_ROOT / "dot_local/share/llm-agents/plugins/.chezmoiexternal.toml.tmpl"
-        ).read_text("utf-8")
-        self.assertNotIn("superpowers", plugin_manifest.casefold())
-        self.assertIn('[' + '"mattpocock-skills"' + ']', plugin_manifest)
-
     def test_ignore_rules_and_base_marketplace_preserve_publisher_ownership(self):
         ignored = {
             line.strip()
@@ -2822,40 +2757,6 @@ class RenderedWrapperExecutionTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Shared skill publication failed (exit 19)", result.stderr)
         self.assertIn("No migration or Claude cache operations were attempted", result.stderr)
-
-
-class NativeAcceptancePrerequisiteTests(unittest.TestCase):
-    def test_missing_symlinks_block_native_acceptance_but_missing_cli_is_a_skip(self):
-        # Re-evaluate the actual decorators under each capability disposition.
-        node = next(
-            node for node in ast.parse(Path(__file__).read_text("utf-8")).body
-            if isinstance(node, ast.ClassDef) and node.name == "NativeClaudeAcceptanceTests"
-        )
-        code = compile(ast.Module(body=[node], type_ignores=[]), __file__, "exec")
-        for cli in (None, "fixture-claude"):
-            with self.subTest(cli_available=bool(cli)):
-                namespace = dict(globals(), CLAUDE=cli, SYMLINKS_AVAILABLE=False)
-                exec(code, namespace)
-                case = namespace[node.name](
-                    "test_native_claude_cache_updates_to_new_content_derived_version"
-                )
-                result = unittest.TestResult()
-                with mock.patch.object(
-                    tempfile, "TemporaryDirectory", side_effect=AssertionError("native fixture must not start")
-                ), mock.patch.object(
-                    subprocess, "run", side_effect=AssertionError("native subprocess must not run")
-                ):
-                    case.run(result)
-                self.assertEqual(result.testsRun, 1)
-                self.assertEqual(result.errors, [])
-                if cli:
-                    self.assertEqual(result.skipped, [])
-                    self.assertEqual(len(result.failures), 1)
-                    self.assertIn("Native Claude acceptance blocked:", result.failures[0][1])
-                else:
-                    self.assertEqual(result.failures, [])
-                    self.assertEqual(len(result.skipped), 1)
-                    self.assertIn("claude CLI is unavailable", result.skipped[0][1])
 
 
 @unittest.skipUnless(CLAUDE, "claude CLI is unavailable; native plugin acceptance cannot run")

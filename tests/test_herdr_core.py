@@ -78,18 +78,16 @@ class HerdrCoreProvisioningTests(unittest.TestCase):
         # Substitute only the external Scoop command. All resource logic and
         # managed path checks execute unchanged against an isolated profile.
         scripts["SetScript"] = scripts["SetScript"].replace(command, "& $ScoopSpy")
-        self.scripts = {}
-        for action, body in scripts.items():
-            path = self.root / f"{action}.ps1"
-            path.write_text(
-                "param([string]$ScoopSpy)\n$ErrorActionPreference = 'Stop'\n"
-                + "$result = & {\n" + body + "}\n"
-                + "$result | ConvertTo-Json -Compress\n",
-                encoding="utf-8",
-            )
-            self.scripts[action] = path
+        self.scripts = scripts
 
-    def run_action(self, action, **overrides):
+    def run_actions(self, *actions, **overrides):
+        # Each resource action runs in its own scope, in the same isolated host.
+        script = self.root / "scenario.ps1"
+        commands = ["param([string]$ScoopSpy)", "$ErrorActionPreference = 'Stop'"]
+        for action in actions:
+            output = "Out-Null" if action == "SetScript" else "ConvertTo-Json -Compress"
+            commands.append(f"& {{\n{self.scripts[action]}\n}} | {output}")
+        script.write_text("\n".join(commands), encoding="utf-8")
         env = dict(os.environ)
         env.update({
             "USERPROFILE": str(self.home), "HOME": str(self.home),
@@ -97,36 +95,28 @@ class HerdrCoreProvisioningTests(unittest.TestCase):
         })
         return subprocess.run(
             [POWERSHELL, "-NoLogo", "-NoProfile", "-NonInteractive", "-File",
-             str(self.scripts[action]), "-ScoopSpy", str(self.spy)],
+             str(script), "-ScoopSpy", str(self.spy)],
             cwd=self.root, env=env, capture_output=True, text=True, timeout=30,
         )
 
-    def assert_action_value(self, action, value):
-        result = self.run_action(action)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(json.loads(result.stdout), value)
-
     def test_install_and_repeat_are_idempotent(self):
         self.executable.parent.mkdir(parents=True)
-        self.assert_action_value("TestScript", False)
-        self.assert_action_value("GetScript", {"Result": "NotInstalled"})
-        result = self.run_action("SetScript")
+        result = self.run_actions("TestScript", "GetScript", "SetScript", "TestScript", "GetScript", "SetScript")
         self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual([json.loads(line) for line in result.stdout.splitlines()], [
+            False, {"Result": "NotInstalled"}, True, {"Result": "Installed"},
+        ])
         self.assertTrue(self.executable.is_file())
-        self.assert_action_value("TestScript", True)
-        self.assert_action_value("GetScript", {"Result": "Installed"})
-        result = self.run_action("SetScript")
-        self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.calls.read_text().splitlines(), ["install main/herdr-core"])
 
     def test_scoop_failure_is_reported(self):
-        result = self.run_action("SetScript", CORE_TEST_FAIL="1")
+        result = self.run_actions("SetScript", CORE_TEST_FAIL="1")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Failed to install HerdR Core via Scoop (exit 23)", result.stderr)
         self.assertFalse(self.executable.exists())
 
     def test_success_without_managed_executable_is_rejected(self):
-        result = self.run_action("SetScript", CORE_TEST_OMIT_EXE="1")
+        result = self.run_actions("SetScript", CORE_TEST_OMIT_EXE="1")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Scoop did not create the managed HerdR Core executable", result.stderr)
         self.assertFalse(self.executable.exists())

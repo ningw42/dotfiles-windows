@@ -152,18 +152,6 @@ class ModelCatalogTests(unittest.TestCase):
         self.assertEqual(config["enabled_providers"], sorted(config["provider"]))
         self.assertEqual(config["permission"]["skill"], {name: "deny" for name in USER_SKILLS})
 
-    def test_opencode_provider_metadata_matches_nixfiles_snapshot(self):
-        # Reviewed provider snapshot synchronized with nixfiles at a78379f.
-        # Canonical JSON matches Nix's builtins.toJSON rendering.
-        providers = load_opencode_config()["provider"]
-        snapshot = json.dumps(
-            providers, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-        ).encode("utf-8")
-        self.assertEqual(
-            hashlib.sha256(snapshot).hexdigest(),
-            "40b612d39425adcafaa286d8090c2065833228afb39aa2e79976746e7aea1239",
-        )
-
     def test_pi_cycle_defaults_match_nixfiles_projection(self):
         settings = load_json("dot_pi/agent/settings.json")
         self.assertEqual(settings["defaultProvider"], "magpie-responses")

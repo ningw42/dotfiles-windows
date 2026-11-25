@@ -18,7 +18,9 @@ class LlmTemplateTests(unittest.TestCase):
     def test_composed_opencode_output_matches_the_pre_refactor_fixture(self):
         expected = json.loads((REPO_ROOT / "tests/fixtures/llm/opencode.json").read_text("utf-8"))
         actual = json.loads(render_template("dot_config/opencode/opencode.json.tmpl"))
-        self.assertEqual(actual, expected)
+        # Compare JSON types too (Python dict equality treats true and 1 as equal).
+        self.assertEqual(json.dumps(actual, sort_keys=True, indent=2),
+                         json.dumps(expected, sort_keys=True, indent=2))
 
     def test_composed_pi_retains_non_inference_settings(self):
         base = json.loads((REPO_ROOT / ".chezmoitemplates/llm/pi-settings-base.json").read_text("utf-8"))
@@ -44,10 +46,10 @@ class LlmTemplateTests(unittest.TestCase):
             shutil.copyfile(REPO_ROOT / "dot_config/llm/credentials.ps1", helper)
             env = {k: v for k, v in os.environ.items()
                    if not k.upper().endswith(("_API_KEY", "_TOKEN"))}
-            value = "fixture-provider-credential"
+            credentials = {"copilotd": "fixture-copilotd-key", "magpie": "fixture-magpie-key"}
             published = subprocess.run(
                 [POWERSHELL, "-NoProfile", "-NonInteractive", "-File", str(helper), "-Action", "Publish"],
-                input=json.dumps({"schema_version": 1, "providers": {"copilotd": value, "magpie": value}}),
+                input=json.dumps({"schema_version": 1, "providers": credentials}),
                 capture_output=True, text=True, encoding="utf-8", env=env, timeout=20,
             )
             self.assertEqual(published.returncode, 0, published.stderr)
@@ -57,15 +59,17 @@ class LlmTemplateTests(unittest.TestCase):
             resolved = subprocess.run([auth["command"], *auth["args"]], capture_output=True,
                                       text=True, encoding="utf-8", env=env, timeout=20)
             self.assertEqual(resolved.returncode, 0, resolved.stderr)
-            self.assertEqual(resolved.stdout, value)
+            self.assertEqual(resolved.stdout, credentials["copilotd"])
             pi = json.loads(render_template("dot_pi/agent/models.json.tmpl", home=home.as_posix()))
             command = pi["providers"]["magpie-responses"]["apiKey"]
             self.assertTrue(command.startswith("!"))
             resolved = subprocess.run(command[1:], shell=True, capture_output=True,
                                       text=True, encoding="utf-8", env=env, timeout=20)
             self.assertEqual(resolved.returncode, 0, resolved.stderr)
-            self.assertEqual(resolved.stdout, value)
-            self.assertNotIn(value, (helper.parent / "store/snapshot.json").read_text("utf-8"))
+            self.assertEqual(resolved.stdout, credentials["magpie"])
+            snapshot = (helper.parent / "store/snapshot.json").read_text("utf-8")
+            for value in credentials.values():
+                self.assertNotIn(value, snapshot)
 
     @unittest.skipUnless(POWERSHELL, "PowerShell 7 is required")
     def test_apply_script_paths_with_all_apostrophe_styles_parse_as_data(self):
@@ -103,7 +107,7 @@ class LlmTemplateTests(unittest.TestCase):
                 destination = source / path
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(REPO_ROOT / path, destination)
-            (source / ".chezmoiignore").write_text("render_llm_config.py\n.config/llm/store/\n", encoding="utf-8")
+            shutil.copyfile(REPO_ROOT / ".chezmoiignore", source / ".chezmoiignore")
             config = root / "config.json"
             config.write_text(json.dumps({"data": {
                 "llm_python": sys.executable,

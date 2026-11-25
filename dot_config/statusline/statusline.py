@@ -898,9 +898,9 @@ def _run_tests():
             self.assertTrue(cut.endswith(RESET))
 
         def test_context_bar(self):
-            self.assertEqual(len(context_bar(0)), 10)
-            self.assertTrue(all(c in CTX_EMPTY for c in context_bar(0)))
-            self.assertTrue(all(c in CTX_FILLED for c in context_bar(100)))
+            for percent, (left, middle, right) in ((0, CTX_EMPTY), (100, CTX_FILLED)):
+                with self.subTest(percent=percent):
+                    self.assertEqual(context_bar(percent), left + middle * 8 + right)
 
         def test_format_model_label(self):
             f = CopilotStatusline.format_model_label
@@ -1220,12 +1220,14 @@ def _run_tests():
 
         def test_copilot_edge_guards(self):
             fake = fake_starship({"directory": "x"})
-            for columns in ("120", "40"):
-                os.environ["COLUMNS"] = columns
-                rows = CopilotStatusline(copilot_payload, starship=fake).render_rows()
-                for row in rows:
-                    self.assertTrue(row.startswith(RESET))
-                    self.assertTrue(row.endswith(RESET))
+            for columns, expected_rows in (("120", 1), ("40", 3)):
+                with self.subTest(columns=columns):
+                    os.environ["COLUMNS"] = columns
+                    rows = CopilotStatusline(copilot_payload, starship=fake).render_rows()
+                    self.assertEqual(len(rows), expected_rows)
+                    for row in rows:
+                        self.assertTrue(row.startswith(RESET))
+                        self.assertTrue(row.endswith(RESET))
 
     class CaptureTests(unittest.TestCase):
         def setUp(self):

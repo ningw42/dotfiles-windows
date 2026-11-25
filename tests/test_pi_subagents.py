@@ -101,7 +101,7 @@ class PiBuiltinAgentGenerationTests(unittest.TestCase):
             cwd=self.root,
         )
 
-    def test_all_managed_agents_pin_background_and_preserve_upstream_content(self):
+    def test_managed_agents_publish_idempotently_and_refresh_upstream_prompts(self):
         result = self.generate()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual({path.stem for path in self.output.glob("*.md")}, set(AGENT_MODELS))
@@ -117,22 +117,20 @@ class PiBuiltinAgentGenerationTests(unittest.TestCase):
                 mode = "append" if name == "general-purpose" else "replace"
                 self.assertIn(f"prompt_mode: {mode}\n", content)
 
-    def test_reapply_is_idempotent_and_refreshes_upstream_prompts(self):
-        first = self.generate()
-        self.assertEqual(first.returncode, 0, first.stderr)
-        paths = list(self.output.glob("*.md"))
+        paths = [self.output / f"{name}.md" for name in AGENT_MODELS]
         before = {path.name: (path.read_bytes(), path.stat().st_mtime_ns) for path in paths}
         second = self.generate()
         self.assertEqual(second.returncode, 0, second.stderr)
         self.assertEqual(
-            {path.name: (path.read_bytes(), path.stat().st_mtime_ns) for path in paths}, before
+            {path.name: (path.read_bytes(), path.stat().st_mtime_ns) for path in self.output.glob("*.md")},
+            before,
         )
 
         self.defaults.write_text(DEFAULT_AGENTS.replace("upstream prompt", "updated prompt"), encoding="utf-8")
         third = self.generate()
         self.assertEqual(third.returncode, 0, third.stderr)
         for path in paths:
-            self.assertIn("updated prompt", path.read_text(encoding="utf-8"))
+            self.assertIn(f"\n{path.stem} updated prompt\n", path.read_text(encoding="utf-8"))
 
     def customize_explore(self, fields):
         self.template, count = re.subn(

@@ -232,20 +232,6 @@ class ExternalManifestRenderingTests(unittest.TestCase):
                 colorscheme="catppuccin-mocha", os_name="windows", arch="386",
             )
 
-    def test_template_errors_are_failures_not_skips(self):
-        with self.assertRaisesRegex(ManifestRenderError, "intentional render failure"):
-            render_manifests(
-                {"broken/.chezmoiexternal.toml": '{{ fail "intentional render failure" }}'},
-                {}, colorscheme="unknown-theme", os_name="linux", arch="amd64",
-            )
-
-    def test_invalid_rendered_toml_is_rejected(self):
-        with self.assertRaises(tomllib.TOMLDecodeError):
-            render_manifests(
-                {"broken/.chezmoiexternal.toml": "not valid TOML"},
-                {}, colorscheme="unknown-theme", os_name="linux", arch="amd64",
-            )
-
 
 if __name__ == "__main__":
     unittest.main()

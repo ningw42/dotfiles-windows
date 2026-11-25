@@ -335,6 +335,9 @@ class CredentialStoreTests(unittest.TestCase):
                 self.assertRegex(result.stdout, r"^(initial|fixture-[0-7])$")
         first = self.invoke("Get", "copilotd")
         second = self.invoke("Get", "magpie")
+        self.assertEqual(first.returncode, 0, first.stderr)
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertIn(first.stdout, {f"fixture-{index}" for index in range(8)})
         self.assertEqual(first.stdout, second.stdout)
         self.assertEqual({p.name for p in self.store.iterdir()}, {"snapshot.json", "publish.lock"})
 
@@ -391,7 +394,7 @@ class CredentialApplyTests(unittest.TestCase):
             target = self.source / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(original, target)
-        (self.source / ".chezmoiignore").write_text("secrets.yaml.age\n", encoding="utf-8")
+        shutil.copyfile(ROOT / ".chezmoiignore", self.source / ".chezmoiignore")
         self.renderer = self.source / ".chezmoitemplates/llm/render.json.tmpl"
         self.manifest({"copilotd": "copilotd_api_key", "magpie": "magpie_api_key"})
         self.encrypt({"copilotd_api_key": "fixture-copilotd-secret", "magpie_api_key": "fixture-magpie-secret",
@@ -559,8 +562,6 @@ class CredentialApplyTests(unittest.TestCase):
         config = json.loads(self.config.read_text(encoding="utf-8"))
         config["data"]["llm_python"] = sys.executable
         self.config.write_text(json.dumps(config), encoding="utf-8")
-        with (self.source / ".chezmoiignore").open("a", encoding="utf-8") as ignore:
-            ignore.write("render_llm_config.py\n.config/llm/store/\n")
         self.assert_apply()
         self.assertEqual(self.get("copilotd").stdout, "fixture-copilotd-secret")
         self.assertEqual(self.get("magpie").stdout, "fixture-magpie-secret")
