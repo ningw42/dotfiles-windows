@@ -6,20 +6,30 @@ properties:
     # Scoop Package Manager
     # ============================================================
 
-    # Bootstrap Scoop
+    # All Scoop installs depend on this bootstrap, directly or via a bucket.
     - resource: PSDscResources/Script
       id: ScoopBootstrap
       directives:
-        description: Install Scoop package manager
+        description: Install Scoop and select its scoopcs executable shim provider
         allowPrerelease: true
       settings:
         TestScript: |
-          Test-Path "$env:USERPROFILE\scoop\shims\scoop.cmd"
+          $scoop = "$env:USERPROFILE\scoop\shims\scoop.cmd"
+          if (-not (Test-Path -LiteralPath $scoop -PathType Leaf)) { return $false }
+          $shim = & $scoop config shim
+          $LASTEXITCODE -eq 0 -and $shim -eq 'scoopcs'
         SetScript: |
-          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
-          Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+          $scoop = "$env:USERPROFILE\scoop\shims\scoop.cmd"
+          if (-not (Test-Path -LiteralPath $scoop -PathType Leaf)) {
+            Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+            Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+          }
+          & $scoop config shim scoopcs
+          if ($LASTEXITCODE -ne 0) { throw "Could not set Scoop's shim provider (exit $LASTEXITCODE)." }
         GetScript: |
-          @{ Result = if (Test-Path "$env:USERPROFILE\scoop\shims\scoop.cmd") { 'Installed' } else { 'NotInstalled' } }
+          $scoop = "$env:USERPROFILE\scoop\shims\scoop.cmd"
+          if (-not (Test-Path -LiteralPath $scoop -PathType Leaf)) { return @{ Result = 'NotInstalled' } }
+          @{ Result = (& $scoop config shim) }
 
     # Add extras bucket (needed for lazygit)
     - resource: PSDscResources/Script

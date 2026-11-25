@@ -16,6 +16,11 @@ chezmoi init github.com/ningw42/dotfiles-windows
 winget configure -f ~/.local/share/chezmoi/configuration.dsc.yaml
 ```
 
+Provisioning sets Scoop's executable shim provider to `scoopcs` before installing
+packages. Its launcher runs as x64 on x64 Windows, so HerdR Core can report its
+working directory. Existing shims are not rewritten by the setting alone; to
+regenerate an app's shims, close the app and run `scoop reset <app>`.
+
 Place the age identity at `~/.config/chezmoi/key.txt`, then preview and deploy the
 dotfiles. Existing plaintext credential exports require manual cleanup after
 verifying the protected credential setup:
