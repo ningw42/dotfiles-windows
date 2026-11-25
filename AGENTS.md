@@ -1,252 +1,51 @@
 # AGENTS.md
 
-Operating rules for agents working in this repository. The human-facing overview
-is [`README.md`](README.md).
+This repository is the chezmoi source for a Windows user profile. Edit sources
+here, not deployed files in `$HOME`. Keep [README.md](README.md) focused on
+first-run setup; link to manifests and templates rather than copying their contents.
 
-## Repository model
+## Migrations: commit only what a fresh host needs
 
-This is a Windows/PowerShell dotfiles repo, and its root is the chezmoi source
-directory (`~/.local/share/chezmoi`). Files here are sources that `chezmoi apply`
-renders into `$HOME`; they are not the deployed files themselves.
+Commit the resulting configuration and any repeatable setup a new host needs.
+If a step only imports, converts, moves, or removes state from an older setup,
+give the user a **temporary PowerShell script** in your response to review and
+run. Keep the script and its one-off instructions out of the repo; do not run
+it automatically or add it to provisioning or apply hooks.
 
-## Non-negotiable rules
+Deleting a source does not remove its deployed copy. Use `.chezmoiremove` when
+a path must *stay absent* under the current configuration (such as an inactive
+theme). Removing an old filename once is a migration, not an ongoing rule.
 
-1. **Edit sources here, never deployed targets** such as `~/.gitconfig`,
-   `~/Documents/PowerShell/...`, or `~/.config/...`.
-2. **Keep repo-only root files out of `$HOME`.** Add any new root-level doc or
-   helper to `.chezmoiignore`. The ignore file is the authoritative list.
-3. **Preview before deploying.** Run `chezmoi diff`; run `chezmoi apply` only
-   when deployment is part of the task.
-4. **Use forward slashes in templates.** For home paths use
-   `{{ .chezmoi.homeDir | replace "\\" "/" }}`. Raw backslashes can break
-   JSON or template parsing.
-5. **Remove abandoned targets.** Deleting or renaming a source does not delete
-   its deployed copy. Add orphaned paths to `.chezmoiremove`, which is always
-   templated.
-6. **Use scoped Conventional Commits** such as `feat(statusline): ...`. Do not
-   add a `Co-authored-by` trailer.
-7. **Do not overwrite unrelated work.** Check `git status` and keep edits scoped
-   to the request.
+## Editing rules
 
-## Working with chezmoi
+- Check `git status` and preserve unrelated work. Use scoped Conventional Commits
+  without a `Co-authored-by` trailer.
+- Add repo-only root files to `.chezmoiignore` so chezmoi won't deploy them.
+  Use forward slashes in templated home paths: `{{ .chezmoi.homeDir | replace "\\" "/" }}`.
+- Change the source that owns the behavior: `configuration.dsc.yaml` for software,
+  `.chezmoi.toml.tmpl` for machine prompts, `.chezmoidata/llm-*.toml` for shared
+  model configuration.
+- When changing a colorscheme, check per-app palettes and external manifests as
+  well as shared templates. Keep shared MCP definitions aligned across clients;
+  Copilot intentionally omits GitHub.
+- For generated skills, hooks, and agent files, change the generator in
+  `.chezmoiscripts/`, `manage_skills.py`, or the package pin. Don't import
+  generated output or runtime caches. Preserve publisher receipts and recovery
+  files rather than deleting them to force an overwrite.
+- Commit `secrets.yaml.age`, never plaintext. Decrypt only in the apply-time
+  credential hook, not while rendering templates or previewing a diff. Test
+  credential changes with fixture keys and isolated homes.
 
-```powershell
-chezmoi diff                       # preview all rendered changes
-chezmoi apply                      # deploy interactively
-chezmoi cat ~/.gitconfig           # render one managed target
-Get-Content -Raw f.tmpl | chezmoi execute-template
-chezmoi doctor                     # check the environment
-chezmoi ignored                    # inspect ignored targets
-```
+## Validation and deployment
 
-Automated or agent-driven applies that may touch pi must use
-`chezmoi apply --force`; otherwise a prompt about pi's runtime edits to
-`~/.pi/agent/settings.json` can appear as a silent hang.
-
-### Source conventions
-
-| Source pattern | Meaning |
-| :--- | :--- |
-| `dot_foo` | Deploy as `~/.foo` |
-| `readonly_foo` | Deploy read-only |
-| `*.tmpl` | Render as a Go template |
-| `.chezmoitemplates/...` | Shared template partial |
-| `.chezmoiexternal.toml[.tmpl]` | Checksum-pinned remote content |
-| `.chezmoiscripts/run_onchange_*` | Run when rendered content changes |
-| `.chezmoiscripts/run_after_*` | Run after each apply |
-| `*.age` | Age-encrypted source |
-
-`.chezmoi.toml.tmpl` is the source of truth for prompted machine data.
-`.chezmoidata/llm-*.toml` owns LLM providers, models, and harness bindings.
-Claude Code uses subscription authentication, not a templated base URL.
-`.chezmoidata.toml` holds pinned external-release metadata. Only the apply-time
-credential extractor loads secrets with `include "secrets.yaml.age" | decrypt |
-fromYaml`; ordinary target rendering stays secret-free. Referencing an
-undeclared data variable makes apply fail.
-
-## Cross-cutting configuration
-
-### Colorschemes
-
-The valid choices live in `.chezmoi.toml.tmpl`. Themes are implemented through a
-mix of shared partials under `.chezmoitemplates/`, colorscheme-conditional
-externals, and inline template conditionals. To find every integration, search
-rather than relying on a copied list:
-
-```powershell
-rg -l colorscheme -g '*.tmpl' -g '*.toml' -g '*.lua' -g '*.ps1'
-```
-
-When adding or renaming a scheme, update every integration, add the required
-partials/externals, and clean obsolete deployed theme files through
-`.chezmoiremove`.
-
-Rio is a special case: its Catppuccin external intentionally tracks the
-`ningw42/rio` `feat/update-color-schema` branch. It no longer uses a filter.
-Read the header in `AppData/Local/rio/.chezmoiexternal.toml.tmpl` before changing
-its URL or checksum.
-
-### Externals
-
-Changing an external URL requires a matching SHA-256 update. Use:
-
-```powershell
-python update_externals.py --dry-run
-python update_externals.py
-```
-
-All direct pins live under `external_resources.pins` in `.chezmoidata.toml` as
-resolved `url`/`sha256` pairs; optional `update` recipes select GitHub releases or
-branch-head commits.
-Manifests only select pins and declare placement/extraction. The updater edits
-structured pin data only, with an all-or-nothing atomic write and canonical TOML
-formatting. Exit codes are `0` unchanged, `1` updated/would update, and `2` errors;
-dry-run still uses the network. Inspect upstream changes before accepting pins.
-
-### Secrets
-
-- Commit `secrets.yaml.age`, never plaintext `secrets.yaml`.
-- The age identity is `~/.config/chezmoi/key.txt`; the recipient is declared in
-  `.chezmoi.toml.tmpl`.
-- After editing, re-encrypt the file. Normal apply publishes required Codex/Pi
-  credentials to a Windows CurrentUser-DPAPI store. Profiles and persistent user
-  environment hooks contain only non-secret settings. Existing environment keys
-  are a human-only migration, never automatic cleanup.
-- Keep Python rendering secret-free; only the apply hook decrypts. Test LLM
-  configuration and credential changes with fixture keys and isolated homes,
-  never real credentials.
-
-```powershell
-age -d -i ~/.config/chezmoi/key.txt -o secrets.yaml secrets.yaml.age
-age -e -r RECIPIENT_FROM_CHEZMOI_CONFIG -o secrets.yaml.age secrets.yaml
-```
-
-## Coding-agent configuration
-
-Managed sources include `dot_agents/`, `dot_claude/`, `dot_codex/`,
-`dot_copilot/`, `dot_config/opencode/`, `dot_pi/`, and the shared status line in
-`dot_config/statusline/`.
-
-- Keep shared MCP server definitions aligned in `dot_codex/config.toml.tmpl`,
-  `dot_copilot/mcp-config.json`, `dot_config/opencode/opencode.json.tmpl`,
-  `dot_config/claude-code-chezmoi/plugins/user-mcps/dot_mcp.json`, and pi's
-  `dot_pi/agent/readonly_mcp.json`, which Pi's built-in MCP reads. Copilot
-  intentionally omits GitHub.
-- `dot_config/statusline/statusline.py` serves Claude Code and Copilot via the
-  `claude` and `copilot` dispatch arguments.
-- Chezmoi owns raw Matt Pocock and HumanLayer snapshots selected by
-  `.chezmoidata.toml`. `manage_skills.py` owns the filtered plugin views, their
-  shared links, its receipt/lock, and the generated Claude marketplace; Claude
-  owns its runtime registry/cache. Repo-authored skills under `dot_agents/skills/`
-  and the generated HerdR Core skill retain their owners. Source filters are
-  opt-in: omitted include selects upstream-declared/conventional skills, an
-  explicit include stays nonempty, and exclude wins. Matt follows its upstream
-  manifest; HumanLayer remains show-me-only, excluding its Codex invocation
-  policy to match nixfiles. The publisher never adopts foreign outputs. See
-  README's shared-skills section for selection, recovery, and deployment.
-- `.chezmoiscripts/run_after_shared-agent-skills.ps1.tmpl` invokes the publisher
-  with Scoop's managed Python 3.11+ after apply. Changes to skill selection,
-  publication, acquisition, or lifecycle must run `tests/test_agent_skills.py`,
-  `tests/test_external_manifests.py`, and `tests/test_update_externals.py`.
-- `.chezmoiscripts/run_onchange_herdr-integrations.ps1.tmpl` extracts HerdR's
-  lifecycle hooks, plugins, and OpenCode TUI glue from the installed TUI binary
-  in an isolated profile. Its legacy `herdr` skill is retired. The Copilot
-  SessionStart hook coexists with RTK's independently generated PreToolUse hook.
-  Do not add these generated outputs as chezmoi sources or edit deployed copies.
-- HerdR Core is separate: DSC installs `main/herdr-core` (the `hc` CLI).
-  `run_after_herdr-core-skill.ps1.tmpl` wraps its installed `--skill` manual with
-  discovery metadata and the outside-session consent gate, then publishes its
-  skill and links. Keep these generated outputs out of source control and the
-  shared Python publisher; no separate Core skill pin is needed.
-
-### RTK ownership
-
-RTK owns its generated files; do not add them as chezmoi sources or edit deployed
-copies.
-
-- Codex uses the `rtk hook codex` Bash `PreToolUse` handler in
-  `dot_codex/hooks.json.tmpl`, with exact hook trust in `config.toml.tmpl`.
-  `run_onchange_rtk-init.ps1.tmpl` generates `~/.codex/{AGENTS,RTK}.md` in an
-  isolated `CODEX_HOME`, preserving unrelated instructions and publishing only
-  those awareness documents; RTK never patches the managed hooks or config.
-- Claude Code uses the `rtk hook claude` hook in `dot_claude/settings.json.tmpl`.
-- Copilot uses its generated `~/.copilot/hooks/rtk-rewrite.json`; the script
-  deletes the redundant generated instruction file.
-- OpenCode 2 uses RTK's generated native `~/.config/opencode/plugins/rtk.ts`.
-  The RTK script invokes `rtk init -g --opencode --no-patch` with an isolated
-  `CLAUDE_CONFIG_DIR`.
-- Do not add pi to the RTK script. `pi-distribution` owns pi's RTK extension.
-
-### pi ownership
-
-The repo manages pi's agent JSON files and workflow settings under `dot_pi/`.
-Pi's packaged extensions, packaged skills, and packaged themes come from the
-checksum-pinned `pi-distribution` release external under
-`dot_pi/agent/packages/`; the human-invoked skills under `dot_agents/skills/`
-are deliberate additions to that package-owned set. The HerdR state extension
-is generated by `run_onchange_herdr-integrations.ps1.tmpl`, not by
-`pi-distribution`. Do not add separate pi theme externals.
-
-The `pi-distribution` tag and architecture-specific asset checksums live in
-`.chezmoidata.toml`; `.chezmoitemplates/llm/pi-settings-base.json` declares only
-its stable local package path, composed into `dot_pi/agent/settings.json.tmpl`.
-Refresh the pin with `update_externals.py`, and let
-`dot_pi/agent/packages/.chezmoiexternal.toml.tmpl` materialize it. Node.js, RTK,
-and starship are runtime dependencies installed by `configuration.dsc.yaml`.
-The PowerShell profile and persistent Windows environment set
-`PI_STATUSLINE_STARSHIP`, disable pi's own version check, and opt out of install
-telemetry to reproduce the nixfiles wrapper.
-
-The global pi-subagents and pi-tasks defaults live in
-`dot_pi/agent/{subagents.json,tasks-config.json}`. Built-in agent overrides are
-generated after every apply by
-`.chezmoiscripts/run_after_pi-subagents-agents.ps1.tmpl` from the installed,
-pinned pi-subagents sources. Model routes come from
-`.chezmoidata/llm-harnesses.toml`; customize other fields in the generator's
-`$builtinAgentOverrides` mapping using camelCase `AgentConfig` fields: omitted
-fields inherit upstream, values replace (including lists), and `$null` removes
-a field. Keep canonical agent IDs as keys; use `displayName` for cosmetic names.
-Keep all three as generated deployed files; do not add
-`dot_pi/agent/agents/*.md` sources. Validate generator changes with
-`tests/test_pi_subagents.py`, which uses isolated sources and output files.
-
-Pi also rewrites `settings.json` at runtime (for package/theme/version state), so
-interactive apply may ask whether to overwrite it. This is expected: overwrite
-to reassert the repo or skip to retain the runtime copy temporarily. Do not try
-to mirror pi's volatile output. For non-interactive apply, use `--force`.
-
-Do not add pi to the shared Python status line; `pi-distribution` provides pi's
-starship-backed status-line extension.
-
-### Local versus deployed Claude settings
-
-- Root `.claude/` configures an agent working in this repository.
-- `dot_claude/` deploys the managed user configuration to `~/.claude/`.
-- `.claude/settings.local.json` is an ignored personal override.
-
-## Provisioning
-
-`configuration.dsc.yaml` is the idempotent WinGet configuration for Scoop,
-command-line and GUI tools, PowerShell modules, and per-user fonts. Keep its
-resources Windows-first.
-
-Font updates deliberately install in user context, write a
-`.cache-refresh-needed` sentinel, and let the elevated
-`RestartFontCacheForFonts` resource restart `FontCache`. Do not replace this with
-`AddFontResource`/`WM_FONTCHANGE`; those do not refresh DirectWrite. Mixed
-security contexts require WinGet 1.9 or newer, and a failed elevation should
-leave the sentinel for retry.
-
-## Validation
-
-Run the checks relevant to the change; do not deploy merely to validate.
-
-| Change | Check |
-| :--- | :--- |
-| Any template/config | `chezmoi diff` |
-| External URLs or pins | `python update_externals.py --dry-run` |
-| Repository docs/tests or cross-cutting changes | `python -B -m unittest discover -s tests` |
-| External updater | `python -B -m unittest discover -s tests -p test_update_externals.py` |
-| Shared skill publication | `python -B -m unittest discover -s tests -p test_agent_skills.py -v` |
-| Shared status line | `python dot_config/statusline/statusline.py test` |
-| Chezmoi environment | `chezmoi doctor` |
+- **Templates or config:** preview with `chezmoi diff`. Apply only when deployment
+  is requested. For an authorized automated apply that touches pi settings, use
+  `chezmoi apply --force` after reviewing the diff; pi's runtime edits can prompt.
+- **External pins:** keep URLs and SHA-256 hashes together in `.chezmoidata.toml`.
+  Preview with `python update_externals.py --dry-run` (exit `1` means changes,
+  `2` means failure). Review upstream changes, run `python update_externals.py`,
+  then `chezmoi diff --refresh-externals=always` to avoid stale cached downloads.
+- **Tests:** run the matching suite for a focused change. For docs, shared skills,
+  or changes spanning tools, run `python -B -m unittest discover -s tests`.
+  Outside discovery: `python -B tests/acceptance_rtk.py -v` after RTK upgrades,
+  and `python dot_config/statusline/statusline.py test` for status-line changes.
