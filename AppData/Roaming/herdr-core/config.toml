@@ -1,0 +1,14 @@
+# Honor the directory hc selected; forcing ~ here also resets tabs and splits.
+# Drop hc's launch-time PWD and report navigation via the Windows process cwd.
+shell = ["pwsh.exe", "-NoExit", "-Command", '''
+Remove-Item Env:PWD -ErrorAction Ignore
+[Environment]::CurrentDirectory = $ExecutionContext.SessionState.Path.CurrentFileSystemLocation.ProviderPath
+$ExecutionContext.InvokeCommand.LocationChangedAction = [Delegate]::Combine(
+  $ExecutionContext.InvokeCommand.LocationChangedAction,
+  [EventHandler[System.Management.Automation.LocationChangedEventArgs]]{
+    param($sender, $change)
+    if ($change.NewPath.Provider.Name -eq 'FileSystem') {
+      [Environment]::CurrentDirectory = $change.NewPath.ProviderPath
+    }
+  })
+''']
